@@ -39,3 +39,6 @@ docs/build/
 # Jupyter
 .ipynb_checkpoints
 */.ipynb_checkpoints/*
+
+# Dev
+sandbox/*
