@@ -9,3 +9,8 @@ readme = "README.md"
 requires-python = ">=3.10"
 authors = [{name = "Geet George", email = "geet.george@mpimet.mpg.de"}]
 
+[tool.pytest.ini_options]
+addopts = [
+    "--import-mode=importlib",
+]
+testpaths = ["tests","docs"]
