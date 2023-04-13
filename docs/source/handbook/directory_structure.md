@@ -32,3 +32,4 @@ The directories within flight-data directories with `Level_` prefixes include th
 | `Level_3` | All sounding files in Level-2 gridded on a uniform, vertical grid, with some derived variables |
 | `Level_4` | Circle products from all circles flown during flight                                           |
 
+Maintaining this structure is also important for the package to automatically navigate through data directories, e.g. see the {py:obj}`Paths <halodrops.helper.paths.Paths>` class.
