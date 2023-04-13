@@ -2,7 +2,7 @@
 
 `halodrops` strongly recommends that the data be stored in the following structure:
 
-```
+```bash
 ├── Data_Directory
 │   ├── 20200202
 │   │   ├── Level_0
@@ -10,15 +10,17 @@
 │   │   ├── Level_2
 │   │   ├── Level_3
 │   │   ├── Level_4
+│   │   ├── Quicklooks
 │   ├── 20220303
 │   │   ├── Level_0
 │   │   ├── Level_1
 │   │   ├── Level_2
 │   │   ├── Level_3
 │   │   ├── Level_4
+│   │   ├── Quicklooks
 ```
 
-## Descriptions - Directory and nomenclature
+## Descriptions and nomenclature
 
 The `Data_Directory` is a directory that includes all data from a single campaign. Therein, data from individual flights are stored in their respective folders with their name in the format of `YYYYMMDD`, indicating the flight-date. In case of flying through midnight, consider the date of take-off. In case, there are multiple flights in a day, consider adding alphabetical suffixes  to distinguish chronologically between flights, e.g. `20200202-A` and `20200202-B` would be two flights on the same day in the same order that they were flown. 
 
@@ -32,3 +34,4 @@ The directories within flight-data directories with `Level_` prefixes include th
 | `Level_3` | All sounding files in Level-2 gridded on a uniform, vertical grid, with some derived variables |
 | `Level_4` | Circle products from all circles flown during flight                                           |
 
+Maintaining this structure is also important for the package to automatically navigate through data directories, e.g. see the {py:obj}`Paths <halodrops.helper.paths.Paths>` class.
