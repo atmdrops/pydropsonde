@@ -19,4 +19,5 @@ tutorial/index
 howto/index
 reference/index
 explanation/index
+handbook/index
 ```
