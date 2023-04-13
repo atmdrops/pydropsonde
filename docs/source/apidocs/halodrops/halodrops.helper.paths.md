@@ -21,18 +21,6 @@
     ```
 ````
 
-### Functions
-
-````{list-table}
-:class: autosummary longtable
-:align: left
-
-* - {py:obj}`get_all_sondes_list <halodrops.helper.paths.get_all_sondes_list>`
-  - ```{autodoc2-docstring} halodrops.helper.paths.get_all_sondes_list
-    :summary:
-    ```
-````
-
 ### API
 
 `````{py:class} Paths(directory, flightdir)
@@ -47,27 +35,12 @@
 ```{autodoc2-docstring} halodrops.helper.paths.Paths.__init__
 ```
 
-````{py:method} quickplot_path()
-:canonical: halodrops.helper.paths.Paths.quickplot_path
+````{py:method} quicklooks_path()
+:canonical: halodrops.helper.paths.Paths.quicklooks_path
 
-```{autodoc2-docstring} halodrops.helper.paths.Paths.quickplot_path
-```
-
-````
-
-````{py:method} quickgrid_nc_path()
-:canonical: halodrops.helper.paths.Paths.quickgrid_nc_path
-
-```{autodoc2-docstring} halodrops.helper.paths.Paths.quickgrid_nc_path
+```{autodoc2-docstring} halodrops.helper.paths.Paths.quicklooks_path
 ```
 
 ````
 
 `````
-
-````{py:function} get_all_sondes_list(Platform)
-:canonical: halodrops.helper.paths.get_all_sondes_list
-
-```{autodoc2-docstring} halodrops.helper.paths.get_all_sondes_list
-```
-````

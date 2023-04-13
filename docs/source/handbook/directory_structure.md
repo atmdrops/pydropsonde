@@ -10,12 +10,14 @@
 │   │   ├── Level_2
 │   │   ├── Level_3
 │   │   ├── Level_4
+│   │   ├── Quicklooks
 │   ├── 20220303
 │   │   ├── Level_0
 │   │   ├── Level_1
 │   │   ├── Level_2
 │   │   ├── Level_3
 │   │   ├── Level_4
+│   │   ├── Quicklooks
 ```
 
 ## Descriptions - Directory and nomenclature
