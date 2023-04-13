@@ -18,8 +18,16 @@ extensions = [
     'myst_parser',
     'sphinx.ext.duration',
     'sphinx.ext.autosectionlabel',
-    'nbsphinx'
+    'nbsphinx',
+    "autodoc2",
     ]
+
+autodoc2_packages = [
+    {
+        "path": "../../sandbox",
+        "auto_mode": False,
+    },
+]
 
 myst_enable_extensions =[
     "colon_fence",

@@ -7,8 +7,6 @@
 installation
 ```
 -----
------
-
 Ideally, for a campaign, the package would run in a way that all you have to do for data processing is:
 
 ```console

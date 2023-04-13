@@ -7,5 +7,4 @@
 list_failed_sondes
 ```
 -----
------
 Here is a {doc}`notebook demo <list_failed_sondes>` to get you started.
