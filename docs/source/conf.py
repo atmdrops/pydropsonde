@@ -28,7 +28,7 @@ myst_enable_extensions =[
 ]
 autodoc2_packages = [
    {
-        "path": "../../src",
+        "path": "../../src/halodrops/",
     },
 ]
 autodoc2_render_plugin = "myst"
