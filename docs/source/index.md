@@ -20,4 +20,5 @@ howto/index
 reference/index
 explanation/index
 handbook/index
+apidocs/index
 ```

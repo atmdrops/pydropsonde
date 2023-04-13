@@ -22,18 +22,16 @@ extensions = [
     "autodoc2",
     ]
 
-autodoc2_packages = [
-    {
-        "path": "../../sandbox",
-        "auto_mode": False,
-    },
-]
-
 myst_enable_extensions =[
     "colon_fence",
     "dollarmath"
 ]
-
+autodoc2_packages = [
+   {
+        "path": "../../src",
+    },
+]
+autodoc2_render_plugin = "myst"
 exclude_patterns = []
 
 source_suffix = {
