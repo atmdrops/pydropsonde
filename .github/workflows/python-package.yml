@@ -38,4 +38,4 @@ jobs:
         $CONDA/bin/conda install conda-build
         $CONDA/bin/conda develop ./src
         $CONDA/bin/conda install pytest
-        $CONDA/bin/pytest
+        $CONDA/bin/pytest --import-mode=importlib .
