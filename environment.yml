@@ -10,4 +10,5 @@ dependencies:
   - myst-parser
   - certifi
   - sphinx-autobuild
+  - numpy
 prefix: /Users/geet/Documents/Repositories/Owned/halodrops/halodrops_env
