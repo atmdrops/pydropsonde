@@ -47,7 +47,7 @@ class Paths:
         `str`
             Path to quicklooks directory
         """
-        quicklooks_path_str = os.path.join(self.dir,'Quicklooks')
+        quicklooks_path_str = os.path.join(self.flightdir,'Quicklooks')
         if pp(quicklooks_path_str).exists():
             logging.info(f'Path exists: {quicklooks_path_str}')
         else:    
