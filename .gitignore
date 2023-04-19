@@ -42,3 +42,4 @@ docs/build/
 
 # Dev
 sandbox/*
+src/_version.py

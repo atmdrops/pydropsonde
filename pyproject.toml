@@ -1,10 +1,10 @@
 [build-system]
-requires=["setuptools>=43.0.0","wheel"]
+requires=["setuptools>=43.0.0","wheel","setuptools_scm[toml]>=6.2"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "halodrops"
-version = "2023.04"
+dynamic = ["version"]
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [{name = "Geet George", email = "geet.george@mpimet.mpg.de"}]
@@ -14,3 +14,6 @@ addopts = [
     "--import-mode=importlib",
 ]
 testpaths = ["tests","docs"]
+
+[tool.setuptools_scm]
+write_to = "src/_version.py"
