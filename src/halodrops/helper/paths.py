@@ -35,7 +35,7 @@ class Paths:
         self.flightdirname = flightdir
         self.l1dir = os.path.join(directory,flightdir,'Level_1')
 
-        logging.info(f'Created Path Instance: Main:{directory}; Flight:{flightdir}')
+        logging.info(f'Created Path Instance: {self.flightdir=}; {self.flightdirname=}; {self.l1dir=}')
 
     def quicklooks_path(self):
         """Path to quicklooks directory
@@ -49,8 +49,8 @@ class Paths:
         """
         quicklooks_path_str = os.path.join(self.flightdir,'Quicklooks')
         if pp(quicklooks_path_str).exists():
-            logging.info(f'Path exists: {quicklooks_path_str}')
+            logging.info(f'Path exists: {quicklooks_path_str=}')
         else:    
             pp(quicklooks_path_str).mkdir(parents=True)
-            logging.info(f'Path did not exist. Created directory: {quicklooks_path_str}')
+            logging.info(f'Path did not exist. Created directory: {quicklooks_path_str=}')
         return quicklooks_path_str
