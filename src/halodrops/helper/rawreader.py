@@ -1,3 +1,6 @@
+"""
+Module to read from raw files, mostly to gather metadata from A files
+"""
 import logging
 
 def check_launch_detect_in_afile(a_file:'str') -> bool:
