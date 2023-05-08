@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field, InitVar, KW_ONLY
-from typing import Any, Optional
+from typing import Any, Optional, List
 import numpy as np
 
 _no_default = object()
@@ -24,13 +24,37 @@ class Sonde:
     _ : KW_ONLY
     launch_time: Optional[Any] = None
     
-    # add more attributes of other optional metadata
-
     def __post_init__(self):
         """The `sort_index` attribute is only applicable when `launch_time` is available.
         """
         if self.launch_time is not None:
             object.__setattr__(self, 'sort_index', self.launch_time)
+
+    def add_spatial_coordinates_at_launch(self,launch_coordinates:List) -> None:
+        """Sets attributes of spatial coordinates at launch
+
+        Expected units for altitude, latitude and longitude are
+        meter above sea level, degree north and degree east, respectively.
+
+        Parameters
+        ----------
+        launch_coordinates : List
+            List must be provided in the order of [`launch_alt`,`launch_lat`,`launch_lon`]
+        """
+        launch_alt, launch_lat, launch_lon = launch_coordinates
+        object.__setattr__(self, 'launch_alt', launch_alt)
+        object.__setattr__(self, 'launch_lat', launch_lat)
+        object.__setattr__(self, 'launch_lon', launch_lon)
+    
+    def add_launch_detect(self,launch_detect_bool:bool) -> None:
+        """Sets bool attribute of whether launch was detected
+             
+        Parameters
+        ----------
+        launch_detect_bool : bool
+            True if launch detected, else False            
+        """
+        object.__setattr__(self, 'launch_detect', launch_detect_bool)
 
 @dataclass(frozen=True)
 class SondeData(Sonde):

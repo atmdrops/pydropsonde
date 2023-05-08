@@ -107,6 +107,22 @@
 
 ````
 
+````{py:method} add_spatial_coordinates_at_launch(launch_coordinates: typing.List) -> None
+:canonical: halodrops.sonde.Sonde.add_spatial_coordinates_at_launch
+
+```{autodoc2-docstring} halodrops.sonde.Sonde.add_spatial_coordinates_at_launch
+```
+
+````
+
+````{py:method} add_launch_detect(launch_detect_bool: bool) -> None
+:canonical: halodrops.sonde.Sonde.add_launch_detect
+
+```{autodoc2-docstring} halodrops.sonde.Sonde.add_launch_detect
+```
+
+````
+
 `````
 
 `````{py:class} SondeData
