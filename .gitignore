@@ -44,3 +44,4 @@ docs/build/
 sandbox/*
 src/_version.py
 **/*.log
+**/*.doc*
