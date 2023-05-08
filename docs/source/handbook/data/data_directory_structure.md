@@ -1,4 +1,4 @@
-# Directory Structure
+# Data Directory Structure
 
 `halodrops` strongly recommends that the data be stored in the following structure:
 

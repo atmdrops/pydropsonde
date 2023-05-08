@@ -1,9 +1,8 @@
-# Handbook
+# Data
 
 ```{toctree}
 :caption: 'Contents:'
 :maxdepth: 1
 
-operations/index
-data/index
+data_directory_structure
 ```
