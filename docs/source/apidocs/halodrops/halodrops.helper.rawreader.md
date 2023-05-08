@@ -27,6 +27,10 @@
   - ```{autodoc2-docstring} halodrops.helper.rawreader.get_launch_time
     :summary:
     ```
+* - {py:obj}`get_spatial_coordinates_at_launch <halodrops.helper.rawreader.get_spatial_coordinates_at_launch>`
+  - ```{autodoc2-docstring} halodrops.helper.rawreader.get_spatial_coordinates_at_launch
+    :summary:
+    ```
 ````
 
 ### API
@@ -49,5 +53,12 @@
 :canonical: halodrops.helper.rawreader.get_launch_time
 
 ```{autodoc2-docstring} halodrops.helper.rawreader.get_launch_time
+```
+````
+
+````{py:function} get_spatial_coordinates_at_launch(a_file: str) -> typing.List
+:canonical: halodrops.helper.rawreader.get_spatial_coordinates_at_launch
+
+```{autodoc2-docstring} halodrops.helper.rawreader.get_spatial_coordinates_at_launch
 ```
 ````

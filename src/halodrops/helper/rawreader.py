@@ -3,6 +3,7 @@ Module to read from raw files, mostly to gather metadata from A files
 """
 from datetime import datetime
 import logging
+from typing import List
 
 import numpy as np
 
@@ -105,3 +106,54 @@ def get_launch_time(a_file:'str') -> np.datetime64:
         format = "%Y-%m-%d, %H:%M:%S"
 
         return np.datetime64(datetime.strptime(ltime, format))
+
+def get_spatial_coordinates_at_launch(a_file:str) -> List:
+    """Returns spatial coordinates of sonde at launch
+
+    For the provided A-file, if the sonde has detected a launch (see `check_launch_detect_in_afile` function)
+    then the function returns the altitude, latitude and longitude of the sonde at the time of detected launch
+    by parsing lines having the phrases "MSL Altitude (m)", "Latitude (deg)" and "Longitude (deg)". 
+    Unit convention is meter above sea level, degree north and degree east.
+
+    If the sonde has not detected a launch, an empty list will be returned.
+
+    Parameters
+    ----------
+    a_file : str
+        Path to A-file
+
+    Returns
+    -------
+    List
+        [altitude at launch, latitude at launch, longitude at launch]
+    """
+
+    if check_launch_detect_in_afile(a_file):
+        with open(a_file, "r") as f:
+            logging.info(f'Opened File: {a_file=}')
+            lines = f.readlines()
+
+            alt_id = 0; lat_id = 0; lon_id = 0
+            while alt_id + lat_id + lon_id < 3:
+                for i, line in enumerate(lines):
+                    if "MSL Altitude (m)" in line:
+                        line_id = i
+                        logging.info(f'"MSL Altitude (m)" found on line {line_id=}')
+                        alt_id = 1
+                        alt = float(line.split('=')[1].lstrip().rstrip())
+                    elif "Latitude (deg)" in line:
+                        line_id = i
+                        logging.info(f'"Latitude (deg)" found on line {line_id=}')
+                        lat_id = 1
+                        lat = float(line.split('=')[1].lstrip().rstrip())
+                    elif "Longitude (deg)" in line:
+                        line_id = i
+                        logging.info(f'"Longitude (deg)" found on line {line_id=}')
+                        lon_id = 1
+                        lon = float(line.split('=')[1].lstrip().rstrip())
+                    else:
+                        pass
+            return [alt,lat,lon]
+                
+    else:
+        return []
