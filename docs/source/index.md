@@ -17,7 +17,6 @@ For a quick start to using `halodrops`, go to {doc}`Getting Started <tutorial/in
 
 tutorial/index
 howto/index
-reference/index
 explanation/index
 handbook/index
 apidocs/index
