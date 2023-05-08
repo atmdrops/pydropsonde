@@ -8,6 +8,7 @@ This document describes the preparations, operations and data-handling of the HR
 
 switching_on
 pre_flight
+in_flight
 ```
 ```{toctree}
 :caption: 'Issues:'
