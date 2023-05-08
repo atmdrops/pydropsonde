@@ -7,6 +7,7 @@ This document describes the preparations, operations and data-handling of the HR
 :maxdepth: 1
 
 switching_on
+pre_flight
 ```
 ```{toctree}
 :caption: 'Issues:'
