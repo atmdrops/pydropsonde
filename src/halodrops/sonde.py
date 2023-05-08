@@ -41,11 +41,14 @@ class Sonde:
         launch_coordinates : List
             List must be provided in the order of [`launch_alt`,`launch_lat`,`launch_lon`]
         """
-        launch_alt, launch_lat, launch_lon = launch_coordinates
-        object.__setattr__(self, 'launch_alt', launch_alt)
-        object.__setattr__(self, 'launch_lat', launch_lat)
-        object.__setattr__(self, 'launch_lon', launch_lon)
-    
+        try:
+            launch_alt, launch_lat, launch_lon = launch_coordinates
+            object.__setattr__(self, 'launch_alt', launch_alt)
+            object.__setattr__(self, 'launch_lat', launch_lat)
+            object.__setattr__(self, 'launch_lon', launch_lon)
+        except:
+            print("Check if the sonde detected a launch, otherwise launch coordinates cannot be set")
+        
     def add_launch_detect(self,launch_detect_bool:bool) -> None:
         """Sets bool attribute of whether launch was detected
              
