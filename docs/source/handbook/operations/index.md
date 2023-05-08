@@ -1,7 +1,15 @@
 # Operations
 
+This document describes the preparations, operations and data-handling of the HRDS \& AVAPS systems for dropsondes on the HALO aircraft. Also included are some known issues and potential ways to overcome them. 
+
 ```{toctree}
-:caption: 'Contents:'
+:caption: 'Routine:'
+:maxdepth: 1
+
+switching_on
+```
+```{toctree}
+:caption: 'Issues:'
 :maxdepth: 1
 
 ip_address_setup
