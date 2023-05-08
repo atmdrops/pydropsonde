@@ -14,4 +14,5 @@
 :maxdepth: 1
 
 halodrops.helper.paths
+halodrops.helper.performance
 ```
