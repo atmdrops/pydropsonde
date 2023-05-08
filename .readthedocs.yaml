@@ -5,6 +5,5 @@ build:
   tools:
     python: "3.11"
 
-python:
-  install:
-    - requirements: environment.yml
+conda:
+  environment: environment.yml
