@@ -35,6 +35,14 @@
 ```{autodoc2-docstring} halodrops.helper.paths.Paths.__init__
 ```
 
+````{py:method} get_all_afiles()
+:canonical: halodrops.helper.paths.Paths.get_all_afiles
+
+```{autodoc2-docstring} halodrops.helper.paths.Paths.get_all_afiles
+```
+
+````
+
 ````{py:method} quicklooks_path()
 :canonical: halodrops.helper.paths.Paths.quicklooks_path
 

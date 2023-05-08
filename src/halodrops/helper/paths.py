@@ -1,3 +1,4 @@
+import glob
 import logging
 from pathlib import Path as pp
 import os.path
@@ -33,9 +34,18 @@ class Paths:
         """
         self.flightdir = os.path.join(directory,flightdir)
         self.flightdirname = flightdir
+        self.l0dir = os.path.join(directory,flightdir,'Level_0')
         self.l1dir = os.path.join(directory,flightdir,'Level_1')
 
         logging.info(f'Created Path Instance: {self.flightdir=}; {self.flightdirname=}; {self.l1dir=}')
+
+    def get_all_afiles(self):
+        """Returns a list of paths to all A-files for the given directory
+        and also sets it as attribute named 'afiles_list'
+        """
+        a_files = glob.glob(os.path.join(self.l0dir,'A*'))
+        self.afiles_list = a_files
+        return a_files
 
     def quicklooks_path(self):
         """Path to quicklooks directory
