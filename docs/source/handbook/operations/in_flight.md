@@ -1,6 +1,8 @@
 # In-flight Operations
 
-Once the [pre-flight operations](./pre_flight.md) are complete and the tests are successful (or relevant workarounds have been achieved), we are ready for the in-flight operations. These are, in sequence, as follows:
+Once the [pre-flight operations](./pre_flight.md) are complete and the tests are successful (or relevant workarounds have been achieved), we are ready for the in-flight operations. These consist primarily of initialization and launch.
+
+## Initialization
 
 1. Start the AVAPS software as explained in [Switching on AVAPS](./switching_on.md). Continue by clicking on `Soundings`.
     
@@ -40,3 +42,20 @@ Once the [pre-flight operations](./pre_flight.md) are complete and the tests are
     | ![Sonde ready](../../graphics/sonde_ready.png) |
     | :--------------------------------------------: |
     |                 *Sonde ready*                  |
+
+
+## Launch
+
+```{warning}
+The following sequence of steps are like a checklist for launching sondes, and not designed as a complete tutorial for a beginner. It is best to get practice with the launch operations on board with another experienced operator. Ideally, this is done mid-flight, but could also be learnt on ground, although the lack of pressure-difference between the cabin and the environment makes a big difference in how the launch is experienced by the operator.
+```
+
+1.  Power on the dispenser unit
+2.	Remove carefully the red cover of the dropsonde-sensor
+3.	Remove tape from the black delayed deployment mechanism
+4.	Open the dispenser
+5.	Place the sonde sensors down in the launcher tube
+6.	Close the dispenser
+7.	Open release valve
+8.	Check if sonde left the dispenser
+9.	Close release valve
