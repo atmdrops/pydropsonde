@@ -13,6 +13,6 @@
 :titlesonly:
 :maxdepth: 1
 
+halodrops.helper.rawreader
 halodrops.helper.paths
-halodrops.helper.performance
 ```
