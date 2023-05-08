@@ -11,4 +11,9 @@ dependencies:
   - certifi
   - sphinx-autobuild
   - numpy
+  - nbsphinx
+  - pip>=20.1
+  - pip:
+    - sphinx-autodoc2
+    - sphinx-book-theme
 prefix: /Users/geet/Documents/Repositories/Owned/halodrops/halodrops_env
