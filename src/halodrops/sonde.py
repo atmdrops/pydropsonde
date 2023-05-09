@@ -1,5 +1,7 @@
 from dataclasses import dataclass, field, InitVar, KW_ONLY
 from typing import Any, Optional, List
+import os
+
 import numpy as np
 
 _no_default = object()
@@ -58,6 +60,51 @@ class Sonde:
             True if launch detected, else False            
         """
         object.__setattr__(self, 'launch_detect', launch_detect_bool)
+
+    def add_afile(self,path_to_afile:str) -> None:
+        """Sets attribute with path to A-file of the sonde
+
+        Parameters
+        ----------
+        path_to_afile : str
+            Path to the sonde's A-file
+        """
+        object.__setattr__(self, 'afile', path_to_afile)
+
+    def add_postaspenfile(self,path_to_postaspenfile:str=None) -> None:
+        """Sets attribute with path to post-ASPEN file of the sonde
+
+        If the A-file path is known for the sonde, i.e. if the attribute `path_to_afile` exists,
+        then the function will attempt to look for a post-ASPEN file of the same date-time as in the A-file's name.
+        Sometimes, the post-ASPEN file might not exist (e.g. because launch was not detected), and in
+        such cases, an exception will be printed.
+
+        If the A-file path is not known for the sonde, the function will expect the argument
+        `path_to_postaspenfile` to be not empty. 
+
+        Parameters
+        ----------
+        path_to_postaspenfile : str
+            Path to the sonde's post-ASPEN file
+        """
+
+        if path_to_postaspenfile is None:
+            if hasattr(self, 'afile'):
+                path_to_l1dir = os.path.dirname(self.afile)[:-1] + '1'
+                postaspenfile = 'D' + os.path.basename(self.afile).split('.')[0][1:] + 'QC.nc'
+                path_to_postaspenfile = os.path.join(path_to_l1dir,postaspenfile)
+                if os.path.exists(path_to_postaspenfile):
+                    object.__setattr__(self, 'postaspenfile', path_to_postaspenfile)
+                else:
+                    print(f"The post-ASPEN file for {self.serial_id} with filename {postaspenfile} does not exist. Therefore, I am not setting the `postaspenfile` attribute.")
+            else:
+                print("The attribute `path_to_afile` doesn't exist.")
+        
+        else:
+            if os.path.exists(path_to_postaspenfile):
+                object.__setattr__(self, 'postaspenfile', path_to_postaspenfile)
+            else:
+                print(f"The post-ASPEN file for your provided {path_to_postaspenfile=} does not exist. Therefore, I am not setting the `postaspenfile` attribute.")
 
 @dataclass(frozen=True)
 class SondeData(Sonde):
