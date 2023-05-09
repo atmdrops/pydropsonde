@@ -1,7 +1,11 @@
 import glob
 import logging
 from pathlib import Path as pp
+from typing import Dict
 import os.path
+
+from halodrops.helper import rawreader as rr
+from halodrops.sonde import Sonde
 
 class Paths:
     """
@@ -64,3 +68,25 @@ class Paths:
             pp(quicklooks_path_str).mkdir(parents=True)
             logging.info(f'Path did not exist. Created directory: {quicklooks_path_str=}')
         return quicklooks_path_str
+
+    def populate_sonde_instances(self) -> Dict:
+        """Returns a dictionary of `Sonde` class instances for all A-files found in `flightdir`
+        and also sets the dictionary as value of `Sondes` attribute
+        """
+        afiles = self.get_all_afiles()
+
+        Sondes = {}
+
+        for a_file in afiles:
+            launch_detect = rr.check_launch_detect_in_afile(a_file)
+            sonde_id = rr.get_sonde_id(a_file)
+            launch_time = rr.get_launch_time(a_file)
+
+            Sondes[sonde_id] = Sonde(sonde_id,launch_time=launch_time)
+            Sondes[sonde_id].add_launch_detect(launch_detect)
+            Sondes[sonde_id].add_afile(a_file)
+            Sondes[sonde_id].add_postaspenfile()
+
+        object.__setattr__(self, 'Sondes', Sondes)
+        
+        return Sondes
