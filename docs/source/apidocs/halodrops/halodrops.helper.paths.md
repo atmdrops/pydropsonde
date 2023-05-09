@@ -51,4 +51,12 @@
 
 ````
 
+````{py:method} populate_sonde_instances() -> typing.Dict
+:canonical: halodrops.helper.paths.Paths.populate_sonde_instances
+
+```{autodoc2-docstring} halodrops.helper.paths.Paths.populate_sonde_instances
+```
+
+````
+
 `````

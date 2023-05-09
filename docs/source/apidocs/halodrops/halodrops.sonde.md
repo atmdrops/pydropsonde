@@ -123,6 +123,30 @@
 
 ````
 
+````{py:method} add_afile(path_to_afile: str) -> None
+:canonical: halodrops.sonde.Sonde.add_afile
+
+```{autodoc2-docstring} halodrops.sonde.Sonde.add_afile
+```
+
+````
+
+````{py:method} add_postaspenfile(path_to_postaspenfile: str = None) -> None
+:canonical: halodrops.sonde.Sonde.add_postaspenfile
+
+```{autodoc2-docstring} halodrops.sonde.Sonde.add_postaspenfile
+```
+
+````
+
+````{py:method} add_aspen_ds() -> None
+:canonical: halodrops.sonde.Sonde.add_aspen_ds
+
+```{autodoc2-docstring} halodrops.sonde.Sonde.add_aspen_ds
+```
+
+````
+
 `````
 
 `````{py:class} SondeData
