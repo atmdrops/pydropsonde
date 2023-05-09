@@ -86,6 +86,7 @@ class Paths:
             Sondes[sonde_id].add_launch_detect(launch_detect)
             Sondes[sonde_id].add_afile(a_file)
             Sondes[sonde_id].add_postaspenfile()
+            Sondes[sonde_id].add_aspen_ds()
 
         object.__setattr__(self, 'Sondes', Sondes)
         
