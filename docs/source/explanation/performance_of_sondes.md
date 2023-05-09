@@ -23,6 +23,8 @@ A launch should be detected automatically in the ideal scenario. If the sonde fa
     
 The primary method to check if a launch was detected for a given sonde is to parse through the log files of the sonde. These files have names starting with 'A' and are followed by the date and time of launch. The file extension is the number of the channel used to initialise the sonde and receive its signal, but for all practical purposes, it is a `.txt` file. (Note: For sondes that did not detect a launch, the file name has time when the sonde was initialised). The log file contains an internal record termed 'Launch Obs Done?'. If this value is 1, the launch was detected, else if it is 0, launch was not detected. The same values are used to mark the `ld_FLAG`.
 
+To get a quick idea of how to get sondes that have a launch-detect failure, check out this {doc}`how-to guide <../howto/list_failed_sondes>`
+
 (sensor-failure)=
 ### Sensor failure
 
