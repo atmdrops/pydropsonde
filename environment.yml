@@ -13,6 +13,8 @@ dependencies:
   - numpy
   - nbsphinx
   - pip>=20.1
+  - xarray
+  - netcdf4
   - pip:
     - sphinx-autodoc2
     - sphinx-book-theme

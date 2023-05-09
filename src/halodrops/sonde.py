@@ -3,6 +3,7 @@ from typing import Any, Optional, List
 import os
 
 import numpy as np
+import xarray as xr
 
 _no_default = object()
 
@@ -105,6 +106,24 @@ class Sonde:
                 object.__setattr__(self, 'postaspenfile', path_to_postaspenfile)
             else:
                 print(f"The post-ASPEN file for your provided {path_to_postaspenfile=} does not exist. Therefore, I am not setting the `postaspenfile` attribute.")
+
+    def add_aspen_ds(self) -> None:
+        """Sets attribute with an xarray Dataset read from post-ASPEN file
+
+        The function will first check if the serial ID of the instance and that obtained from the 
+        global attributes of the post-ASPEN file match. If they don't, function will print out an error.
+        
+        If the `postaspenfile` attribute doesn't exist, function will print out an error
+        """
+
+        if hasattr(self, "postaspenfile"):
+            ds = xr.open_dataset(self.postaspenfile)
+            if ds.attrs['SondeId'] == self.serial_id:
+                object.__setattr__(self, 'aspen_ds', ds)
+            else:
+                print("I found the `SondeId` global attribute to not match with this instance's `serial_id` attribute. I am not storing the xarray dataset as an attribute.")
+        else:
+            print("I didn't find the `postaspenfile` attribute, therefore I am not storing the xarray dataset as an attribute")
 
 @dataclass(frozen=True)
 class SondeData(Sonde):
