@@ -19,4 +19,5 @@ dependencies:
   - pip:
     - sphinx-autodoc2
     - sphinx-book-theme
+    - sphinx-last-updated-by-git
 prefix: /Users/geet/Documents/Repositories/Owned/halodrops/halodrops_env

@@ -26,6 +26,7 @@ extensions = [
     'sphinx.ext.viewcode',
     'nbsphinx',
     "autodoc2",
+    "sphinx_last_updated_by_git",
     ]
 
 myst_enable_extensions =[
