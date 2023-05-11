@@ -60,6 +60,7 @@ html_theme_options = {
     "use_repository_button": True,
     "use_edit_page_button": True,
     "use_issues_button": True,
+    "use_fullscreen_button": False,
     "announcement": "<p style='font-size:130%;color:white'> &#9888;&#65039; HALO-DROPS Hackathon/Workshop in Hamburg, June 7th-9th : <a style='color:hotpink;' href='https://halo-research.de/events/' target='_blank'>Details here</a> &#9888;&#65039;</p>",
 }
 # Set link name generated in the top bar.
