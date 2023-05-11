@@ -51,6 +51,14 @@ source_suffix = {
 
 html_theme = 'sphinx_book_theme'
 html_static_path = ['_static']
-
+html_context = {
+   "default_mode": "light"
+}
+html_theme_options = {
+    "repository_url": "https://github.com/Geet-George/halodrops",
+    "use_repository_button": True,
+    "use_edit_page_button": True,
+    "use_issues_button": True,
+}
 # Set link name generated in the top bar.
 html_title = 'HALO-DROPS'
