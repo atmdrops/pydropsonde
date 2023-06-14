@@ -20,3 +20,4 @@ dependencies:
     - sphinx-autodoc2
     - sphinx-book-theme
     - sphinx-last-updated-by-git
+    - -e .
