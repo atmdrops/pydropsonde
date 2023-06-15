@@ -85,7 +85,7 @@ Have a look at the [issues](https://github.com/Geet-George/halodrops/issues) and
 
     Every commit makes changes that are justified by one reason. The size of a commit could be a single character change or a change in thousands of lines across millions of files. But the reason behind the commit should ideally be as solitary as possible. Commit often, but not too often. Henry VIII said that.
 
-    For documentation, refer the [Documentation development](#documentation-development) section for steps. 
+    For making changes to the documentation, refer the {ref}`Documentation development<documentation-development>`section for steps. 
 
 5. **Submit pull request**
 
@@ -95,4 +95,50 @@ Have a look at the [issues](https://github.com/Geet-George/halodrops/issues) and
 
 6. **... And that's it! Thanks for helping**
 
+(documentation-development)=
 ## Documentation development
+
+HALO-DROPS uses [Sphinx](https://www.sphinx-doc.org/en/master/index.html) with the [Book theme](https://sphinx-book-theme.readthedocs.io/en/stable/) to display its documentation, and is hosted by [ReadTheDocs](https://readthedocs.org/). All documentation comes from markdown files or Jupyter notebooks, except the API reference, which is built automatically from the docstrings in the modules in the `src` directory, thanks to [sphinx-autodoc2](https://sphinx-autodoc2.readthedocs.io/en/latest/).
+
+### Steps to make documentation changes
+
+1. You'll find the source files for documentation in the `docs/source/` directory. If you want to change documentation in the API reference, then head over to the corresponding module in the source code and change the relevant docstring. 
+
+2. Make the change. Here are some referencing tips for both Markdown files and for docstrings.
+   
+   - For cross-referencing within the document, use the `myst` style, which is: 
+      ```
+      {ref}`Text you want displayed <reference-tag>`
+      ```
+      The `reference-tag` is added to the relevant sub-header as follows:
+      ```
+      (reference-tag)=
+      ## The Header
+      ```
+
+   - For cross-referencing a different document, use:
+      ```
+      {doc}`Text you want displayed <path/to/doc/FilenameWithoutExtension>`
+      ```
+
+   - For URLs, simple markdown cross-referencing should suffice, e.g.
+      ```
+      [Text you want displayed](https://thereference.url)
+      ```
+
+
+
+3. Rebuild the documentation with:
+
+```bash
+sphinx-build -n docs/source docs/build
+```
+
+The `-n` flag is to enable [nitpicky mode](https://www.sphinx-doc.org/en/master/usage/configuration.html#confval-nitpicky), so that we catch all warnings with missing references. 
+
+For automatically updating the documentation upon any changes you make, we also have the [`sphinx-autobuild`](https://pypi.org/project/sphinx-autobuild/) installed in our development environment. This detects any changes to files in the `docs/source`  directory, rebuilds the docs and starts a server at http://127.0.0.1:8000 to display the rebuilt docs. Stop the server with `Ctrl + C`.
+
+```bash
+sphinx-autobuild  -n docs/source/ docs/build/
+```
+There are several arguments of `sphinx-build` & `sphinx-autobuild` that can be used to make modifications to the workflow. For example, the `--open-browser` argument will also open the browser to the port.
