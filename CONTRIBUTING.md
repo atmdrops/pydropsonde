@@ -1,0 +1,1 @@
+You will find detailed guides in our [CONTRIBUTING section](https://halodrops.readthedocs.io/CONTRIBUTING) in the docs.

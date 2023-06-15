@@ -1,4 +1,4 @@
-name: /Users/geet/Documents/Repositories/Owned/halodrops/halodrops_env
+name: halodrops_env
 channels:
   - conda-forge
   - defaults
@@ -20,4 +20,4 @@ dependencies:
     - sphinx-autodoc2
     - sphinx-book-theme
     - sphinx-last-updated-by-git
-prefix: /Users/geet/Documents/Repositories/Owned/halodrops/halodrops_env
+    - -e .

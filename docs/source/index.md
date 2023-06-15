@@ -44,6 +44,7 @@ For a quick start to using `halodrops`, go to {doc}`Getting Started <tutorial/in
 :caption: 'Contents:'
 :maxdepth: 1
 
+CONTRIBUTING.md
 tutorial/index
 howto/index
 explanation/index
