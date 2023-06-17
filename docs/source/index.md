@@ -4,7 +4,7 @@
 % contain the root `toctree` directive.
 
 ```{warning}
-Currently under active development
+Currently under active development! We can help from your contributions. Please check out our {doc}`Contributing Guide <CONTRIBUTING>`.
 ```
 # Overview
 
