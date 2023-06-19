@@ -9,32 +9,29 @@
 import sys
 import os
 
-sys.path.insert(0, os.path.abspath('../../src'))
+sys.path.insert(0, os.path.abspath("../../src"))
 
-project = 'HALO-DROPS'
-copyright = '2023, Geet George'
-author = 'Geet George'
-release = 'v0.1'
+project = "HALO-DROPS"
+copyright = "2023, Geet George"
+author = "Geet George"
+release = "v0.1"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
 extensions = [
-    'myst_parser',
-    'sphinx.ext.duration',
-    'sphinx.ext.autosectionlabel',
-    'sphinx.ext.viewcode',
-    'nbsphinx',
+    "myst_parser",
+    "sphinx.ext.duration",
+    "sphinx.ext.autosectionlabel",
+    "sphinx.ext.viewcode",
+    "nbsphinx",
     "autodoc2",
     "sphinx_last_updated_by_git",
-    ]
-
-myst_enable_extensions =[
-    "colon_fence",
-    "dollarmath"
 ]
+
+myst_enable_extensions = ["colon_fence", "dollarmath"]
 autodoc2_packages = [
-   {
+    {
         "path": "../../src/halodrops/",
     },
 ]
@@ -42,19 +39,17 @@ autodoc2_render_plugin = "myst"
 exclude_patterns = []
 
 source_suffix = {
-    '.rst': 'restructuredtext',
-    '.txt': 'markdown',
-    '.md': 'markdown',
+    ".rst": "restructuredtext",
+    ".txt": "markdown",
+    ".md": "markdown",
 }
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-html_theme = 'sphinx_book_theme'
-html_static_path = ['_static']
-html_context = {
-   "default_mode": "light"
-}
+html_theme = "sphinx_book_theme"
+html_static_path = ["_static"]
+html_context = {"default_mode": "light"}
 html_theme_options = {
     "repository_url": "https://github.com/Geet-George/halodrops",
     "use_repository_button": True,
@@ -64,4 +59,4 @@ html_theme_options = {
     "announcement": "<p style='font-size:130%;color:white'> &#9888;&#65039; HALO-DROPS Hackathon/Workshop in Hamburg, June 21st-23rd : <a style='color:hotpink;' href='https://owncloud.gwdg.de/index.php/s/dBytH8rI7u20hJb' target='_blank'>Details here</a> &#9888;&#65039;</p>",
 }
 # Set link name generated in the top bar.
-html_title = 'HALO-DROPS'
+html_title = "HALO-DROPS"

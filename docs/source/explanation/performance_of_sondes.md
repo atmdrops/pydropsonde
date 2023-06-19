@@ -10,7 +10,7 @@ The performance of sondes is determined by how well the sonde performs with data
 Sonde failures could be because of multiple reasons:
 
 - {ref}`Launch-detect failure <launch-detect-failure>`
-- {ref}`Sensor failure <sensor-failure>` 
+- {ref}`Sensor failure <sensor-failure>`
 - {ref}`Parachute failure <parachute-failure>`
 - {ref}`Others <other-failure>`
 
@@ -18,7 +18,7 @@ Sonde failures could be because of multiple reasons:
 ### Launch-detect failure
 
 A launch should be detected automatically in the ideal scenario. If the sonde fails to do this, it does not switch to high-power signal transmission, and thus, stops sending data back to the AVAPS PC, after a short range. The most common way this occurs is when the parachute fails to release from the sonde. There is a small IR (?) sensor in the sonde which detects that the parachute is out, and then switches on high-power radio transmission. Before this, the sonde (after initialization) transmits data to the AVAPS system via low-power transmission. Without the high-power transmission, the signal strength is too low for the aircraft to be able to detect and eventually, as the sonde goes further away, contact is lost. During EUREC4A, this was unfortunately a common failure for the HALO dropsondes, which were from a bad bunch.
-    
+
 The primary method to check if a launch was detected for a given sonde is to parse through the log files of the sonde. These files have names starting with 'A' (hence, called A-files) and are followed by the date and time of launch. The file extension is the number of the channel used to initialise the sonde and receive its signal, but for all practical purposes, it is a `.txt` file. (Note: For sondes that did not detect a launch, the file name has time when the sonde was initialised). The log file contains an internal record termed 'Launch Obs Done?'. If this value is 1, the launch was detected, else if it is 0, launch was not detected. The same values are used to mark the `ld_FLAG`.
 
 To get an idea of how to get sondes that have a launch-detect failure, check out this {doc}`how-to guide <../howto/list_failed_sondes>`
