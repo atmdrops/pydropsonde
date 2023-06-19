@@ -7,14 +7,19 @@ import os.path
 from halodrops.helper import rawreader as rr
 from halodrops.sonde import Sonde
 
+# create logger
+module_logger = logging.getLogger("halodrops.helper.paths")
+
+
 class Paths:
     """
     Deriving paths from the provided directory
 
-    The input should align in terms of hierarchy and nomenclature 
+    The input should align in terms of hierarchy and nomenclature
     with the {doc}`Directory Structure </handbook/directory_structure>` that `halodrops` expects.
     """
-    def __init__(self,directory,flightdir):
+
+    def __init__(self, directory, flightdir):
         """Creates an instance of Paths object for a given flight
 
         Parameters
@@ -36,24 +41,27 @@ class Paths:
         `l1dir`
             Path to Level-1 data directory
         """
-        self.flightdir = os.path.join(directory,flightdir)
+        self.logger = logging.getLogger("halodrops.helper.paths.Paths")
+        self.flightdir = os.path.join(directory, flightdir)
         self.flightdirname = flightdir
-        self.l0dir = os.path.join(directory,flightdir,'Level_0')
-        self.l1dir = os.path.join(directory,flightdir,'Level_1')
+        self.l0dir = os.path.join(directory, flightdir, "Level_0")
+        self.l1dir = os.path.join(directory, flightdir, "Level_1")
 
-        logging.info(f'Created Path Instance: {self.flightdir=}; {self.flightdirname=}; {self.l1dir=}')
+        self.logger.info(
+            f"Created Path Instance: {self.flightdir=}; {self.flightdirname=}; {self.l1dir=}"
+        )
 
     def get_all_afiles(self):
         """Returns a list of paths to all A-files for the given directory
         and also sets it as attribute named 'afiles_list'
         """
-        a_files = glob.glob(os.path.join(self.l0dir,'A*'))
+        a_files = glob.glob(os.path.join(self.l0dir, "A*"))
         self.afiles_list = a_files
         return a_files
 
     def quicklooks_path(self):
         """Path to quicklooks directory
-        
+
         Function checks for an existing quicklooks directory, and if not found, creates one.
 
         Returns
@@ -61,12 +69,14 @@ class Paths:
         `str`
             Path to quicklooks directory
         """
-        quicklooks_path_str = os.path.join(self.flightdir,'Quicklooks')
+        quicklooks_path_str = os.path.join(self.flightdir, "Quicklooks")
         if pp(quicklooks_path_str).exists():
-            logging.info(f'Path exists: {quicklooks_path_str=}')
-        else:    
+            self.logger.info(f"Path exists: {quicklooks_path_str=}")
+        else:
             pp(quicklooks_path_str).mkdir(parents=True)
-            logging.info(f'Path did not exist. Created directory: {quicklooks_path_str=}')
+            self.logger.info(
+                f"Path did not exist. Created directory: {quicklooks_path_str=}"
+            )
         return quicklooks_path_str
 
     def populate_sonde_instances(self) -> Dict:
@@ -82,12 +92,12 @@ class Paths:
             sonde_id = rr.get_sonde_id(a_file)
             launch_time = rr.get_launch_time(a_file)
 
-            Sondes[sonde_id] = Sonde(sonde_id,launch_time=launch_time)
+            Sondes[sonde_id] = Sonde(sonde_id, launch_time=launch_time)
             Sondes[sonde_id].add_launch_detect(launch_detect)
             Sondes[sonde_id].add_afile(a_file)
             Sondes[sonde_id].add_postaspenfile()
             Sondes[sonde_id].add_aspen_ds()
 
-        object.__setattr__(self, 'Sondes', Sondes)
-        
+        object.__setattr__(self, "Sondes", Sondes)
+
         return Sondes
