@@ -21,7 +21,29 @@
     ```
 ````
 
+### Data
+
+````{list-table}
+:class: autosummary longtable
+:align: left
+
+* - {py:obj}`module_logger <halodrops.helper.paths.module_logger>`
+  - ```{autodoc2-docstring} halodrops.helper.paths.module_logger
+    :summary:
+    ```
+````
+
 ### API
+
+````{py:data} module_logger
+:canonical: halodrops.helper.paths.module_logger
+:value: >
+   None
+
+```{autodoc2-docstring} halodrops.helper.paths.module_logger
+```
+
+````
 
 `````{py:class} Paths(directory, flightdir)
 :canonical: halodrops.helper.paths.Paths

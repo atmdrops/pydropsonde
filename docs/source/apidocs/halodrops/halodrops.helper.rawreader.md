@@ -33,7 +33,29 @@
     ```
 ````
 
+### Data
+
+````{list-table}
+:class: autosummary longtable
+:align: left
+
+* - {py:obj}`module_logger <halodrops.helper.rawreader.module_logger>`
+  - ```{autodoc2-docstring} halodrops.helper.rawreader.module_logger
+    :summary:
+    ```
+````
+
 ### API
+
+````{py:data} module_logger
+:canonical: halodrops.helper.rawreader.module_logger
+:value: >
+   None
+
+```{autodoc2-docstring} halodrops.helper.rawreader.module_logger
+```
+
+````
 
 ````{py:function} check_launch_detect_in_afile(a_file: str) -> bool
 :canonical: halodrops.helper.rawreader.check_launch_detect_in_afile
