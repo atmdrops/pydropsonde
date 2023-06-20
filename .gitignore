@@ -41,6 +41,7 @@ docs/build/
 */.ipynb_checkpoints/*
 
 # Dev
+sample/*
 sandbox/*
 src/_version.py
 **/*.log
