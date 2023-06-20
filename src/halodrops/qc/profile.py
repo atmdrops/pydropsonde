@@ -50,3 +50,41 @@ def weighted_fullness(dataset, variable, sampling_frequency, time_dimension="tim
     # 4 is the number of timestamps every second, read assumption in description
     weighed_time_size = len(dataset[time_dimension]) / (4 / sampling_frequency)
     return np.sum(~np.isnan(dataset[variable].values)) / weighed_time_size
+
+
+def weighted_fullness_for_config_vars(dataset, config_file_path, add_to_dataset=True):
+    """Return weighted fullness for all variables in a provided config file
+
+    Parameters
+    ----------
+    dataset : xarray.Dataset
+        Dataset containing variable along time_dimension
+    config_file : str
+        Path to config file
+    add_to_dataset : bool, optional
+        Should values be added to the provided dataset? by default True
+
+    Returns
+    -------
+    xr.Dataset or dictionary
+        if True, returns weighted fullness as variables in provided dataset, else returns them as a dictionary,
+    """
+    # Reading the CONFIG file
+    import configparser
+
+    config = configparser.ConfigParser()
+    config.read(config_file_path)
+
+    vars = [
+        (var, int(config["sampling - frequencies"][var]))
+        for var in config["sampling - frequencies"].keys()
+    ]
+
+    dict = {}
+    for var in vars:
+        dict[f"{var[0]}_weighted_fullness"] = weighted_fullness(dataset, var[0], var[1])
+
+    if add_to_dataset:
+        return dataset.assign(dict)
+    else:
+        return dict
