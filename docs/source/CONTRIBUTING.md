@@ -53,6 +53,22 @@ Have a look at the [issues](https://github.com/Geet-George/halodrops/issues) and
     conda activate halodrops
     ```
 
+    **_Get pre-commit working for you_**
+
+    If you created the environment with the `environmnet.yml` file, then `pre-commit` should already be present in your environment. `pre-commit` is used to employ hooks for checking (and in some cases, fixing) the code before commits are made. To get pre-commit to check automatically every time you commit, use the following command:
+
+    ```bash
+    pre-commit install
+    ```
+
+    That's it. :) `pre-commit` will now parse through all hooks in the `.pre-commit-config.yaml` file and do its thing accordingly.
+
+    Every time there is a change in the config YAML file, be sure to apply those changes for all existing files too with the following command:
+
+    ```bash
+    pre-commit run --all-files
+    ```
+
 3. **Create a branch**
 
     Now we have a local copy of our fork and we have the environment ready to start developing.
