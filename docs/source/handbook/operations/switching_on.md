@@ -17,15 +17,15 @@ The HRDS rack is situated in the baggage compartment at the back of the aircraft
     |                                                 ![Switch rack](../../graphics/switch_rack.jpg)                                                  |
     | :---------------------------------------------------------------------------------------------------------------------------------------------: |
     | *Switch rack. Labels above the switches indicate the respective components which are powered on.  <small>(photo courtesy: Geet George)</small>* |
-    
+
 3. Screen should look like the picture below after booting has completed.
-    
+
     | ![Start screen](../../graphics/start_screen.png) |
     | :----------------------------------------------: |
     |                  *Start screen*                  |
-    
+
 4. Start the `AVAPS II` software. You should find the shortcut icon on the Desktop. The software opens to look like this.
-    
+
     | ![AVAPS start screen](../../graphics/start_avaps.png) |
     | :---------------------------------------------------: |
     |                 *AVAPS start screen*                  |

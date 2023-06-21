@@ -1,6 +1,6 @@
 # Pre-flight Operations
 
-There are primarily three pre-flight operations that need to be carried out. Here, "pre-flight" has slightly different time-scales for the processes. The steps to carry out all three of the procedures are elaborated in linked PDF documents. Please note that these are from restricted documents shared with us courtesy of NCAR/EOL. Therefore, this document also should be used with that consideration in mind. 
+There are primarily three pre-flight operations that need to be carried out. Here, "pre-flight" has slightly different time-scales for the processes. The steps to carry out all three of the procedures are elaborated in linked PDF documents. Please note that these are from restricted documents shared with us courtesy of NCAR/EOL. Therefore, this document also should be used with that consideration in mind.
 
 ## Reconditioning of the dropsondes
 ```{note}

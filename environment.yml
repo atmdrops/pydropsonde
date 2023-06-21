@@ -16,6 +16,7 @@ dependencies:
   - xarray
   - netcdf4
   - ipython
+  - pre-commit
   - pip:
     - sphinx-autodoc2
     - sphinx-book-theme
