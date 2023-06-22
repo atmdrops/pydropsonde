@@ -26,3 +26,34 @@ ch.setFormatter(formatter)
 logger.addHandler(fh_info)
 logger.addHandler(fh_debug)
 logger.addHandler(ch)
+
+
+def main():
+    import argparse
+
+    parser = argparse.ArgumentParser("Arguments")
+
+    parser.add_argument(
+        "-c",
+        "--configpath",
+        default="./halodrops.cfg",
+        help="config file path for halodrops, by default the config file is halodrops.cfg in the current directory",
+    )
+
+    args = parser.parse_args()
+    import os
+
+    if args.configpath[-3:] != "cfg":
+        config_path = os.path.join(args.configpath, "halodrops.cfg")
+    else:
+        config_path = args.configpath
+
+    if os.path.exists(config_path):
+        import configparser
+
+        config = configparser.ConfigParser()
+        config.read(config_path)
+    else:
+        return print(
+            f"{config_path}: Path does not exist. Please check config file location."
+        )
