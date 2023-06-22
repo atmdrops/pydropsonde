@@ -45,10 +45,6 @@ def main():
     args = parser.parse_args()
     import os
     config_file_path=args.config_file_path
-    #if args.config_file_path[-3:] != "cfg":
-    #    config_file_path = os.path.join(args.config_file_path, "halodrops.cfg")
-    #else:
-    #    config_file_path = args.config_file_path
     config_dirname  = os.path.dirname(config_file_path)
     config_basename = os.path.basename(config_file_path)
 
@@ -57,9 +53,9 @@ def main():
         raise FileNotFoundError("Directory ", config_dirname, "not found.")
     else:
         # check if config file exists inside
-        if os.path.exists(config_file_path):
+        if not os.path.exists(config_file_path):
+            raise FileNotFoundError("File", config_file_path," does not exist. Please check file name.")
+        else:
             import configparser
             config = configparser.ConfigParser()
             config.read(config_path)
-        else:
-            raise FileNotFoundError("File", config_file_path," does not exist. Please check file name .")
