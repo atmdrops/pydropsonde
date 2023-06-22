@@ -39,3 +39,5 @@ jobs:
         $CONDA/bin/conda develop ./src
         $CONDA/bin/conda install pytest
         $CONDA/bin/pytest --import-mode=importlib .
+    - name: pre-commit
+      uses: pre-commit/action@v3.0.0
