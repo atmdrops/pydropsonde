@@ -37,25 +37,29 @@ def main():
         "-c",
         "--config_file_path",
         default="./halodrops.cfg",
-        help="config file path for halodrops, "+\
-            "by default the config file is halodrops.cfg in the current directory."+\
-            "Otherwise path to directory and filename need to be defined",
+        help="config file path for halodrops, "
+        + "by default the config file is halodrops.cfg in the current directory."
+        + "Otherwise path to directory and filename need to be defined",
     )
 
     args = parser.parse_args()
     import os
-    config_file_path=args.config_file_path
-    config_dirname  = os.path.dirname(config_file_path)
+
+    config_file_path = args.config_file_path
+    config_dirname = os.path.dirname(config_file_path)
     config_basename = os.path.basename(config_file_path)
 
     # check if given config file directory exists
     if not os.path.exists(config_dirname):
-        raise FileNotFoundError("Directory ", config_dirname, "not found.")
+        raise FileNotFoundError(f"Directory {config_dirname} not found.")
     else:
         # check if config file exists inside
         if not os.path.exists(config_file_path):
-            raise FileNotFoundError("File", config_file_path," does not exist. Please check file name.")
+            raise FileNotFoundError(
+                f"File {config_file_path} does not exist. Please check file name."
+            )
         else:
             import configparser
+
             config = configparser.ConfigParser()
-            config.read(config_path)
+            config.read(config_file_path)
