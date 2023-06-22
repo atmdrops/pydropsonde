@@ -85,7 +85,7 @@ def launch_locations_map(
 
     fig = plt.figure()
 
-    ax = plt.axes(projection=ccrs.AzimuthalEquidistant())
+    ax = plt.axes(projection=ccrs.PlateCarree())
     ax.coastlines(resolution="50m", linewidth=1.5)
     ax.set_extent(extent, crs=ccrs.PlateCarree())
 
@@ -97,7 +97,7 @@ def launch_locations_map(
             y="lat",
             cmap=satellite_cmap,
             add_colorbar=True,
-            cbar_kwargs={"pad": 0.15, "extend": "both", "aspect": 30},
+            cbar_kwargs={"pad": 0.15, "extend": "both", "aspect": 15, "shrink": 0.7},
             vmin=satellite_vmin,
             vmax=satellite_vmax,
             zorder=-1,
@@ -147,15 +147,9 @@ def launch_locations_map(
     gl.ylabel_style = {"size": 12, "color": "k"}
 
     # Colorbar
-    cax = fig.add_axes([0.08, -0.05, 0.85, 0.02])
+    # cax = fig.add_axes([0.08, -0.05, 0.85, 0.02])
     g = fig.colorbar(
-        im_launches,
-        cax=cax,
-        orientation="horizontal",
-        shrink=0.5,
-        pad=0.02,
-        extend="both",
-        aspect=10,
+        im_launches, orientation="horizontal", extend="both", aspect=30, pad=0.1
     )
     g.set_label(ds_flight[color_coding_var].long_name, fontsize=12)
     plt.tick_params(labelsize=10)
