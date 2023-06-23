@@ -22,3 +22,4 @@ dependencies:
     - sphinx-book-theme
     - sphinx-last-updated-by-git
     - -e .
+    - git+git://github.com/Geet-George/gogoesgone.git@main
