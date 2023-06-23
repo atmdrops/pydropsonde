@@ -26,13 +26,27 @@ import s3fs
 import pandas as pd
 
 
+def convert_time_to_str(time=None, time_format="%Y%m%d %H:%M:%S"):
+
+    """
+    Convert input time into desired string format.
+    """
+
+    # Ensure time is in correct format
+    timestamp = (time - np.datetime64("1970-01-01T00:00:00")) / np.timedelta64(1, "s")
+    datetime_time = datetime.utcfromtimestamp(timestamp)
+    str_time = datetime_time.strftime(time_format)
+
+    return str_time
+
+
 def get_mean_launch_time(ds_flight=None, time_format="%Y%m%d %H:%M:%S"):
 
     """
     Compute mean launch time from all sondes in the dataset.
     """
 
-    mean_time = ds_flight.launch_time.mean().values
+    mean_time = convert_time_to_str(ds_flight.launch_time.mean().values, time_format)
 
     return mean_time
 
@@ -40,6 +54,7 @@ def get_mean_launch_time(ds_flight=None, time_format="%Y%m%d %H:%M:%S"):
 def get_satellite_data(
     satellite_time="mean_launch_time",
     time_format="%Y%m%d %H:%M:%S",
+    ds_flight=None,
     satellite_name="goes16",
     channel=13,
     product="ABI-L2-CMIPF",
@@ -48,14 +63,17 @@ def get_satellite_data(
 
     """
     Access satellite data for nearest time, map to lon/lat grid, and convert to dataset.
+    By default use the mean launch time from dropsonde dataset.
     """
 
-    # Ensure time is in correct format
-    pd_time = pd.to_datetime(str(satellite_time))
-    str_time = pd_time.strftime(time_format)
+    # Get correct time for satellite data
+    if satellite_time == "mean_launch_time":
+        use_time = get_mean_launch_time(ds_flight=ds_flight)
+    else:
+        use_time = convert_time_to_str(time=satellite_time)
 
     # Get filepath to satellite data at nearest time.
-    flist = za.nearest_time_url(str_time, time_format, channel, product, satellite_name)
+    flist = za.nearest_time_url(use_time, time_format, channel, product, satellite_name)
     m = za.get_mapper_from_mzz(flist)
 
     # Select subset of satellite domain
@@ -67,11 +85,11 @@ def get_satellite_data(
 
 def launch_locations_map(
     ds_flight=None,
+    satellite_data=None,
     save_filepath="/path/to/save/",
     color_coding_var="IWV",
     color_coding_cmap="gist_earth",
     overlay_satellite=False,
-    satellite_data=None,
     satellite_time=None,
     extent=(-62, -48, 10, 20),
     satellite_cmap="cubehelix_r",
@@ -151,11 +169,14 @@ def launch_locations_map(
     g = fig.colorbar(
         im_launches, orientation="horizontal", extend="both", aspect=30, pad=0.1
     )
-    g.set_label(ds_flight[color_coding_var].long_name, fontsize=12)
+    g.set_label(ds_flight[color_coding_var].long_name, fontsize=10)
     plt.tick_params(labelsize=10)
 
-    # Title
-    ax.set_title(f"Satellite Time = {satellite_image.t[0].values}", pad=10)
+    # Format time stamp
+    title_time = convert_time_to_str(
+        time=satellite_data.t[0].values, time_format="%Y-%m-%d %H:%M:%S"
+    )
+    ax.set_title(f"Satellite Time = {title_time}", pad=10)
 
     # Save figure
     plt.savefig(save_filepath, dpi=300, bbox_inches="tight")
