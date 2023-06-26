@@ -87,12 +87,11 @@ def launch_locations_map(
     ds_flight=None,
     satellite_data=None,
     save_filepath="/path/to/save/",
-    color_coding_var="IWV",
-    color_coding_cmap="gist_earth",
-    overlay_satellite=False,
+    color_coding_var="flight_altitude",
+    color_coding_cmap="magma",
     satellite_time=None,
-    extent=(-62, -48, 10, 20),
-    satellite_cmap="cubehelix_r",
+    extent=(-61, -52, 10, 16),
+    satellite_cmap="Greys",
     satellite_vmin=280,
     satellite_vmax=300,
 ):
@@ -101,21 +100,27 @@ def launch_locations_map(
     Plot dropsonde launch locations, optionally over satellite images.
     """
 
-    fig = plt.figure()
+    fig = plt.figure(figsize=(10, 8))
 
     ax = plt.axes(projection=ccrs.PlateCarree())
     ax.coastlines(resolution="50m", linewidth=1.5)
     ax.set_extent(extent, crs=ccrs.PlateCarree())
 
     # Plot satellite image
-    if overlay_satellite == True:
+    if satellite_data:
         sat_im = satellite_data.CMI.isel(t=0).plot(
             ax=ax,
             x="lon",
             y="lat",
             cmap=satellite_cmap,
             add_colorbar=True,
-            cbar_kwargs={"pad": 0.15, "extend": "both", "aspect": 15, "shrink": 0.7},
+            cbar_kwargs={
+                "pad": 0.1,
+                "extend": "both",
+                "aspect": 15,
+                "shrink": 0.7,
+                "label": f"{satellite_data.CMI.name} / {satellite_data.CMI.units}",
+            },
             vmin=satellite_vmin,
             vmax=satellite_vmax,
             zorder=-1,
@@ -161,15 +166,17 @@ def launch_locations_map(
     gl.ylocator = mticker.FixedLocator(yticks)
     gl.xformatter = LONGITUDE_FORMATTER
     gl.yformatter = LATITUDE_FORMATTER
-    gl.xlabel_style = {"size": 12, "color": "k"}
-    gl.ylabel_style = {"size": 12, "color": "k"}
+    gl.xlabel_style = {"size": 10, "color": "k"}
+    gl.ylabel_style = {"size": 10, "color": "k"}
 
     # Colorbar
-    # cax = fig.add_axes([0.08, -0.05, 0.85, 0.02])
     g = fig.colorbar(
         im_launches, orientation="horizontal", extend="both", aspect=30, pad=0.1
     )
-    g.set_label(ds_flight[color_coding_var].long_name, fontsize=10)
+    g.set_label(
+        f"{ds_flight[color_coding_var].name} / {ds_flight[color_coding_var].units}",
+        fontsize=12,
+    )
     plt.tick_params(labelsize=10)
 
     # Format time stamp
@@ -179,4 +186,156 @@ def launch_locations_map(
     ax.set_title(f"Satellite Time = {title_time}", pad=10)
 
     # Save figure
-    plt.savefig(save_filepath, dpi=300, bbox_inches="tight")
+    save_filename = f"{save_filepath}launch-locations-{color_coding_var}-{satellite_data.platform_ID}.png"
+    plt.savefig(save_filename, dpi=300, bbox_inches="tight")
+
+
+def plot_lat_time(
+    ds_flight,
+    color_coding_var="flight_altitude",
+    color_coding_cmap="magma",
+    save_filepath="/path/to/save/",
+):
+
+    """
+    Plot spatio-temporal variation (lat v/s time) of selected variable.
+    """
+
+    ax = plt.figure(figsize=(12, 4))
+    plt.scatter(
+        ds_flight["launch_time"].values,
+        ds_flight["lat"].isel(alt=-700).values,
+        s=90,
+        c=ds_flight[color_coding_var],
+        edgecolor="grey",
+        cmap=color_coding_cmap,
+    )
+    plt.xlim(
+        np.min(ds_flight["launch_time"].values) - np.timedelta64(4, "m"),
+        np.max(ds_flight["launch_time"].values) + np.timedelta64(4, "m"),
+    )
+    plt.gca().spines["right"].set_visible(False)
+    plt.gca().spines["top"].set_visible(False)
+    g = plt.colorbar()
+    g.set_label(
+        f"{ds_flight[color_coding_var].name} / {ds_flight[color_coding_var].units}",
+        fontsize=12,
+    )
+
+    myFmt = mdates.DateFormatter("%H:%M")
+    plt.gca().xaxis.set_major_formatter(myFmt)
+    plt.xlabel("Time / UTC", fontsize=12)
+    plt.ylabel("Latitude / $\degree$N", fontsize=12)
+    plt.title(
+        f"Sondes {ds_flight.sonde_id.values[0]} to {ds_flight.sonde_id.values[-1]}",
+        fontsize=12,
+    )
+
+    save_filename = f"{save_filepath}spatiotemporal-variation-{color_coding_var}.png"
+
+    plt.savefig(
+        save_filename,
+        dpi=300,
+        bbox_inches="tight",
+    )
+
+
+def plot_profiles(
+    ds_flight,
+    r=["ta", "theta", "rh", "wspd", "wdir"],
+    r_titles=[
+        "T / $\degree$C",
+        "$\\theta$ / K",
+        "RH / %",
+        "Wind speed / ms$^{-1}$",
+        "Wind direction / $\degree$",
+    ],
+    row=1,
+    col=4,
+    save_filepath="/path/to/save/",
+):
+
+    """
+    Plot vertical profiles of specified variables.
+    """
+
+    f, ax = plt.subplots(row, col, sharey=True, figsize=(12, 6))
+
+    for j in range(col):
+        d = ds_flight[r[j]]
+        for i in range(1, len(ds_flight["launch_time"]) - 1):
+            ax[j].plot(
+                d.isel(sonde_id=i),
+                ds_flight["alt"] / 1000,
+                c="grey",
+                alpha=0.25,
+                linewidth=0.5,
+            )
+
+        ax[j].plot(
+            np.nanmean(d, axis=0),
+            ds_flight["alt"] / 1000,
+            linewidth=3,
+            c="k",
+        )
+        ax[j].set_xlabel(r_titles[j], fontsize=12)
+        ax[j].spines["right"].set_visible(False)
+        ax[j].spines["top"].set_visible(False)
+        if j == 0:
+            ax[j].set_ylabel("Altitude / km", fontsize=12)
+
+    plt.suptitle(
+        f"Sondes {ds_flight.sonde_id.values[0]} to {ds_flight.sonde_id.values[-1]}",
+        fontsize=12,
+    )
+
+    save_filename = f"{save_filepath}vertical-profiles-measured-quantities.png"
+
+    plt.savefig(save_filename, dpi=300, bbox_inches="tight")
+
+
+def drift_plots(ds_flight=None, save_filepath="/path/to/save/"):
+
+    print("Plotting drift in lat and lon...")
+
+    f, ax = plt.subplots(1, 2, sharey=True, figsize=(10, 5))
+
+    for i in range(len(ds_flight["launch_time"])):
+
+        max_id = np.max(np.where(~np.isnan(ds_flight["lon"].isel(sonde_id=i))))
+
+        ax[0].plot(
+            ds_flight["lat"].isel(sonde_id=i)
+            - ds_flight["lat"].isel(sonde_id=i).isel(alt=max_id),
+            ds_flight["alt"] / 1000,
+            linewidth=1.5,
+            c="grey",
+            alpha=0.75,
+        )
+
+        ax[0].set_xlabel("Drift in Latitude / $\degree$", fontsize=12)
+        ax[0].set_ylabel("Altitude / km", fontsize=12)
+        ax[0].spines["right"].set_visible(False)
+        ax[0].spines["top"].set_visible(False)
+
+        ax[1].plot(
+            ds_flight["lon"].isel(sonde_id=i)
+            - ds_flight["lon"].isel(sonde_id=i).isel(alt=max_id),
+            ds_flight["alt"] / 1000,
+            linewidth=1.5,
+            c="grey",
+            alpha=0.75,
+        )
+
+        ax[1].set_xlabel("Drift in Longitude / $\degree$", fontsize=12)
+        ax[1].spines["right"].set_visible(False)
+        ax[1].spines["top"].set_visible(False)
+
+    plt.suptitle(
+        f"Sondes {ds_flight.sonde_id.values[0]} to {ds_flight.sonde_id.values[-1]}",
+        fontsize=12,
+    )
+
+    save_filename = f"{save_filepath}drift-in-lat-lon.png"
+
+    plt.savefig(save_filename, dpi=300, bbox_inches="tight")
