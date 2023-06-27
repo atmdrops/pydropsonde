@@ -2,21 +2,18 @@ from halodrops.plotting import quicklooks as ql
 
 
 # Access satellite data
-satellite_image = ql.get_satellite_data(ds_flight=ds_sondes_first_circle_Jan24)
-
+satellite_image = ql.get_satellite_data(**kwargs)
 
 # Plot launch locations over satellite images
-ql.launch_locations_map(
-    ds_flight=ds_sondes_first_circle_Jan24,
-    satellite_data=satellite_image,
-    save_filepath="/path/to/save/",
-)
+ql.launch_locations_map(**kwargs)
 
 # Plot longitude/time
-ql.plot_lat_time(ds_flight=ds_sondes_first_circle_Jan24, save_filepath=".")
+ql.plot_lat_time(**kwargs)
 
 # Plot vertical profiles
-ql.plot_profiles(ds_flight=ds_sondes_first_circle_Jan24, save_filepath=".")
+ql.plot_profiles(**kwargs)
 
 # Plot dropsonde drift
-ql.drift_plots(ds_flight=ds_sondes_first_circle_Jan24, save_filepath=".")
+ql.drift_plots(**kwargs)
+
+# Output all quicklooks into a PDF
