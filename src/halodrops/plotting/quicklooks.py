@@ -181,9 +181,15 @@ def launch_locations_map(
 
     # Format time stamp
     title_time = convert_time_to_str(
-        time=satellite_data.t[0].values, time_format="%Y-%m-%d %H:%M:%S"
+        time=satellite_data.t[0].values, time_format="%Y-%m-%d %H:%M"
     )
-    ax.set_title(f"Satellite Time = {title_time}", pad=10)
+    ax.set_title("")
+
+    plt.title(
+        f"Sondes {ds_flight.sonde_id.values[0]} to {ds_flight.sonde_id.values[-1]} (Satellite Time = {title_time})",
+        fontsize=12,
+        pad=10,
+    )
 
     # Save figure
     save_filename = f"{save_filepath}launch-locations-{color_coding_var}-{satellite_data.platform_ID}.png"
