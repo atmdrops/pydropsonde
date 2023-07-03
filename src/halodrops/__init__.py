@@ -1,4 +1,5 @@
 import logging
+from pathlib import Path
 
 # create halodrops logger
 logger = logging.getLogger("halodrops")
@@ -27,9 +28,101 @@ logger.addHandler(fh_info)
 logger.addHandler(fh_debug)
 logger.addHandler(ch)
 
+import inspect
+import importlib
+import pkgutil
+import configparser
+
+
+def get_all_defaults(package):
+    """Retrieve the default values of all functions within a package and its subpackages.
+
+    Parameters:
+        package (module): The root package to inspect.
+
+    Returns:
+        dict: A dictionary where the keys are the fully qualified names of the functions,
+              including all parent modules, and the values are dictionaries containing the
+              default values of the function parameters.
+    """
+    function_values = {}
+
+    def process_module(module, parent_module_names):
+        """Process a module and retrieve the default values of its functions.
+
+        Parameters:
+            module (module): The module to process.
+            parent_module_names (list): The names of the parent modules.
+
+        Returns:
+            None
+        """
+        for name, obj in inspect.getmembers(module):
+            if inspect.isfunction(obj):
+                function_signature = inspect.signature(obj)
+                defaults = {
+                    param.name: param.default
+                    for param in function_signature.parameters.values()
+                    if param.default is not inspect.Parameter.empty
+                }
+                function_name = ".".join(parent_module_names + [obj.__qualname__])
+                function_values[function_name] = defaults
+
+    def process_package(package, parent_module_names):
+        """Process a package and its subpackages, retrieving the default values of functions.
+
+        Parameters:
+            package (module): The package to process.
+            parent_module_names (list): The names of the parent modules.
+
+        Returns:
+            None
+        """
+        package_path = package.__path__
+        package_name = package.__name__
+        module_infos = pkgutil.walk_packages(package_path, prefix=package_name + ".")
+
+        for module_info in module_infos:
+            module = importlib.import_module(module_info.name)
+            module_name_parts = module_info.name.split(".")
+            module_names = (
+                parent_module_names + module_name_parts[1:]
+            )  # Exclude root package name
+            process_module(module, module_names)
+
+    process_package(package, [])
+    return function_values
+
+
+def nondefault_values_from_config(config, default_dict):
+    """Retrieve non-default argument values from a configuration file.
+
+    Parameters:
+        config (configparser.ConfigParser): The configuration object representing the config file.
+        default_dict (dict): A dictionary containing the default values for functions.
+
+    Returns:
+        dict: A dictionary containing the non-default arguments and their corresponding values
+              based on the config file.
+    """
+    function_defaults = {}
+    for section in config.sections():
+        if section in default_dict.keys():
+            function_defaults[section] = {}
+            for option, value in config.items(section):
+                if option in default_dict[section]:
+                    function_defaults[section][option] = value
+            # remove empty dict if no args for section are found
+            if not function_defaults[section]:
+                del function_defaults[section]
+
+    return function_defaults
+
 
 def main():
     import argparse
+    import halodrops
+    import halodrops.api.qc as qc
 
     parser = argparse.ArgumentParser("Arguments")
 
@@ -63,3 +156,20 @@ def main():
 
             config = configparser.ConfigParser()
             config.read(config_file_path)
+
+    default_dict = get_all_defaults(halodrops)
+    nondefaults = {}
+    nondefaults = nondefault_values_from_config(config, default_dict)
+
+    list_of_functions = [qc.run, qc.run2]
+
+    for function in list_of_functions:
+        section_name = f"{function.__module__}.{function.__name__}".split("halodrops.")[
+            1
+        ]
+        if section_name in nondefaults:
+            nondefault_args = nondefaults[section_name]
+        else:
+            nondefault_args = {}
+
+        function(**nondefault_args)
