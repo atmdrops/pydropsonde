@@ -66,11 +66,22 @@ def get_satellite_data(
     By default use the mean launch time from dropsonde dataset.
     """
 
-    # Get correct time for satellite data
+    # Get correct time for satellite data. Default is mean of all launches
     if satellite_time == "mean_launch_time":
         use_time = get_mean_launch_time(ds_flight=ds_flight)
     else:
         use_time = convert_time_to_str(time=satellite_time)
+
+    # Define default extent based on launch locations, or user-defined extent
+    if extent is not None:
+        image_lims = extent
+    else:
+        image_lims = (
+            ds_flight.lon.min() - 1,
+            ds_flight.lon.max() + 1,
+            ds_flight.lat.min() - 1,
+            ds_flight.lat.max() + 1,
+        )
 
     # Get filepath to satellite data at nearest time.
     flist = za.nearest_time_url(use_time, time_format, channel, product, satellite_name)
@@ -78,7 +89,7 @@ def get_satellite_data(
 
     # Select subset of satellite domain
     img = pr.Image(m)
-    subset = img.subset_region_from_latlon_extents(extent, unit="degree")
+    subset = img.subset_region_from_latlon_extents(image_lims, unit="degree")
 
     return subset
 
@@ -90,7 +101,7 @@ def launch_locations_map(
     color_coding_var="flight_altitude",
     color_coding_cmap="magma",
     satellite_time=None,
-    extent=(-61, -52, 10, 16),
+    extent=None,
     satellite_cmap="Greys",
     satellite_vmin=280,
     satellite_vmax=300,
@@ -102,9 +113,20 @@ def launch_locations_map(
 
     fig = plt.figure(figsize=(10, 8))
 
+    # Define default extent based on launch locations, or user-defined extent
+    if extent is not None:
+        image_lims = extent
+    else:
+        image_lims = (
+            ds_flight.lon.min() - 1,
+            ds_flight.lon.max() + 1,
+            ds_flight.lat.min() - 1,
+            ds_flight.lat.max() + 1,
+        )
+
     ax = plt.axes(projection=ccrs.PlateCarree())
     ax.coastlines(resolution="50m", linewidth=1.5)
-    ax.set_extent(extent, crs=ccrs.PlateCarree())
+    ax.set_extent(image_lims, crs=ccrs.PlateCarree())
 
     # Plot satellite image
     if satellite_data:
@@ -115,7 +137,7 @@ def launch_locations_map(
             cmap=satellite_cmap,
             add_colorbar=True,
             cbar_kwargs={
-                "pad": 0.1,
+                "pad": 0.05,
                 "extend": "both",
                 "aspect": 15,
                 "shrink": 0.7,
@@ -150,8 +172,8 @@ def launch_locations_map(
     )
 
     # Assigning axes ticks
-    xticks = np.arange(-180, 180, 4)
-    yticks = np.arange(-90, 90, 4)
+    xticks = np.arange(-180, 180, 1)
+    yticks = np.arange(-90, 90, 1)
 
     # Setting up the gridlines
     gl = ax.gridlines(
@@ -171,7 +193,7 @@ def launch_locations_map(
 
     # Colorbar
     g = fig.colorbar(
-        im_launches, orientation="horizontal", extend="both", aspect=30, pad=0.1
+        im_launches, orientation="horizontal", extend="both", aspect=30, pad=0.05
     )
     g.set_label(
         f"{ds_flight[color_coding_var].name} / {ds_flight[color_coding_var].units}",
