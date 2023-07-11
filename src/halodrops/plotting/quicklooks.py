@@ -58,7 +58,7 @@ def get_satellite_data(
     satellite_name="goes16",
     channel=13,
     product="ABI-L2-CMIPF",
-    extent=(-62, -48, 10, 20),
+    extent=None,
 ):
 
     """
