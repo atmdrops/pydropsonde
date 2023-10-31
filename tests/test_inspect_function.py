@@ -1,6 +1,6 @@
 from configparser import ConfigParser
 from typing import Dict
-from halodrops import nondefault_values_from_config
+from halodrops import nondefault_values_from_config,get_mandatory_args, get_mandatory_values_from_config
 import pytest
 
 
@@ -134,3 +134,53 @@ def test_nondefault_values_from_config_with_empty_config(
     result = nondefault_values_from_config(empty_config, default_dict)
 
     assert result == {}
+
+
+def test_get_mandatory_args():
+    """
+    Test get_mandatory_args function.
+    """
+    def sample_function(arg1, arg2, arg3='default'):
+        pass
+
+    result = get_mandatory_args(sample_function)
+    assert result == ['arg1', 'arg2']
+
+
+def test_get_mandatory_values_from_config():
+    """
+    Test get_mandatory_values_from_config function.
+    """
+    mandatory_args = ['arg1', 'arg2']
+    config = ConfigParser()
+    config.add_section("MANDATORY")
+    config.set("MANDATORY", "arg1", "value1")
+    config.set("MANDATORY", "arg2", "value2")
+
+    result = get_mandatory_values_from_config(config, mandatory_args)
+    assert result == {'arg1': 'value1', 'arg2': 'value2'}
+
+
+def test_get_mandatory_values_from_config_missing_section():
+    """
+    Test get_mandatory_values_from_config function with missing MANDATORY section.
+    """
+    mandatory_args = ['arg1', 'arg2']
+    config = ConfigParser()
+
+    with pytest.raises(ValueError, match='MANDATORY section not found in config file'):
+        get_mandatory_values_from_config(config, mandatory_args)
+
+
+def test_get_mandatory_values_from_config_missing_arg():
+    """
+    Test get_mandatory_values_from_config function with missing mandatory argument.
+    """
+    mandatory_args = ['arg1', 'arg2', 'arg3']
+    config = ConfigParser()
+    config.add_section("MANDATORY")
+    config.set("MANDATORY", "arg1", "value1")
+    config.set("MANDATORY", "arg2", "value2")
+
+    with pytest.raises(ValueError, match='Mandatory argument arg3 not found in config file'):
+        get_mandatory_values_from_config(config, mandatory_args)
