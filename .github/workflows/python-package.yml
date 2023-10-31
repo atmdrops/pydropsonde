@@ -49,11 +49,9 @@ jobs:
     #     $CONDA/bin/flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Run pytest in micromamba environment
       run: |
-        eval "$(micromamba shell hook --shell bash)"
-        micromamba activate test-env
-        micromamba install pytest
-        pytest --import-mode=importlib .
-      shell: micromamba-shell {0}
+        micromamba install -n test-env pytest
+        micromamba run -n test-env pytest --import-mode=importlib .
+      # shell: micromamba-shell {0}
 
     # - name: Test with pytest
     #   run: |
@@ -63,3 +61,6 @@ jobs:
     #     $CONDA/bin/pytest --import-mode=importlib .
     - name: pre-commit
       uses: pre-commit/action@v3.0.0
+
+# eval "$(micromamba shell hook --shell bash)"
+# micromamba activate test-env
