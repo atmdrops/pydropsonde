@@ -26,6 +26,7 @@ jobs:
     - uses: mamba-org/setup-micromamba@v1
       with:
         init-shell: bash
+        generate-run-shell: true
         environment-name: test-env
         create-args: >-
           python=${{ matrix.python-version }}
