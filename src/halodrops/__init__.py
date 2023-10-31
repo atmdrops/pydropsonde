@@ -118,6 +118,76 @@ def nondefault_values_from_config(config, default_dict):
 
     return function_defaults
 
+def get_mandatory_args(function):
+    """
+    Get a list of all arguments that do not have a default value for each function in the list.
+
+    Parameters
+    ----------
+    list_of_functions : list
+        A list of functions to inspect.
+
+    Returns
+    -------
+    list
+        A list of argument names that do not have a default value.
+
+    Examples
+    --------
+    >>> def func1(a, b=2):
+    ...     pass
+    >>> def func2(c, d=4, e=5):
+    ...     pass
+    >>> mandatory_args([func1, func2])
+    ['a', 'c']
+    """
+    mandatory_args = []
+    sig = inspect.signature(function)
+    for name, param in sig.parameters.items():
+        if param.default == inspect.Parameter.empty:
+            mandatory_args.append(name) 
+    return mandatory_args
+    
+
+def get_mandatory_values_from_config(config, mandatory_args):
+    """
+    Extracts mandatory values from the 'MANDATORY' section of a configuration file.
+
+    Parameters
+    ----------
+    config : ConfigParser
+        The configuration file parser.
+    mandatory_args : list
+        A list of argument names that are expected to be in the 'MANDATORY' section of the config file.
+
+    Returns
+    -------
+    dict
+        A dictionary where the keys are the argument names and the values are the corresponding values from the config file.
+
+    Raises
+    ------
+    ValueError
+        If the 'MANDATORY' section is not found in the config file or if a mandatory argument is not found in the 'MANDATORY' section.
+
+    Examples
+    --------
+    >>> import configparser
+    >>> config = configparser.ConfigParser()
+    >>> config.read_string('[MANDATORY]\\narg1=value1\\narg2=value2')
+    >>> mandatory_values_from_config(config, ['arg1', 'arg2'])
+    {'arg1': 'value1', 'arg2': 'value2'}
+    """
+    if not config.has_section('MANDATORY'):
+        raise ValueError(f'MANDATORY section not found in config file')
+    else:
+        mandatory_dict = {}
+        for arg in mandatory_args:
+            if config.has_option('MANDATORY', arg):
+                mandatory_dict[arg] = config.get('MANDATORY', arg)
+            else:
+                raise ValueError(f'Mandatory argument {arg} not found in config file')
+    return mandatory_dict
 
 def main():
     import argparse
@@ -158,7 +228,6 @@ def main():
             config.read(config_file_path)
 
     default_dict = get_all_defaults(halodrops)
-    nondefaults = {}
     nondefaults = nondefault_values_from_config(config, default_dict)
 
     list_of_functions = [qc.run, qc.run2]
@@ -171,5 +240,10 @@ def main():
             nondefault_args = nondefaults[section_name]
         else:
             nondefault_args = {}
-
+    
+        mandatory = get_mandatory_args(function)
+        if mandatory:
+            mandatory_args = get_mandatory_values_from_config(config, mandatory)
+            nondefault_args.update(mandatory_args)
+        
         function(**nondefault_args)
