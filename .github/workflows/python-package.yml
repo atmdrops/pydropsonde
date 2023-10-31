@@ -50,6 +50,7 @@ jobs:
     - name: Run pytest in micromamba environment
       run: |
         micromamba install pytest
+        micromamba activate test-env
         pytest --import-mode=importlib .
       shell: micromamba-shell {0}
 
