@@ -25,6 +25,7 @@ jobs:
         swap-size-gb: 10
     - uses: mamba-org/setup-micromamba@v1
       with:
+        micromamba-version: 'latest'
         init-shell: bash
         generate-run-shell: true
         environment-name: testenv
