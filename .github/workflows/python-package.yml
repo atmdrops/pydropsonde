@@ -33,7 +33,7 @@ jobs:
           python=${{ matrix.python-version }}
     - name: Install dependencies in mamba testenv
       run: |
-        micromamba update -n testenv -f environment.yml
+        micromamba env update -n testenv -f environment.yml
     # - name: Set up Python ${{ matrix.python-version }}
     #   uses: actions/setup-python@v3
     #   with:
