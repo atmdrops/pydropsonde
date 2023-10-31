@@ -25,7 +25,7 @@ jobs:
         swap-size-gb: 10
     - uses: mamba-org/setup-micromamba@v1
       with:
-        generate-run-shell: true
+        init-shell: bash
         environment-name: test-env
         create-args: >-
           python=${{ matrix.python-version }}
@@ -48,7 +48,6 @@ jobs:
     #     $CONDA/bin/flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Run pytest in micromamba environment
       run: |
-        micromamba activate test-env
         micromamba install pytest
         pytest --import-mode=importlib .
         shell: micromamba-shell {0}
