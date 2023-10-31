@@ -47,6 +47,7 @@ jobs:
     #     $CONDA/bin/flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Run pytest in micromamba environment
       run: |
+        micromamba shell reinit --shell bash
         micromamba activate test-env
         micromamba install pytest
         pytest --import-mode=importlib .
