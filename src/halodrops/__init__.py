@@ -118,6 +118,7 @@ def nondefault_values_from_config(config, default_dict):
 
     return function_defaults
 
+
 def get_mandatory_args(function):
     """
     Get a list of all arguments that do not have a default value for each function in the list.
@@ -145,9 +146,9 @@ def get_mandatory_args(function):
     sig = inspect.signature(function)
     for name, param in sig.parameters.items():
         if param.default == inspect.Parameter.empty:
-            mandatory_args.append(name) 
+            mandatory_args.append(name)
     return mandatory_args
-    
+
 
 def get_mandatory_values_from_config(config, mandatory_args):
     """
@@ -178,16 +179,17 @@ def get_mandatory_values_from_config(config, mandatory_args):
     >>> mandatory_values_from_config(config, ['arg1', 'arg2'])
     {'arg1': 'value1', 'arg2': 'value2'}
     """
-    if not config.has_section('MANDATORY'):
-        raise ValueError(f'MANDATORY section not found in config file')
+    if not config.has_section("MANDATORY"):
+        raise ValueError(f"MANDATORY section not found in config file")
     else:
         mandatory_dict = {}
         for arg in mandatory_args:
-            if config.has_option('MANDATORY', arg):
-                mandatory_dict[arg] = config.get('MANDATORY', arg)
+            if config.has_option("MANDATORY", arg):
+                mandatory_dict[arg] = config.get("MANDATORY", arg)
             else:
-                raise ValueError(f'Mandatory argument {arg} not found in config file')
+                raise ValueError(f"Mandatory argument {arg} not found in config file")
     return mandatory_dict
+
 
 def main():
     import argparse
@@ -240,10 +242,10 @@ def main():
             nondefault_args = nondefaults[section_name]
         else:
             nondefault_args = {}
-    
+
         mandatory = get_mandatory_args(function)
         if mandatory:
             mandatory_args = get_mandatory_values_from_config(config, mandatory)
             nondefault_args.update(mandatory_args)
-        
+
         function(**nondefault_args)

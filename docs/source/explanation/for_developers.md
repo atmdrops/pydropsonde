@@ -2,7 +2,7 @@
 
 ## How does `halodrops.__init__` work?
 
-The idea is to minimize the decision-making on the user's part. The user should be able to run the package with minimal configuration. The package should be able to handle the rest. For this, all functions in the package should ideally have all arguments with default values. The user can override these default values by providing non-default values in a configuration file. 
+The idea is to minimize the decision-making on the user's part. The user should be able to run the package with minimal configuration. The package should be able to handle the rest. For this, all functions in the package should ideally have all arguments with default values. The user can override these default values by providing non-default values in a configuration file.
 
 However, some arguments cannot have default values (e.g. `data_directory` or `flight_id`). These arguments are mandatory and must be provided by the user within a `MANDATORY` section in the configuration file. This means that functions in the package that have the same mandatory arguments must always use the same argument name across the whole package (e.g. `data_directory` should not be called by a different function as `data_dir`).
 
