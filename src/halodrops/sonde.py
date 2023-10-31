@@ -130,12 +130,12 @@ class Sonde:
             if ds.attrs["SondeId"] == self.serial_id:
                 object.__setattr__(self, "aspen_ds", ds)
             else:
-                print(
-                    "I found the `SondeId` global attribute to not match with this instance's `serial_id` attribute. I am not storing the xarray dataset as an attribute."
+                raise ValueError(
+                    f"I found the `SondeId` global attribute ({ds.attrs['SondeId']}) to not match with this instance's `serial_id` attribute ({self.serial_id}). Therefore, I am not storing the xarray dataset as an attribute."
                 )
         else:
-            print(
-                "I didn't find the `postaspenfile` attribute, therefore I am not storing the xarray dataset as an attribute"
+            raise ValueError(
+                f"I didn't find the `postaspenfile` attribute for Sonde {self.serial_id}, therefore I can't store the xarray dataset as an attribute"
             )
 
 
