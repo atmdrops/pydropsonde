@@ -27,12 +27,12 @@ jobs:
       with:
         init-shell: bash
         generate-run-shell: true
-        environment-name: test-env
+        environment-name: testenv
         create-args: >-
           python=${{ matrix.python-version }}
-    - name: Install dependencies in mamba test-env
+    - name: Install dependencies in mamba testenv
       run: |
-        micromamba update -n test-env -f environment.yml
+        micromamba update -n testenv -f environment.yml
     # - name: Set up Python ${{ matrix.python-version }}
     #   uses: actions/setup-python@v3
     #   with:
@@ -49,8 +49,8 @@ jobs:
     #     $CONDA/bin/flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Run pytest in micromamba environment
       run: |
-        micromamba install -n test-env pytest
-        micromamba run -n test-env pytest --import-mode=importlib .
+        micromamba install -n testenv pytest
+        micromamba run -n testenv pytest --import-mode=importlib .
       # shell: micromamba-shell {0}
 
     # - name: Test with pytest
@@ -63,4 +63,4 @@ jobs:
       uses: pre-commit/action@v3.0.0
 
 # eval "$(micromamba shell hook --shell bash)"
-# micromamba activate test-env
+# micromamba activate testenv
