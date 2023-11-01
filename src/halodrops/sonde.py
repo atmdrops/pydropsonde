@@ -81,15 +81,26 @@ class Sonde:
         If the A-file path is known for the sonde, i.e. if the attribute `path_to_afile` exists,
         then the function will attempt to look for a post-ASPEN file of the same date-time as in the A-file's name.
         Sometimes, the post-ASPEN file might not exist (e.g. because launch was not detected), and in
-        such cases, an exception will be printed.
+        such cases, an exception will be raised.
 
         If the A-file path is not known for the sonde, the function will expect the argument
         `path_to_postaspenfile` to be not empty.
 
         Parameters
         ----------
-        path_to_postaspenfile : str
-            Path to the sonde's post-ASPEN file
+        path_to_postaspenfile : str, optional
+            The path to the post-ASPEN file. If not provided, the function will attempt to construct the path from the `afile` attribute.
+
+        Raises
+        ------
+        ValueError
+            If the `afile` attribute does not exist when `path_to_postaspenfile` is not provided.
+            If the post-ASPEN file does not exist at the constructed or provided path.
+
+        Attributes Set
+        --------------
+        postaspenfile : str
+            The path to the post-ASPEN file. This attribute is set if the file exists at the constructed or provided path.
         """
 
         if path_to_postaspenfile is None:
@@ -102,17 +113,17 @@ class Sonde:
                 if os.path.exists(path_to_postaspenfile):
                     object.__setattr__(self, "postaspenfile", path_to_postaspenfile)
                 else:
-                    print(
+                    raise ValueError(
                         f"The post-ASPEN file for {self.serial_id} with filename {postaspenfile} does not exist. Therefore, I am not setting the `postaspenfile` attribute."
                     )
             else:
-                print("The attribute `path_to_afile` doesn't exist.")
+                raise ValueError("The attribute `path_to_afile` doesn't exist.")
 
         else:
             if os.path.exists(path_to_postaspenfile):
                 object.__setattr__(self, "postaspenfile", path_to_postaspenfile)
             else:
-                print(
+                raise ValueError(
                     f"The post-ASPEN file for your provided {path_to_postaspenfile=} does not exist. Therefore, I am not setting the `postaspenfile` attribute."
                 )
 
