@@ -1,14 +1,13 @@
 import pytest
 import os
 import xarray as xr
-from halodrops.sonde import Sonde, SondeData
+from halodrops.sonde import Sonde
 
 s_id = "test_this_id"
 launch_time = "2020-02-02 20:22:02"
 file_name_nolaunch = "test_file_nolaunch"
 file_name_launch = "test_file_launch"
 postaspenfile_name = f"D{file_name_launch[1:]}QC.nc"
-data = ["placeholder", "data", 42]
 
 
 def test_Sonde_attrs():
@@ -20,19 +19,6 @@ def test_Sonde_attrs():
     assert TestSonde_nolaunchtime.launch_time is None
     assert TestSonde_withlaunchtime.serial_id == s_id
     assert TestSonde_withlaunchtime.launch_time == launch_time
-
-
-def test_SondeData_attrs():
-
-    TestSonde_nolaunchtime = SondeData(s_id, data)
-    TestSonde_withlaunchtime = SondeData(s_id, launch_time=launch_time, data=data)
-
-    assert TestSonde_nolaunchtime.serial_id == s_id
-    assert TestSonde_nolaunchtime.launch_time is None
-    assert TestSonde_nolaunchtime.data == data
-    assert TestSonde_withlaunchtime.serial_id == s_id
-    assert TestSonde_withlaunchtime.launch_time == launch_time
-    assert TestSonde_withlaunchtime.data == data
 
 
 @pytest.fixture

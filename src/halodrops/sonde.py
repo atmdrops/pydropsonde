@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field, InitVar, KW_ONLY
+from dataclasses import dataclass, field, KW_ONLY
 from typing import Any, Optional, List
 import os
 
@@ -155,28 +155,4 @@ class Sonde:
         else:
             raise ValueError(
                 f"I didn't find the `postaspenfile` attribute for Sonde {self.serial_id}, therefore I can't store the xarray dataset as an attribute"
-            )
-
-
-@dataclass(frozen=True)
-class SondeData(Sonde):
-    """Class containing data of a sonde
-
-    Parameters
-    ----------
-    Sonde : class
-        parent class
-
-    Raises
-    ------
-    TypeError
-        If data is not provided while initializing the instance, a TypeError will be raised
-    """
-
-    data: Any = _no_default
-
-    def __post_init__(self):
-        if self.data is _no_default:
-            raise TypeError(
-                "No data provided! __init__ missing 1 required argument: 'data'"
             )
