@@ -5,6 +5,8 @@ import os
 import numpy as np
 import xarray as xr
 
+from halodrops.helper import rawreader as rr
+
 _no_default = object()
 
 
@@ -95,7 +97,8 @@ class Sonde:
         ------
         ValueError
             If the `afile` attribute does not exist when `path_to_postaspenfile` is not provided.
-            If the post-ASPEN file does not exist at the constructed or provided path.
+            If the post-ASPEN file does not exist at the constructed or provided path, and launch was detected in the A-file.
+            If the launch was not detected in the A-file.
 
         Attributes Set
         --------------
@@ -113,9 +116,14 @@ class Sonde:
                 if os.path.exists(path_to_postaspenfile):
                     object.__setattr__(self, "postaspenfile", path_to_postaspenfile)
                 else:
-                    raise ValueError(
-                        f"The post-ASPEN file for {self.serial_id} with filename {postaspenfile} does not exist. Therefore, I am not setting the `postaspenfile` attribute."
-                    )
+                    if rr.check_launch_detect_in_afile(self.afile):
+                        raise ValueError(
+                            f"The post-ASPEN file for {self.serial_id} with filename {postaspenfile} does not exist. Therefore, I am not setting the `postaspenfile` attribute. I checked and found that launch was detected for {self.serial_id}."
+                        )
+                    else:
+                        raise ValueError(
+                            f"Launch not detected for {self.serial_id}. Therefore, {postaspenfile} does not exist and I am not setting the `postaspenfile` attribute."
+                        )
             else:
                 raise ValueError("The attribute `path_to_afile` doesn't exist.")
 
