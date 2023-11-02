@@ -160,6 +160,46 @@ class Sonde:
             )
         return self
 
+    def weighted_fullness(
+        self,
+        variable_dict={"u_wind": 4, "v_wind": 4, "rh": 2, "tdry": 2, "pres": 2},
+        time_dimension="time",
+        timestamp_frequency=4,
+    ):
+        """Return profile-coverage for variable weighed for sampling frequency
+
+        The assumption is that the time_dimension has coordinates spaced over 0.25 seconds,
+        hence a timestamp_frequency of 4 hertz. This is true for ASPEN-processed QC and PQC files at least for RD41.
+
+        Parameters
+        ----------
+        variable_dict : dict, optional
+            Variable in `self.aspen_ds` with its sampling frequency whose weighted profile-coverage is to be estimated
+            The default is {'u_wind':4,'v_wind':4,'rh':2,'tdry':2,'pres':2}
+        sampling_frequency : numeric
+            Sampling frequency of `variable` in hertz
+        time_dimension : str, optional
+            Name of independent dimension of profile, by default "time"
+        timestamp_frequency : numeric, optional
+            Sampling frequency of `time_dimension` in hertz, by default 4
+
+        Returns
+        -------
+        float
+            Fraction of non-nan variable values along time_dimension weighed for sampling frequency
+        """
+        dataset = self.aspen_ds
+        variable = variable_dict.keys()
+        sampling_frequency = variable_dict.values()
+        weighed_time_size = len(dataset[time_dimension]) / (
+            timestamp_frequency / sampling_frequency
+        )
+        object.__setattr__(
+            self,
+            "profile_coverage",
+            np.sum(~np.isnan(dataset[variable].values)) / weighed_time_size,
+        )
+
     def qc_check_1(self):
         pass
 
