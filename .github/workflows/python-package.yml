@@ -32,6 +32,9 @@ jobs:
       run: |
         micromamba install -n testenv pytest
         micromamba run -n testenv pytest --import-mode=importlib .
+  main:
+    runs-on: ubuntu-latest
+    steps:
     - name: pre-commit
       uses: pre-commit/action@v3.0.0
     - uses: pre-commit-ci/lite-action@v1.0.1
