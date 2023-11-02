@@ -196,7 +196,7 @@ class Sonde:
             )
             object.__setattr__(
                 self,
-                f"profile_coverage_{variable}",
+                f"profile_fullness_{variable}",
                 np.sum(~np.isnan(dataset[variable].values)) / weighed_time_size,
             )
 
@@ -210,7 +210,7 @@ class Sonde:
         Parameters
         ----------
         qc_threshold : float, optional
-            Threshold for profile coverage, by default 0.8
+            Threshold for profile fullness, by default 0.8
 
         Returns
         -------
@@ -222,7 +222,7 @@ class Sonde:
         ValueError
             If no attributes starting with `profile_coverage_` exist.
         """
-        attr_prefix = "profile_coverage_"
+        attr_prefix = "profile_fullness_"
         attributes = [attr for attr in dir(self) if attr.startswith(attr_prefix)]
         if len(attributes) > 0:
             for attribute in attributes:
