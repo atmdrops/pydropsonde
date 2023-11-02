@@ -223,8 +223,73 @@ class Sonde:
                 "The attribute `profile_coverage` does not exist. Please run `weighted_fullness` method first."
             )
 
-    def qc_check_2(self):
-        pass
+    def near_surface_coverage(
+        self,
+        variables=["u_wind", "v_wind", "rh", "tdry", "pres"],
+        alt_bounds=[0, 1000],
+        alt_dimension_name="alt",
+    ):
+        """Return fraction of non-nan values in variables near surface
+
+        Parameters
+        ----------
+        variables : list, optional
+            List of variables to be considered, by default ["u_wind","v_wind","rh","tdry","pres"]
+        alt_bounds : list, optional
+            List of lower and upper bounds of altitude in meters, by default [0,1000]
+        alt_dimension_name : str, optional
+            Name of altitude dimension, by default "alt"
+
+        Returns
+        -------
+        float
+            Fraction of non-nan values in variables near surface
+
+        Raises
+        ------
+        ValueError
+            If the attribute `aspen_ds` does not exist.
+        """
+        if not hasattr(self, "aspen_ds"):
+            raise ValueError(
+                "The attribute `aspen_ds` does not exist. Please run `add_aspen_ds` method first."
+            )
+
+        for variable in variables:
+            dataset = self.aspen_ds[variable]
+            near_surface = dataset.where(
+                (dataset[alt_dimension_name] > alt_bounds[0])
+                & (dataset[alt_dimension_name] < alt_bounds[1]),
+                drop=True,
+            )
+            object.__setattr__(
+                self,
+                f"near_surface_coverage_{variable}",
+                np.sum(~np.isnan(near_surface[variables].values)),
+            )
+
+    def qc_check_near_surface_coverage(self, samples_threshold=10):
+        """Return True if near surface coverage is above threshold
+
+        Parameters
+        ----------
+        samples_threshold : int, optional
+            Threshold for number of samples near surface, by default 10
+
+        Returns
+        -------
+        bool
+            True if near surface coverage is above threshold, else False
+        """
+        if hasattr(self, "near_surface_coverage"):
+            if self.near_surface_coverage > samples_threshold:
+                return True
+            else:
+                return False
+        else:
+            raise ValueError(
+                "The attribute `near_surface_coverage` does not exist. Please run `near_surface_coverage` method first."
+            )
 
     def qc_check_3(self):
         pass
@@ -232,7 +297,7 @@ class Sonde:
     def apply_qc_checks(self, qc_checks):
         qc_functions = {
             "profile_fullness": self.qc_check_profile_fullness,
-            "qc_check_2": self.qc_check_2,
+            "near_surface_coverage": self.qc_check_near_surface_coverage,
             "qc_check_3": self.qc_check_3,
         }
 
