@@ -305,14 +305,10 @@ class Sonde:
                 "No attributes starting with f`{attr_prefix}` does not exist. Please run `near_surface_coverage` method first."
             )
 
-    def qc_check_3(self):
-        pass
-
     def apply_qc_checks(self, qc_checks):
         qc_functions = {
             "profile_fullness": self.qc_check_profile_fullness,
             "near_surface_coverage": self.qc_check_near_surface_coverage,
-            "qc_check_3": self.qc_check_3,
         }
 
         for check in qc_checks:
