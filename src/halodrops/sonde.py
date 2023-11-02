@@ -306,6 +306,25 @@ class Sonde:
             )
 
     def apply_qc_checks(self, qc_checks):
+        """Apply QC checks to the sonde
+
+        Parameters
+        ----------
+        qc_checks : list
+            List of QC checks to be applied; names must remove the `qc_check_` prefix of the method names
+
+        Raises
+        ------
+        ValueError
+            If the QC check does not exist.
+
+        Attributes Set
+        --------------
+        profile_fullness : bool
+            Return value of qc_check for profile coverage (qc_check_profile_fullness)
+        near_surface_coverage : bool
+            Return value of qc_check for near surface coverage (qc_check_near_surface_coverage)
+        """
         qc_functions = {
             "profile_fullness": self.qc_check_profile_fullness,
             "near_surface_coverage": self.qc_check_near_surface_coverage,
