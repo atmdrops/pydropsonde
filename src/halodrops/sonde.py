@@ -188,20 +188,24 @@ class Sonde:
         float
             Fraction of non-nan variable values along time_dimension weighed for sampling frequency
         """
-        dataset = self.aspen_ds
-        variable = variable_dict.keys()
-        sampling_frequency = variable_dict.values()
-        weighed_time_size = len(dataset[time_dimension]) / (
-            timestamp_frequency / sampling_frequency
-        )
-        object.__setattr__(
-            self,
-            "profile_coverage",
-            np.sum(~np.isnan(dataset[variable].values)) / weighed_time_size,
-        )
+
+        for variable, sampling_frequency in variable_dict.items():
+            dataset = self.aspen_ds[variable]
+            weighed_time_size = len(dataset[time_dimension]) / (
+                timestamp_frequency / sampling_frequency
+            )
+            object.__setattr__(
+                self,
+                f"profile_coverage_{variable}",
+                np.sum(~np.isnan(dataset[variable].values)) / weighed_time_size,
+            )
 
     def qc_check_profile_fullness(self, qc_threshold=0.8):
         """Return True if profile coverage is above threshold
+
+        The function checks if the attributes set by the `weighted_fullness` method are above the threshold.
+        If the attributes are not set, the function will raise an error.
+        If the attributes are set, the function will check if all of them are above the threshold and if not, it will return False.
 
         Parameters
         ----------
@@ -212,15 +216,22 @@ class Sonde:
         -------
         bool
             True if profile coverage is above threshold, else False
+
+        Raises
+        ------
+        ValueError
+            If no attributes starting with `profile_coverage_` exist.
         """
-        if hasattr(self, "profile_coverage"):
-            if self.profile_coverage > qc_threshold:
-                return True
-            else:
-                return False
+        attr_prefix = "profile_coverage_"
+        attributes = [attr for attr in dir(self) if attr.startswith(attr_prefix)]
+        if len(attributes) > 0:
+            for attribute in attributes:
+                if getattr(self, attribute) < qc_threshold:
+                    return False
+            return True
         else:
             raise ValueError(
-                "The attribute `profile_coverage` does not exist. Please run `weighted_fullness` method first."
+                "No attributes starting with f`{attr_prefix}` does not exist. Please run `weighted_fullness` method first."
             )
 
     def near_surface_coverage(
