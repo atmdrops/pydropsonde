@@ -292,14 +292,17 @@ class Sonde:
         bool
             True if near surface coverage is above threshold, else False
         """
-        if hasattr(self, "near_surface_coverage"):
-            if self.near_surface_coverage > samples_threshold:
-                return True
-            else:
-                return False
+        attr_prefix = "near_surface_coverage_"
+        attributes = [attr for attr in dir(self) if attr.startswith(attr_prefix)]
+
+        if len(attributes) > 0:
+            for attribute in attributes:
+                if getattr(self, attribute) < samples_threshold:
+                    return False
+            return True
         else:
             raise ValueError(
-                "The attribute `near_surface_coverage` does not exist. Please run `near_surface_coverage` method first."
+                "No attributes starting with f`{attr_prefix}` does not exist. Please run `near_surface_coverage` method first."
             )
 
     def qc_check_3(self):
