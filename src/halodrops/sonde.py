@@ -200,8 +200,28 @@ class Sonde:
             np.sum(~np.isnan(dataset[variable].values)) / weighed_time_size,
         )
 
-    def qc_check_1(self):
-        pass
+    def qc_check_profile_fullness(self, qc_threshold=0.8):
+        """Return True if profile coverage is above threshold
+
+        Parameters
+        ----------
+        qc_threshold : float, optional
+            Threshold for profile coverage, by default 0.8
+
+        Returns
+        -------
+        bool
+            True if profile coverage is above threshold, else False
+        """
+        if hasattr(self, "profile_coverage"):
+            if self.profile_coverage > qc_threshold:
+                return True
+            else:
+                return False
+        else:
+            raise ValueError(
+                "The attribute `profile_coverage` does not exist. Please run `weighted_fullness` method first."
+            )
 
     def qc_check_2(self):
         pass
@@ -211,7 +231,7 @@ class Sonde:
 
     def apply_qc_checks(self, qc_checks):
         qc_functions = {
-            "qc_check_1": self.qc_check_1,
+            "profile_fullness": self.qc_check_profile_fullness,
             "qc_check_2": self.qc_check_2,
             "qc_check_3": self.qc_check_3,
         }
