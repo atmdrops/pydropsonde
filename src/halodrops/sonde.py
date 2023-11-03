@@ -76,6 +76,7 @@ class Sonde:
             Path to the sonde's A-file
         """
         object.__setattr__(self, "afile", path_to_afile)
+        return self
 
     def add_postaspenfile(self, path_to_postaspenfile: str = None) -> None:
         """Sets attribute with path to post-ASPEN file of the sonde
@@ -134,6 +135,7 @@ class Sonde:
                 raise ValueError(
                     f"The post-ASPEN file for your provided {path_to_postaspenfile=} does not exist. Therefore, I am not setting the `postaspenfile` attribute."
                 )
+        return self
 
     def add_aspen_ds(self) -> None:
         """Sets attribute with an xarray Dataset read from post-ASPEN file
@@ -156,3 +158,4 @@ class Sonde:
             raise ValueError(
                 f"I didn't find the `postaspenfile` attribute for Sonde {self.serial_id}, therefore I can't store the xarray dataset as an attribute"
             )
+        return self
