@@ -19,36 +19,36 @@ class Paths:
     with the {doc}`Directory Structure </handbook/directory_structure>` that `halodrops` expects.
     """
 
-    def __init__(self, directory, flightdir):
+    def __init__(self, data_directory, flight_id):
         """Creates an instance of Paths object for a given flight
 
         Parameters
         ----------
-        `directory` : `str`
+        `data_directory` : `str`
             Main data directory
 
-        `flightdir` : `str`
+        `flight_id` : `str`
             Individual flight directory name
 
         Attributes
         ----------
-        `flightdir`
+        `flight_id`
             Path to flight data directory
 
-        `flightdirname`
+        `flight_idname`
             Name of flight data directory
 
         `l1dir`
             Path to Level-1 data directory
         """
         self.logger = logging.getLogger("halodrops.helper.paths.Paths")
-        self.flightdir = os.path.join(directory, flightdir)
-        self.flightdirname = flightdir
-        self.l0dir = os.path.join(directory, flightdir, "Level_0")
-        self.l1dir = os.path.join(directory, flightdir, "Level_1")
+        self.flight_id = os.path.join(data_directory, flight_id)
+        self.flight_idname = flight_id
+        self.l0dir = os.path.join(data_directory, flight_id, "Level_0")
+        self.l1dir = os.path.join(data_directory, flight_id, "Level_1")
 
         self.logger.info(
-            f"Created Path Instance: {self.flightdir=}; {self.flightdirname=}; {self.l1dir=}"
+            f"Created Path Instance: {self.flight_id=}; {self.flight_idname=}; {self.l1dir=}"
         )
 
     def get_all_afiles(self):
@@ -69,7 +69,7 @@ class Paths:
         `str`
             Path to quicklooks directory
         """
-        quicklooks_path_str = os.path.join(self.flightdir, "Quicklooks")
+        quicklooks_path_str = os.path.join(self.flight_id, "Quicklooks")
         if pp(quicklooks_path_str).exists():
             self.logger.info(f"Path exists: {quicklooks_path_str=}")
         else:
@@ -80,7 +80,7 @@ class Paths:
         return quicklooks_path_str
 
     def populate_sonde_instances(self) -> Dict:
-        """Returns a dictionary of `Sonde` class instances for all A-files found in `flightdir`
+        """Returns a dictionary of `Sonde` class instances for all A-files found in `flight_id`
         and also sets the dictionary as value of `Sondes` attribute
         """
         afiles = self.get_all_afiles()
