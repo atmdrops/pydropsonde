@@ -47,6 +47,25 @@ def get_all_defaults(package):
     """
     function_values = {}
 
+    def process_function(obj, parent_module_names):
+        """Process a function and retrieve its default values.
+
+        Parameters:
+            obj (function): The function to process.
+            parent_module_names (list): The names of the parent modules.
+
+        Returns:
+            None
+        """
+        function_signature = inspect.signature(obj)
+        defaults = {
+            param.name: param.default
+            for param in function_signature.parameters.values()
+            if param.default is not inspect.Parameter.empty
+        }
+        function_name = ".".join(parent_module_names + [obj.__qualname__])
+        function_values[function_name] = defaults
+
     def process_module(module, parent_module_names):
         """Process a module and retrieve the default values of its functions.
 
@@ -59,14 +78,11 @@ def get_all_defaults(package):
         """
         for name, obj in inspect.getmembers(module):
             if inspect.isfunction(obj):
-                function_signature = inspect.signature(obj)
-                defaults = {
-                    param.name: param.default
-                    for param in function_signature.parameters.values()
-                    if param.default is not inspect.Parameter.empty
-                }
-                function_name = ".".join(parent_module_names + [obj.__qualname__])
-                function_values[function_name] = defaults
+                process_function(obj, parent_module_names)
+            elif inspect.isclass(obj):
+                for class_name, class_obj in inspect.getmembers(obj):
+                    if inspect.isfunction(class_obj):
+                        process_function(class_obj, parent_module_names + [name])
 
     def process_package(package, parent_module_names):
         """Process a package and its subpackages, retrieving the default values of functions.
