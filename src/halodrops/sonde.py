@@ -159,3 +159,26 @@ class Sonde:
                 f"I didn't find the `postaspenfile` attribute for Sonde {self.serial_id}, therefore I can't store the xarray dataset as an attribute"
             )
         return self
+
+    def qc_check_1(self):
+        pass
+
+    def qc_check_2(self):
+        pass
+
+    def qc_check_3(self):
+        pass
+
+    def apply_qc_checks(self, qc_checks):
+        qc_functions = {
+            "qc_check_1": self.qc_check_1,
+            "qc_check_2": self.qc_check_2,
+            "qc_check_3": self.qc_check_3,
+        }
+
+        for check in qc_checks:
+            func = qc_functions.get(check)
+            if func is not None:
+                object.__setattr__(self, f"{check}", func())
+            else:
+                raise ValueError(f"The QC function '{check}' does not exist.")
