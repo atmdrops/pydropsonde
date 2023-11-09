@@ -159,3 +159,180 @@ class Sonde:
                 f"I didn't find the `postaspenfile` attribute for Sonde {self.serial_id}, therefore I can't store the xarray dataset as an attribute"
             )
         return self
+
+    def weighted_fullness(
+        self,
+        variable_dict={"u_wind": 4, "v_wind": 4, "rh": 2, "tdry": 2, "pres": 2},
+        time_dimension="time",
+        timestamp_frequency=4,
+    ):
+        """Return profile-coverage for variable weighed for sampling frequency
+
+        The assumption is that the time_dimension has coordinates spaced over 0.25 seconds,
+        hence a timestamp_frequency of 4 hertz. This is true for ASPEN-processed QC and PQC files at least for RD41.
+
+        Parameters
+        ----------
+        variable_dict : dict, optional
+            Variable in `self.aspen_ds` with its sampling frequency whose weighted profile-coverage is to be estimated
+            The default is {'u_wind':4,'v_wind':4,'rh':2,'tdry':2,'pres':2}
+        sampling_frequency : numeric
+            Sampling frequency of `variable` in hertz
+        time_dimension : str, optional
+            Name of independent dimension of profile, by default "time"
+        timestamp_frequency : numeric, optional
+            Sampling frequency of `time_dimension` in hertz, by default 4
+
+        Returns
+        -------
+        float
+            Fraction of non-nan variable values along time_dimension weighed for sampling frequency
+        """
+
+        for variable, sampling_frequency in variable_dict.items():
+            dataset = self.aspen_ds[variable]
+            weighed_time_size = len(dataset[time_dimension]) / (
+                timestamp_frequency / sampling_frequency
+            )
+            object.__setattr__(
+                self,
+                f"profile_fullness_{variable}",
+                np.sum(~np.isnan(dataset[variable].values)) / weighed_time_size,
+            )
+
+    def qc_check_profile_fullness(self, qc_threshold=0.8):
+        """Return True if profile coverage is above threshold
+
+        The function checks if the attributes set by the `weighted_fullness` method are above the threshold.
+        If the attributes are not set, the function will raise an error.
+        If the attributes are set, the function will check if all of them are above the threshold and if not, it will return False.
+
+        Parameters
+        ----------
+        qc_threshold : float, optional
+            Threshold for profile fullness, by default 0.8
+
+        Returns
+        -------
+        bool
+            True if profile coverage is above threshold, else False
+
+        Raises
+        ------
+        ValueError
+            If no attributes starting with `profile_coverage_` exist.
+        """
+        attr_prefix = "profile_fullness_"
+        attributes = [attr for attr in dir(self) if attr.startswith(attr_prefix)]
+        if len(attributes) > 0:
+            for attribute in attributes:
+                if getattr(self, attribute) < qc_threshold:
+                    return False
+            return True
+        else:
+            raise ValueError(
+                "No attributes starting with f`{attr_prefix}` does not exist. Please run `weighted_fullness` method first."
+            )
+
+    def near_surface_coverage(
+        self,
+        variables=["u_wind", "v_wind", "rh", "tdry", "pres"],
+        alt_bounds=[0, 1000],
+        alt_dimension_name="alt",
+    ):
+        """Return fraction of non-nan values in variables near surface
+
+        Parameters
+        ----------
+        variables : list, optional
+            List of variables to be considered, by default ["u_wind","v_wind","rh","tdry","pres"]
+        alt_bounds : list, optional
+            List of lower and upper bounds of altitude in meters, by default [0,1000]
+        alt_dimension_name : str, optional
+            Name of altitude dimension, by default "alt"
+
+        Returns
+        -------
+        float
+            Fraction of non-nan values in variables near surface
+
+        Raises
+        ------
+        ValueError
+            If the attribute `aspen_ds` does not exist.
+        """
+        if not hasattr(self, "aspen_ds"):
+            raise ValueError(
+                "The attribute `aspen_ds` does not exist. Please run `add_aspen_ds` method first."
+            )
+
+        for variable in variables:
+            dataset = self.aspen_ds[variable]
+            near_surface = dataset.where(
+                (dataset[alt_dimension_name] > alt_bounds[0])
+                & (dataset[alt_dimension_name] < alt_bounds[1]),
+                drop=True,
+            )
+            object.__setattr__(
+                self,
+                f"near_surface_coverage_{variable}",
+                np.sum(~np.isnan(near_surface[variables].values)),
+            )
+
+    def qc_check_near_surface_coverage(self, samples_threshold=10):
+        """Return True if near surface coverage is above threshold
+
+        Parameters
+        ----------
+        samples_threshold : int, optional
+            Threshold for number of samples near surface, by default 10
+
+        Returns
+        -------
+        bool
+            True if near surface coverage is above threshold, else False
+        """
+        attr_prefix = "near_surface_coverage_"
+        attributes = [attr for attr in dir(self) if attr.startswith(attr_prefix)]
+
+        if len(attributes) > 0:
+            for attribute in attributes:
+                if getattr(self, attribute) < samples_threshold:
+                    return False
+            return True
+        else:
+            raise ValueError(
+                "No attributes starting with f`{attr_prefix}` does not exist. Please run `near_surface_coverage` method first."
+            )
+
+    def apply_qc_checks(self, qc_checks):
+        """Apply QC checks to the sonde
+
+        Parameters
+        ----------
+        qc_checks : list
+            List of QC checks to be applied; names must remove the `qc_check_` prefix of the method names
+
+        Raises
+        ------
+        ValueError
+            If the QC check does not exist.
+
+        Attributes Set
+        --------------
+        profile_fullness : bool
+            Return value of qc_check for profile coverage (qc_check_profile_fullness)
+        near_surface_coverage : bool
+            Return value of qc_check for near surface coverage (qc_check_near_surface_coverage)
+        """
+        qc_functions = {
+            "profile_fullness": self.qc_check_profile_fullness,
+            "near_surface_coverage": self.qc_check_near_surface_coverage,
+        }
+
+        for check in qc_checks:
+            func = qc_functions.get(check)
+            if func is not None:
+                object.__setattr__(self, f"{check}", func())
+            else:
+                raise ValueError(f"The QC function '{check}' does not exist.")
