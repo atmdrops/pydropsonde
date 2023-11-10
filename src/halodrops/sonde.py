@@ -277,7 +277,7 @@ class Sonde:
             object.__setattr__(
                 self,
                 f"near_surface_coverage_{variable}",
-                np.sum(~np.isnan(near_surface[variables].values)),
+                np.sum(~np.isnan(near_surface[variable].values)),
             )
         return self
 
