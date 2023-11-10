@@ -262,6 +262,7 @@ def run_pipeline(pipeline: dict, config: configparser.ConfigParser):
     """
     previous_substep_output = None
     for step in pipeline:
+        print(f"Running {step}...")
         substep = pipeline[step]
         if previous_substep_output is None:
             previous_substep_output = run_substep(None, substep, config)
