@@ -197,7 +197,7 @@ class Sonde:
             object.__setattr__(
                 self,
                 f"profile_fullness_{variable}",
-                np.sum(~np.isnan(dataset[variable].values)) / weighed_time_size,
+                np.sum(~np.isnan(dataset.values)) / weighed_time_size,
             )
 
     def qc_check_profile_fullness(self, qc_threshold=0.8):
