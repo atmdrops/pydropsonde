@@ -268,7 +268,7 @@ class Sonde:
             )
 
         for variable in variables:
-            dataset = self.aspen_ds[variable]
+            dataset = self.aspen_ds[[variable, alt_dimension_name]]
             near_surface = dataset.where(
                 (dataset[alt_dimension_name] > alt_bounds[0])
                 & (dataset[alt_dimension_name] < alt_bounds[1]),
