@@ -199,6 +199,7 @@ class Sonde:
                 f"profile_fullness_{variable}",
                 np.sum(~np.isnan(dataset.values)) / weighed_time_size,
             )
+        return self
 
     def qc_check_profile_fullness(self, qc_threshold=0.8):
         """Return True if profile coverage is above threshold
@@ -278,6 +279,7 @@ class Sonde:
                 f"near_surface_coverage_{variable}",
                 np.sum(~np.isnan(near_surface[variables].values)),
             )
+        return self
 
     def qc_check_near_surface_coverage(self, samples_threshold=10):
         """Return True if near surface coverage is above threshold
