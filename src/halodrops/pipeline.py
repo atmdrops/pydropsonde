@@ -164,8 +164,13 @@ def iterate_Sonde_method_over_dict_of_Sondes_objects(
     """
     Iterates over a dictionary of Sonde objects and applies a list of methods to each Sonde.
 
-    For each Sonde object in the dictionary, this function applies each method listed in the 'functions' key of the substep dictionary.
-    The arguments for each method are determined by the `get_args_for_function` function, which uses the nondefaults dictionary and the config object.
+    For each Sonde object in the dictionary, this function
+    applies each method listed in the 'functions' key of the substep dictionary.
+    If the method returns a value, it stores the value in a new dictionary.
+    If the method returns None, it does not store the value in the new dictionary.
+
+    The arguments for each method are determined by the `get_args_for_function` function,
+    which uses the nondefaults dictionary and the config object.
 
     Parameters
     ----------
@@ -181,7 +186,7 @@ def iterate_Sonde_method_over_dict_of_Sondes_objects(
     Returns
     -------
     dict
-        The original dictionary of Sonde objects, but with each Sonde modified by the applied methods.
+        A dictionary of Sonde objects with the results of the methods applied to them (keys where results are None are not included).
     """
     my_dict = obj
     new_dict = {}
@@ -189,7 +194,9 @@ def iterate_Sonde_method_over_dict_of_Sondes_objects(
     for function_name in functions:
         for key, value in my_dict.items():
             function = getattr(Sonde, function_name)
-            new_dict[key] = function(value, **get_args_for_function(config, function))
+            result = function(value, **get_args_for_function(config, function))
+            if result is not None:
+                new_dict[key] = result
         my_dict = new_dict
 
     return my_dict
@@ -262,6 +269,7 @@ def run_pipeline(pipeline: dict, config: configparser.ConfigParser):
     """
     previous_substep_output = None
     for step in pipeline:
+        print(f"Running {step}...")
         substep = pipeline[step]
         if previous_substep_output is None:
             previous_substep_output = run_substep(None, substep, config)
@@ -281,7 +289,11 @@ pipeline = {
     "qc": {
         "intake": "sondes",
         "apply": iterate_Sonde_method_over_dict_of_Sondes_objects,
-        "functions": ["add_postaspenfile", "add_aspen_ds"],
+        "functions": [
+            "filter_no_launch_detect",
+            "weighted_fullness",
+            "near_surface_coverage",
+        ],
         "output": "sondes",
     },
 }
