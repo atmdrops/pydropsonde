@@ -160,6 +160,45 @@ class Sonde:
             )
         return self
 
+    def filter_no_launch_detect(self) -> None:
+        """
+        Filter out sondes that did not detect a launch
+
+        The function will check if the `launch_detect` attribute exists and if it is False.
+        If the attribute doesn't exist, the function will raise an error.
+        If the attribute exists and is False, the function will print a no-launch detected message.
+        If the attribute exists and is True, the function will return the object.
+
+        This function serves as a checkpoint for filtering out sondes
+        that did not detect a launch before running functions
+        that will require `aspen_ds`, e.g. the QC functions.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        self : Sonde object
+            The Sonde object itself, if the launch was detected, else None
+
+        Raises
+        ------
+        ValueError
+            If the `launch_detect` attribute does not exist.
+        """
+        if hasattr(self, "launch_detect"):
+            if self.launch_detect == False:
+                print(
+                    f"No launch detected for Sonde {self.serial_id}. I am not running QC checks for this Sonde."
+                )
+            else:
+                return self
+        else:
+            raise ValueError(
+                f"The attribute `launch_detect` does not exist for Sonde {self.serial_id}."
+            )
+
     def weighted_fullness(
         self,
         variable_dict={"u_wind": 4, "v_wind": 4, "rh": 2, "tdry": 2, "pres": 2},
