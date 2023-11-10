@@ -282,7 +282,7 @@ pipeline = {
     "qc": {
         "intake": "sondes",
         "apply": iterate_Sonde_method_over_dict_of_Sondes_objects,
-        "functions": ["add_postaspenfile", "add_aspen_ds"],
+        "functions": ["weighted_fullness", "near_surface_coverage"],
         "output": "sondes",
     },
 }
