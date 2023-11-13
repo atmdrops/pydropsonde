@@ -296,4 +296,18 @@ pipeline = {
         ],
         "output": "sondes",
     },
+    "create_L2": {
+        "intake": "sondes",
+        "apply": iterate_Sonde_method_over_dict_of_Sondes_objects,
+        "functions": [],
+        "output": "sondes",
+        "comment": "This steps creates the L2 files after the QC (user says how QC flags are used to go from L1 to L2) and then saves these as L2 NC datasets.",
+    },
+    "read_and_process_L2": {
+        "intake": "sondes",
+        "apply": iterate_Sonde_method_over_dict_of_Sondes_objects,
+        "functions": [],
+        "output": "sondes",
+        "comment": "This step reads from the saved L2 files and prepares individual sonde datasets before they can be concatenated to create L3.",
+    },
 }
