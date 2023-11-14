@@ -2,6 +2,7 @@ from .helper.paths import Paths
 from .sonde import Sonde
 import configparser
 import inspect
+import xarray as xr
 
 
 def get_mandatory_args(function):
@@ -202,6 +203,23 @@ def iterate_Sonde_method_over_dict_of_Sondes_objects(
     return my_dict
 
 
+def sondes_to_gridded(sondes: dict) -> xr.Dataset:
+    pass
+
+
+def iterate_method_over_dataset(dataset: xr.Dataset, functions: list) -> xr.Dataset:
+    pass
+
+
+def gridded_to_pattern(
+    gridded: xr.Dataset, config: configparser.ConfigParser
+) -> xr.Dataset:
+    """
+    The flight-phase segmentation file must be provided via the config file.
+    """
+    pass
+
+
 def run_substep(
     previous_substep_output, substep: dict, config: configparser.ConfigParser
 ):
@@ -295,5 +313,56 @@ pipeline = {
             "near_surface_coverage",
         ],
         "output": "sondes",
+    },
+    "create_L2": {
+        "intake": "sondes",
+        "apply": iterate_Sonde_method_over_dict_of_Sondes_objects,
+        "functions": [],
+        "output": "sondes",
+        "comment": "This steps creates the L2 files after the QC (user says how QC flags are used to go from L1 to L2) and then saves these as L2 NC datasets.",
+    },
+    "read_and_process_L2": {
+        "intake": "sondes",
+        "apply": iterate_Sonde_method_over_dict_of_Sondes_objects,
+        "functions": [],
+        "output": "sondes",
+        "comment": "This step reads from the saved L2 files and prepares individual sonde datasets before they can be concatenated to create L3.",
+    },
+    "concatenate_L2": {
+        "intake": "sondes",
+        "apply": sondes_to_gridded,
+        "output": "gridded",
+        "comment": "This step concatenates the individual sonde datasets to create the L3 dataset and saves it as an NC file.",
+    },
+    "create_L3": {
+        "intake": "gridded",
+        "apply": iterate_method_over_dataset,
+        "functions": [],
+        "output": "gridded",
+        "comment": "This step creates the L3 dataset after adding additional products.",
+    },
+    "create_patterns": {
+        "intake": "gridded",
+        "apply": gridded_to_pattern,
+        "output": "pattern",
+        "comment": "This step creates a dataset with the pattern-wide variables by creating the pattern with the flight-phase segmentation file.",
+    },
+    "create_L4": {
+        "intake": "pattern",
+        "apply": iterate_method_over_dataset,
+        "functions": [],
+        "output": "pattern",
+        "comment": "This step creates the L4 dataset after adding additional products and saves the L4 dataset.",
+    },
+    "quicklooks": {
+        "intake": ["sondes", "gridded", "pattern"],
+        "apply": [
+            iterate_Sonde_method_over_dict_of_Sondes_objects,
+            iterate_method_over_dataset,
+            iterate_method_over_dataset,
+        ],
+        "functions": [[], [], []],
+        "output": "plots",
+        "comment": "This step creates quicklooks from the L3 & L4 dataset.",
     },
 }
