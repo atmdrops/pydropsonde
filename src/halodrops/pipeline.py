@@ -2,6 +2,7 @@ from .helper.paths import Paths
 from .sonde import Sonde
 import configparser
 import inspect
+import xarray as xr
 
 
 def get_mandatory_args(function):
