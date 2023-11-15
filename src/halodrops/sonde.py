@@ -32,7 +32,12 @@ class Sonde:
     launch_time: Optional[Any] = None
 
     def __post_init__(self):
-        """The `sort_index` attribute is only applicable when `launch_time` is available."""
+        """
+        Initializes the 'qc' attribute as an empty object and sets the 'sort_index' attribute based on 'launch_time'.
+
+        The 'sort_index' attribute is only applicable when 'launch_time' is available. If 'launch_time' is None, 'sort_index' will not be set.
+        """
+        object.__setattr__(self, "qc", type("", (), {})())
         if self.launch_time is not None:
             object.__setattr__(self, "sort_index", self.launch_time)
 
@@ -234,7 +239,7 @@ class Sonde:
                 timestamp_frequency / sampling_frequency
             )
             object.__setattr__(
-                self,
+                self.qc,
                 f"profile_fullness_{variable}",
                 np.sum(~np.isnan(dataset.values)) / weighed_time_size,
             )
@@ -280,7 +285,7 @@ class Sonde:
                 drop=True,
             )
             object.__setattr__(
-                self,
+                self.qc,
                 f"near_surface_coverage_{variable}",
                 np.sum(~np.isnan(near_surface[variable].values)),
             )
@@ -318,6 +323,6 @@ class Sonde:
 
         # If the sonde passes all the QC checks, remove all attributes listed in filter_flags
         for flag in filter_flags:
-            delattr(self, flag)
+            delattr(self.qc, flag)
 
         return self
