@@ -240,40 +240,6 @@ class Sonde:
             )
         return self
 
-    def qc_check_profile_fullness(self, qc_threshold=0.8):
-        """Return True if profile coverage is above threshold
-
-        The function checks if the attributes set by the `weighted_fullness` method are above the threshold.
-        If the attributes are not set, the function will raise an error.
-        If the attributes are set, the function will check if all of them are above the threshold and if not, it will return False.
-
-        Parameters
-        ----------
-        qc_threshold : float, optional
-            Threshold for profile fullness, by default 0.8
-
-        Returns
-        -------
-        bool
-            True if profile coverage is above threshold, else False
-
-        Raises
-        ------
-        ValueError
-            If no attributes starting with `profile_coverage_` exist.
-        """
-        attr_prefix = "profile_fullness_"
-        attributes = [attr for attr in dir(self) if attr.startswith(attr_prefix)]
-        if len(attributes) > 0:
-            for attribute in attributes:
-                if getattr(self, attribute) < qc_threshold:
-                    return False
-            return True
-        else:
-            raise ValueError(
-                "No attributes starting with f`{attr_prefix}` does not exist. Please run `weighted_fullness` method first."
-            )
-
     def near_surface_coverage(
         self,
         variables=["u_wind", "v_wind", "rh", "tdry", "pres"],
@@ -320,60 +286,38 @@ class Sonde:
             )
         return self
 
-    def qc_check_near_surface_coverage(self, samples_threshold=10):
-        """Return True if near surface coverage is above threshold
+    def qc_filter(self, filter_flags):
+        """
+        Filters the sonde based on a list of QC flags. If any of the flags are False, the sonde will be filtered out from creating L2.
+        If the sonde passes all the QC checks, the attributes listed in filter_flags will be removed from the sonde object.
 
         Parameters
         ----------
-        samples_threshold : int, optional
-            Threshold for number of samples near surface, by default 10
+        filter_flags : list
+            List of QC-related attribute names to be checked.
 
         Returns
         -------
-        bool
-            True if near surface coverage is above threshold, else False
-        """
-        attr_prefix = "near_surface_coverage_"
-        attributes = [attr for attr in dir(self) if attr.startswith(attr_prefix)]
-
-        if len(attributes) > 0:
-            for attribute in attributes:
-                if getattr(self, attribute) < samples_threshold:
-                    return False
-            return True
-        else:
-            raise ValueError(
-                "No attributes starting with f`{attr_prefix}` does not exist. Please run `near_surface_coverage` method first."
-            )
-
-    def apply_qc_checks(self, qc_checks):
-        """Apply QC checks to the sonde
-
-        Parameters
-        ----------
-        qc_checks : list
-            List of QC checks to be applied; names must remove the `qc_check_` prefix of the method names
+        self : object
+            The sonde object itself, with the attributes listed in filter_flags removed if it passes all the QC checks.
 
         Raises
         ------
         ValueError
-            If the QC check does not exist.
-
-        Attributes Set
-        --------------
-        profile_fullness : bool
-            Return value of qc_check for profile coverage (qc_check_profile_fullness)
-        near_surface_coverage : bool
-            Return value of qc_check for near surface coverage (qc_check_near_surface_coverage)
+            If a flag in filter_flags does not exist as an attribute of the sonde object.
         """
-        qc_functions = {
-            "profile_fullness": self.qc_check_profile_fullness,
-            "near_surface_coverage": self.qc_check_near_surface_coverage,
-        }
+        for flag in filter_flags:
+            if not hasattr(self.qc, flag):
+                raise ValueError(
+                    f"The attribute {flag} does not exist. Please check your skipped QC functions or your provided list of filter flags."
+                )
+            if not bool(getattr(self.qc, flag)):
+                return print(
+                    f"{flag} returned False. Therefore, filtering this sonde ({self.serial_id}) out from L2"
+                )
 
-        for check in qc_checks:
-            func = qc_functions.get(check)
-            if func is not None:
-                object.__setattr__(self, f"{check}", func())
-            else:
-                raise ValueError(f"The QC function '{check}' does not exist.")
+        # If the sonde passes all the QC checks, remove all attributes listed in filter_flags
+        for flag in filter_flags:
+            delattr(self, flag)
+
+        return self
