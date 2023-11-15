@@ -32,7 +32,12 @@ class Sonde:
     launch_time: Optional[Any] = None
 
     def __post_init__(self):
-        """The `sort_index` attribute is only applicable when `launch_time` is available."""
+        """
+        Initializes the 'qc' attribute as an empty object and sets the 'sort_index' attribute based on 'launch_time'.
+
+        The 'sort_index' attribute is only applicable when 'launch_time' is available. If 'launch_time' is None, 'sort_index' will not be set.
+        """
+        object.__setattr__(self, "qc", type("", (), {})())
         if self.launch_time is not None:
             object.__setattr__(self, "sort_index", self.launch_time)
 
