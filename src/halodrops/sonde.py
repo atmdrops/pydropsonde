@@ -239,7 +239,7 @@ class Sonde:
                 timestamp_frequency / sampling_frequency
             )
             object.__setattr__(
-                self,
+                self.qc,
                 f"profile_fullness_{variable}",
                 np.sum(~np.isnan(dataset.values)) / weighed_time_size,
             )
@@ -285,7 +285,7 @@ class Sonde:
                 drop=True,
             )
             object.__setattr__(
-                self,
+                self.qc,
                 f"near_surface_coverage_{variable}",
                 np.sum(~np.isnan(near_surface[variable].values)),
             )
@@ -323,6 +323,6 @@ class Sonde:
 
         # If the sonde passes all the QC checks, remove all attributes listed in filter_flags
         for flag in filter_flags:
-            delattr(self, flag)
+            delattr(self.qc, flag)
 
         return self
