@@ -205,7 +205,7 @@ class Sonde:
                 f"The attribute `launch_detect` does not exist for Sonde {self.serial_id}."
             )
 
-    def weighted_fullness(
+    def profile_fullness(
         self,
         variable_dict={"u_wind": 4, "v_wind": 4, "rh": 2, "tdry": 2, "pres": 2},
         time_dimension="time",
