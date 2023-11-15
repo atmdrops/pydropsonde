@@ -291,15 +291,15 @@ class Sonde:
             )
         return self
 
-    def qc_filter(self, filter_flags):
+    def qc_filter(self, filter_flags=None):
         """
         Filters the sonde based on a list of QC flags. If any of the flags are False, the sonde will be filtered out from creating L2.
         If the sonde passes all the QC checks, the attributes listed in filter_flags will be removed from the sonde object.
 
         Parameters
         ----------
-        filter_flags : list
-            List of QC-related attribute names to be checked.
+        filter_flags : str or list, optional
+            Comma-separated string or list of QC-related attribute names to be checked. Each item can be a specific attribute name or a prefix to include all attributes starting with that prefix. You can also provide 'all_except_<prefix>' to filter all flags except those starting with '<prefix>'. If 'all_except_<prefix>' is provided, it should be the only value in filter_flags. If not provided, all QC attributes will be checked.
 
         Returns
         -------
@@ -309,17 +309,59 @@ class Sonde:
         Raises
         ------
         ValueError
-            If a flag in filter_flags does not exist as an attribute of the sonde object.
+            If a flag in filter_flags does not exist as an attribute of the sonde object, or if 'all_except_<prefix>' is provided in filter_flags along with other values. Please ensure that the flag names provided in 'filter_flags' correspond to existing QC attributes. If you're using a prefix to filter attributes, make sure the prefix is correct. Check your skipped QC functions or your provided list of filter flags.
         """
+        all_qc_attributes = [attr for attr in dir(self.qc) if not attr.startswith("__")]
+
+        if filter_flags is None:
+            filter_flags = all_qc_attributes
+        elif isinstance(filter_flags, str):
+            filter_flags = filter_flags.split(",")
+        elif isinstance(filter_flags, list):
+            pass
+        else:
+            raise ValueError(
+                "Invalid type for filter_flags. It must be one of the following:\n"
+                "- None: If you want to filter against all QC attributes.\n"
+                "- A string: If you want to provide a comma-separated list of individual flag values or prefixes of flag values.\n"
+                "- A list: If you want to provide individual flag values or prefixes of flag values."
+            )
+
+        if (
+            any(flag.startswith("all_except_") for flag in filter_flags)
+            and len(filter_flags) > 1
+        ):
+            raise ValueError(
+                "If 'all_except_<prefix>' is provided in filter_flags, it should be the only value."
+            )
+
+        new_filter_flags = []
+        for flag in filter_flags:
+            if flag.startswith("all_except_"):
+                prefix = flag.replace("all_except_", "")
+                new_filter_flags.extend(
+                    [attr for attr in all_qc_attributes if not attr.startswith(prefix)]
+                )
+            else:
+                new_filter_flags.extend(
+                    [attr for attr in all_qc_attributes if attr.startswith(flag)]
+                )
+
+        filter_flags = new_filter_flags
+
         for flag in filter_flags:
             if not hasattr(self.qc, flag):
                 raise ValueError(
-                    f"The attribute {flag} does not exist. Please check your skipped QC functions or your provided list of filter flags."
+                    f"The attribute '{flag}' does not exist in the QC attributes of the sonde object. "
+                    "Please ensure that the flag names provided in 'filter_flags' correspond to existing QC attributes. "
+                    "If you're using a prefix to filter attributes, make sure the prefix is correct. "
+                    "Check your skipped QC functions or your provided list of filter flags."
                 )
             if not bool(getattr(self.qc, flag)):
-                return print(
+                print(
                     f"{flag} returned False. Therefore, filtering this sonde ({self.serial_id}) out from L2"
                 )
+                return None
 
         # If the sonde passes all the QC checks, remove all attributes listed in filter_flags
         for flag in filter_flags:
