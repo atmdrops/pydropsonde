@@ -377,3 +377,39 @@ class Sonde:
                 object.__setattr__(self, f"{check}", func())
             else:
                 raise ValueError(f"The QC function '{check}' does not exist.")
+
+    def qc_filter(self, filter_flags):
+        """
+        Filters the sonde based on a list of QC flags. If any of the flags are False, the sonde will be filtered out from creating L2.
+        If the sonde passes all the QC checks, the attributes listed in filter_flags will be removed from the sonde object.
+
+        Parameters
+        ----------
+        filter_flags : list
+            List of QC-related attribute names to be checked.
+
+        Returns
+        -------
+        self : object
+            The sonde object itself, with the attributes listed in filter_flags removed if it passes all the QC checks.
+
+        Raises
+        ------
+        ValueError
+            If a flag in filter_flags does not exist as an attribute of the sonde object.
+        """
+        for flag in filter_flags:
+            if not hasattr(self.qc, flag):
+                raise ValueError(
+                    f"The attribute {flag} does not exist. Please check your skipped QC functions or your provided list of filter flags."
+                )
+            if not bool(getattr(self.qc, flag)):
+                return print(
+                    f"{flag} returned False. Therefore, filtering this sonde ({self.serial_id}) out from L2"
+                )
+
+        # If the sonde passes all the QC checks, remove all attributes listed in filter_flags
+        for flag in filter_flags:
+            delattr(self, flag)
+
+        return self
