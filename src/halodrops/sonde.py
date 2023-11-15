@@ -299,7 +299,7 @@ class Sonde:
                 )
             return self
 
-    def qc_filter(self, filter_flags=None):
+    def filter_qc_fail(self, filter_flags=None):
         """
         Filters the sonde based on a list of QC flags. If any of the flags are False, the sonde will be filtered out from creating L2.
         If the sonde passes all the QC checks, the attributes listed in filter_flags will be removed from the sonde object.
