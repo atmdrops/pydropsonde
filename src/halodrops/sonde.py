@@ -6,6 +6,7 @@ import numpy as np
 import xarray as xr
 
 from halodrops.helper import rawreader as rr
+import halodrops.helper as hh
 
 _no_default = object()
 
@@ -233,7 +234,7 @@ class Sonde:
         float
             Fraction of non-nan variable values along time_dimension weighed for sampling frequency
         """
-        if skip:
+        if hh.get_bool(skip):
             return self
         else:
             for variable, sampling_frequency in variable_dict.items():
@@ -276,7 +277,7 @@ class Sonde:
         ValueError
             If the attribute `aspen_ds` does not exist.
         """
-        if skip:
+        if hh.get_bool(skip):
             return self
         else:
             if not hasattr(self, "aspen_ds"):
