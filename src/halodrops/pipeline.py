@@ -311,6 +311,7 @@ pipeline = {
             "filter_no_launch_detect",
             "weighted_fullness",
             "near_surface_coverage",
+            "filter_qc_fail",
         ],
         "output": "sondes",
     },
