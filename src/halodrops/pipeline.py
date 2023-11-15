@@ -190,9 +190,9 @@ def iterate_Sonde_method_over_dict_of_Sondes_objects(
         A dictionary of Sonde objects with the results of the methods applied to them (keys where results are None are not included).
     """
     my_dict = obj
-    new_dict = {}
 
     for function_name in functions:
+        new_dict = {}
         for key, value in my_dict.items():
             function = getattr(Sonde, function_name)
             result = function(value, **get_args_for_function(config, function))
