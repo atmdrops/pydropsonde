@@ -6,6 +6,7 @@ import numpy as np
 import xarray as xr
 
 from halodrops.helper import rawreader as rr
+import halodrops.helper as hh
 
 _no_default = object()
 
@@ -209,6 +210,7 @@ class Sonde:
         variable_dict={"u_wind": 4, "v_wind": 4, "rh": 2, "tdry": 2, "pres": 2},
         time_dimension="time",
         timestamp_frequency=4,
+        skip=False,
     ):
         """Return profile-coverage for variable weighed for sampling frequency
 
@@ -232,24 +234,27 @@ class Sonde:
         float
             Fraction of non-nan variable values along time_dimension weighed for sampling frequency
         """
-
-        for variable, sampling_frequency in variable_dict.items():
-            dataset = self.aspen_ds[variable]
-            weighed_time_size = len(dataset[time_dimension]) / (
-                timestamp_frequency / sampling_frequency
-            )
-            object.__setattr__(
-                self.qc,
-                f"profile_fullness_{variable}",
-                np.sum(~np.isnan(dataset.values)) / weighed_time_size,
-            )
-        return self
+        if hh.get_bool(skip):
+            return self
+        else:
+            for variable, sampling_frequency in variable_dict.items():
+                dataset = self.aspen_ds[variable]
+                weighed_time_size = len(dataset[time_dimension]) / (
+                    timestamp_frequency / sampling_frequency
+                )
+                object.__setattr__(
+                    self.qc,
+                    f"profile_fullness_{variable}",
+                    np.sum(~np.isnan(dataset.values)) / weighed_time_size,
+                )
+            return self
 
     def near_surface_coverage(
         self,
         variables=["u_wind", "v_wind", "rh", "tdry", "pres"],
         alt_bounds=[0, 1000],
         alt_dimension_name="alt",
+        skip=False,
     ):
         """Return fraction of non-nan values in variables near surface
 
@@ -272,24 +277,27 @@ class Sonde:
         ValueError
             If the attribute `aspen_ds` does not exist.
         """
-        if not hasattr(self, "aspen_ds"):
-            raise ValueError(
-                "The attribute `aspen_ds` does not exist. Please run `add_aspen_ds` method first."
-            )
+        if hh.get_bool(skip):
+            return self
+        else:
+            if not hasattr(self, "aspen_ds"):
+                raise ValueError(
+                    "The attribute `aspen_ds` does not exist. Please run `add_aspen_ds` method first."
+                )
 
-        for variable in variables:
-            dataset = self.aspen_ds[[variable, alt_dimension_name]]
-            near_surface = dataset.where(
-                (dataset[alt_dimension_name] > alt_bounds[0])
-                & (dataset[alt_dimension_name] < alt_bounds[1]),
-                drop=True,
-            )
-            object.__setattr__(
-                self.qc,
-                f"near_surface_coverage_{variable}",
-                np.sum(~np.isnan(near_surface[variable].values)),
-            )
-        return self
+            for variable in variables:
+                dataset = self.aspen_ds[[variable, alt_dimension_name]]
+                near_surface = dataset.where(
+                    (dataset[alt_dimension_name] > alt_bounds[0])
+                    & (dataset[alt_dimension_name] < alt_bounds[1]),
+                    drop=True,
+                )
+                object.__setattr__(
+                    self.qc,
+                    f"near_surface_coverage_{variable}",
+                    np.sum(~np.isnan(near_surface[variable].values)),
+                )
+            return self
 
     def qc_filter(self, filter_flags=None):
         """
