@@ -292,7 +292,7 @@ class Sonde:
         alt_bounds=[0, 1000],
         alt_dimension_name="alt",
         count_threshold=50,
-        add_near_surface_coverage_fraction_attribute=False,
+        add_near_surface_count_attribute=False,
         skip=False,
     ):
         """Return fraction of non-nan values in variables near surface
@@ -353,10 +353,10 @@ class Sonde:
                         f"near_surface_coverage_{variable}",
                         True,
                     )
-                if hh.get_bool(add_near_surface_coverage_fraction_attribute):
+                if hh.get_bool(add_near_surface_count_attribute):
                     object.__setattr__(
                         self,
-                        f"near_surface_coverage_fraction_{variable}",
+                        f"near_surface_count_{variable}",
                         near_surface_count,
                     )
             return self
