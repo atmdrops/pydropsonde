@@ -295,26 +295,33 @@ class Sonde:
         add_near_surface_count_attribute=False,
         skip=False,
     ):
-        """Return fraction of non-nan values in variables near surface
+        """
+        Calculates the fraction of non-null values in specified variables near the surface.
 
         Parameters
         ----------
         variables : list, optional
-            List of variables to be considered, by default ["u_wind","v_wind","rh","tdry","pres"]
+            The variables to consider for the calculation. Defaults to ["u_wind","v_wind","rh","tdry","pres"].
         alt_bounds : list, optional
-            List of lower and upper bounds of altitude in meters, by default [0,1000]
+            The lower and upper bounds of altitude in meters to consider for the calculation. Defaults to [0,1000].
         alt_dimension_name : str, optional
-            Name of altitude dimension, by default "alt"
+            The name of the altitude dimension. Defaults to "alt".
+        count_threshold : int, optional
+            The minimum count of non-null values required for a variable to be considered as having near surface coverage. Defaults to 50.
+        add_near_surface_count_attribute : bool, optional
+            If True, adds the count of non-null values as an attribute for every variable to the object. Defaults to False.
+        skip : bool, optional
+            If True, skips the calculation and returns the object as is. Defaults to False.
 
         Returns
         -------
-        float
-            Fraction of non-nan values in variables near surface
+        self
+            The object with updated attributes.
 
         Raises
         ------
         ValueError
-            If the attribute `aspen_ds` does not exist.
+            If the attribute `aspen_ds` does not exist. The `add_aspen_ds` method should be run first.
         """
         if hh.get_bool(skip):
             return self
