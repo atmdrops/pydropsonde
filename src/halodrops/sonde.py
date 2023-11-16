@@ -210,43 +210,80 @@ class Sonde:
         variable_dict={"u_wind": 4, "v_wind": 4, "rh": 2, "tdry": 2, "pres": 2},
         time_dimension="time",
         timestamp_frequency=4,
+        fullness_threshold=0.8,
+        add_fullness_fraction_attribute=False,
         skip=False,
     ):
-        """Return profile-coverage for variable weighed for sampling frequency
+        """
+        Calculates the profile coverage for a given set of variables, considering their sampling frequency.
 
-        The assumption is that the time_dimension has coordinates spaced over 0.25 seconds,
-        hence a timestamp_frequency of 4 hertz. This is true for ASPEN-processed QC and PQC files at least for RD41.
+        This function assumes that the time_dimension coordinates are spaced over 0.25 seconds,
+        implying a timestamp_frequency of 4 hertz. This is applicable for ASPEN-processed QC and PQC files,
+        specifically for RD41.
+
+        For each variable in the variable_dict, the function calculates the fullness fraction. If the fullness
+        fraction is less than the fullness_threshold, it sets an attribute in `self.qc` named
+        "profile_fullness_{variable}" to False. Otherwise, it sets this attribute to True.
+
+        If add_fullness_fraction_attribute is True, the function also sets an attribute in `self` named
+        "profile_fullness_fraction_{variable}" to the calculated fullness fraction.
 
         Parameters
         ----------
         variable_dict : dict, optional
-            Variable in `self.aspen_ds` with its sampling frequency whose weighted profile-coverage is to be estimated
-            The default is {'u_wind':4,'v_wind':4,'rh':2,'tdry':2,'pres':2}
-        sampling_frequency : numeric
-            Sampling frequency of `variable` in hertz
+            Dictionary containing the variables in `self.aspen_ds` and their respective sampling frequencies.
+            The function will estimate the weighted profile-coverage for these variables.
+            Default is {'u_wind':4,'v_wind':4,'rh':2,'tdry':2,'pres':2}.
         time_dimension : str, optional
-            Name of independent dimension of profile, by default "time"
+            The independent dimension of the profile. Default is "time".
         timestamp_frequency : numeric, optional
-            Sampling frequency of `time_dimension` in hertz, by default 4
+            The sampling frequency of `time_dimension` in hertz. Default is 4.
+        fullness_threshold : float or str, optional
+            The threshold for the fullness fraction. If the calculated fullness fraction is less than this threshold,
+            the profile is considered not full. Default is 0.8.
+        add_fullness_fraction_attribute : bool or str, optional
+            If True, the function will add the fullness fraction as an attribute to the object. Default is False.
+            If provided as string, it should be possible to convert it to a boolean value with the helper get_bool function.
+        skip : bool, optional
+            If True, the function will return the object without performing any operations. Default is False.
 
         Returns
         -------
-        float
-            Fraction of non-nan variable values along time_dimension weighed for sampling frequency
+        self
+            The object itself, possibly with new attributes added based on the function parameters.
         """
         if hh.get_bool(skip):
             return self
         else:
+            if isinstance(fullness_threshold, str):
+                fullness_threshold = float(fullness_threshold)
+
             for variable, sampling_frequency in variable_dict.items():
                 dataset = self.aspen_ds[variable]
                 weighed_time_size = len(dataset[time_dimension]) / (
                     timestamp_frequency / sampling_frequency
                 )
-                object.__setattr__(
-                    self.qc,
-                    f"profile_fullness_{variable}",
-                    np.sum(~np.isnan(dataset.values)) / weighed_time_size,
+                fullness_fraction = (
+                    np.sum(~np.isnan(dataset.values)) / weighed_time_size
                 )
+                if fullness_fraction < fullness_threshold:
+                    object.__setattr__(
+                        self.qc,
+                        f"profile_fullness_{variable}",
+                        False,
+                    )
+                else:
+                    object.__setattr__(
+                        self.qc,
+                        f"profile_fullness_{variable}",
+                        True,
+                    )
+                if hh.get_bool(add_fullness_fraction_attribute):
+                    object.__setattr__(
+                        self,
+                        f"profile_fullness_fraction_{variable}",
+                        fullness_fraction,
+                    )
             return self
 
     def near_surface_coverage(
@@ -254,6 +291,8 @@ class Sonde:
         variables=["u_wind", "v_wind", "rh", "tdry", "pres"],
         alt_bounds=[0, 1000],
         alt_dimension_name="alt",
+        count_threshold=50,
+        add_near_surface_coverage_fraction_attribute=False,
         skip=False,
     ):
         """Return fraction of non-nan values in variables near surface
@@ -285,6 +324,14 @@ class Sonde:
                     "The attribute `aspen_ds` does not exist. Please run `add_aspen_ds` method first."
                 )
 
+            if isinstance(alt_bounds, str):
+                alt_bounds = alt_bounds.split(",")
+                alt_bounds = [float(alt_bound) for alt_bound in alt_bounds]
+            if isinstance(count_threshold, str):
+                count_threshold = int(count_threshold)
+            if isinstance(variables, str):
+                variables = variables.split(",")
+
             for variable in variables:
                 dataset = self.aspen_ds[[variable, alt_dimension_name]]
                 near_surface = dataset.where(
@@ -292,11 +339,26 @@ class Sonde:
                     & (dataset[alt_dimension_name] < alt_bounds[1]),
                     drop=True,
                 )
-                object.__setattr__(
-                    self.qc,
-                    f"near_surface_coverage_{variable}",
-                    np.sum(~np.isnan(near_surface[variable].values)),
-                )
+
+                near_surface_count = np.sum(~np.isnan(near_surface[variable].values))
+                if near_surface_count < count_threshold:
+                    object.__setattr__(
+                        self.qc,
+                        f"near_surface_coverage_{variable}",
+                        False,
+                    )
+                else:
+                    object.__setattr__(
+                        self.qc,
+                        f"near_surface_coverage_{variable}",
+                        True,
+                    )
+                if hh.get_bool(add_near_surface_coverage_fraction_attribute):
+                    object.__setattr__(
+                        self,
+                        f"near_surface_coverage_fraction_{variable}",
+                        near_surface_count,
+                    )
             return self
 
     def filter_qc_fail(self, filter_flags=None):
