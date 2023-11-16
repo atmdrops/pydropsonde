@@ -324,6 +324,14 @@ class Sonde:
                     "The attribute `aspen_ds` does not exist. Please run `add_aspen_ds` method first."
                 )
 
+            if isinstance(alt_bounds, str):
+                alt_bounds = alt_bounds.split(",")
+                alt_bounds = [float(alt_bound) for alt_bound in alt_bounds]
+            if isinstance(count_threshold, str):
+                count_threshold = int(count_threshold)
+            if isinstance(variables, str):
+                variables = variables.split(",")
+
             for variable in variables:
                 dataset = self.aspen_ds[[variable, alt_dimension_name]]
                 near_surface = dataset.where(
