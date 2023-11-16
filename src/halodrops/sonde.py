@@ -291,6 +291,8 @@ class Sonde:
         variables=["u_wind", "v_wind", "rh", "tdry", "pres"],
         alt_bounds=[0, 1000],
         alt_dimension_name="alt",
+        count_threshold=50,
+        add_near_surface_coverage_fraction_attribute=False,
         skip=False,
     ):
         """Return fraction of non-nan values in variables near surface
@@ -329,11 +331,26 @@ class Sonde:
                     & (dataset[alt_dimension_name] < alt_bounds[1]),
                     drop=True,
                 )
-                object.__setattr__(
-                    self.qc,
-                    f"near_surface_coverage_{variable}",
-                    np.sum(~np.isnan(near_surface[variable].values)),
-                )
+
+                near_surface_count = np.sum(~np.isnan(near_surface[variable].values))
+                if near_surface_count < count_threshold:
+                    object.__setattr__(
+                        self.qc,
+                        f"near_surface_coverage_{variable}",
+                        False,
+                    )
+                else:
+                    object.__setattr__(
+                        self.qc,
+                        f"near_surface_coverage_{variable}",
+                        True,
+                    )
+                if hh.get_bool(add_near_surface_coverage_fraction_attribute):
+                    object.__setattr__(
+                        self,
+                        f"near_surface_coverage_fraction_{variable}",
+                        near_surface_count,
+                    )
             return self
 
     def filter_qc_fail(self, filter_flags=None):
