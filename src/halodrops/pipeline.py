@@ -309,7 +309,7 @@ pipeline = {
         "apply": iterate_Sonde_method_over_dict_of_Sondes_objects,
         "functions": [
             "filter_no_launch_detect",
-            "weighted_fullness",
+            "profile_fullness",
             "near_surface_coverage",
             "filter_qc_fail",
         ],
