@@ -445,3 +445,47 @@ class Sonde:
             delattr(self.qc, flag)
 
         return self
+
+    def convert_to_si(self, variables=["rh", "pres", "tdry"], skip=False):
+        """
+        Converts variables to SI units.
+
+        Parameters
+        ----------
+        variables : list or str, optional
+            The variables to convert to SI units. If a string is provided, it should be a comma-separated list of variables.
+            The default variables are 'rh', 'pres', and 'tdry'.
+
+        skip : bool, optional
+            If set to True, the function will skip the conversion process but will still ensure that the '_interim_l2_ds' attribute is set.
+            If '_interim_l2_ds' is not already an attribute of the object, it will be set to 'aspen_ds'.
+            Default is False.
+
+        Returns
+        -------
+        self : object
+            Returns the sonde object with the specified variables in aspen_ds converted to SI units.
+            If 'skip' is set to True, it returns the sonde object with '_interim_l2_ds' set to 'aspen_ds' if it wasn't already present.
+        """
+        if hh.get_bool(skip):
+            if hasattr(self, "_interim_l2_ds"):
+                return self
+            else:
+                object.__setattr__(self, "_interim_l2_ds", self.aspen_ds)
+                return self
+        else:
+            if isinstance(variables, str):
+                variables = variables.split(",")
+
+            if hasattr(self, "_interim_l2_ds"):
+                ds = self._interim_l2_ds
+            else:
+                ds = self.aspen_ds
+
+            for variable in variables:
+                func = hh.get_si_converter_function_based_on_var(variable)
+                ds = ds.assign({f"{variable}": func(self.aspen_ds[variable])})
+
+            object.__setattr__(self, "_interim_l2_ds", ds)
+
+            return self
