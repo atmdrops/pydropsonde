@@ -11,6 +11,38 @@ from halodrops.sonde import Sonde
 module_logger = logging.getLogger("halodrops.helper.paths")
 
 
+class Platform:
+    """
+    Deriving flight paths from the provided platform directory
+
+    The input should align in terms of hierarchy and nomenclature
+    with the {doc}`Directory Structure </handbook/directory_structure>` that `halodrops` expects.
+    """
+
+    def __init__(
+        self, data_directory, platform_id, platform_directory_name=None
+    ) -> None:
+        self.platform_id = platform_id
+        self.platform_directory_name = platform_directory_name
+        self.data_directory = data_directory
+        self.flight_ids = self.get_flight_ids()
+
+    def get_flight_ids(self):
+        """Returns a list of flight IDs for the given platform directory"""
+        if self.platform_directory_name is None:
+            platform_dir = os.path.join(self.data_directory, self.platform_id)
+        else:
+            platform_dir = os.path.join(
+                self.data_directory, self.platform_directory_name
+            )
+
+        flight_ids = []
+        for flight_dir in os.listdir(platform_dir):
+            if os.path.isdir(os.path.join(platform_dir, flight_dir)):
+                flight_ids.append(flight_dir)
+        return flight_ids
+
+
 class Flight:
     """
     Deriving paths from the provided directory
