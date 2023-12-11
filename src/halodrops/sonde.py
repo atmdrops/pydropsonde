@@ -657,3 +657,36 @@ class Sonde:
         object.__setattr__(self, "nc_global_attrs", nc_global_attrs)
 
         return self
+
+    def add_global_attributes_to_interim_l2_ds(self):
+        """
+        Adds global attributes to _interim_l2_ds.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        self : object
+            Returns the sonde object with global attributes added to _interim_l2_ds.
+        """
+        ds = self._interim_l2_ds
+
+        attrs_to_del = []
+        for attr in ds.attrs.keys():
+            attrs_to_del.append(attr)
+
+        for attr in attrs_to_del:
+            del ds.attrs[attr]
+
+        if hasattr(self, "flight_attrs"):
+            for attr, value in self.flight_attrs.items():
+                ds.attrs[attr] = value
+        if hasattr(self, "nc_global_attrs"):
+            for attr, value in self.nc_global_attrs.items():
+                ds.attrs[attr] = value
+
+        object.__setattr__(self, "_interim_l2_ds", ds)
+
+        return self
