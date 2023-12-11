@@ -527,3 +527,33 @@ class Sonde:
         object.__setattr__(self, "_interim_l2_ds", ds)
 
         return self
+
+    def add_sonde_id_variable(self, variable_name="sonde_id"):
+        """
+        Adds a variable and related attributes to the sonde object with the Sonde object (self)'s serial_id attribute.
+
+        Parameters
+        ----------
+        variable_name : str, optional
+            The name of the variable to be added. Default is 'sonde_id'.
+
+        Returns
+        -------
+        self : object
+            Returns the sonde object with a variable containing serial_id. Name of the variable provided by 'variable_name'.
+        """
+        if hasattr(self, "_interim_l2_ds"):
+            ds = self._interim_l2_ds
+        else:
+            ds = self.aspen_ds
+
+        ds = ds.assign({variable_name: self.serial_id})
+        ds[variable_name].attrs = {
+            "descripion": "unique sonde ID",
+            "long_name": "sonde identifier",
+            "cf_role": "trajectory_id",
+        }
+
+        object.__setattr__(self, "_interim_l2_ds", ds)
+
+        return self
