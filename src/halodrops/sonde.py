@@ -500,12 +500,13 @@ class Sonde:
         l2_variables : dict or str, optional
             A dictionary where the keys are the variables in aspen_ds to keep for L2.
             If dictionary items contain a 'rename_to' key, the variable will be renamed to the value of 'rename_to'.
+            If dictionary items contain a 'attributes' key, the variable will be assigned the attributes in the value of 'attributes'.
             The default is the l2_variables dictionary from the helper module.
 
         Returns
         -------
         self : object
-            Returns the sonde object with only the specified variables (renamed if dictionary has 'rename_to' key) in _interim_l2_ds attribute.
+            Returns the sonde object with only the specified variables (renamed if dictionary has 'rename_to' key and attributes added if dictionary has 'attributes' key) in _interim_l2_ds attribute.
             If '_interim_l2_ds' is not already an attribute of the object, it will first be set to 'aspen_ds' before reducing to the variables and renaming.
         """
         if isinstance(l2_variables, str):
@@ -521,6 +522,8 @@ class Sonde:
         ds = ds[l2_variables_list]
 
         for variable, variable_dict in l2_variables.items():
+            if "attributes" in variable_dict:
+                ds[variable].attrs = variable_dict["attributes"]
             if "rename_to" in variable_dict:
                 ds = ds.rename({variable: variable_dict["rename_to"]})
 
