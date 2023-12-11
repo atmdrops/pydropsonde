@@ -1,5 +1,6 @@
 import ast
 from dataclasses import dataclass, field, KW_ONLY
+import datetime
 from typing import Any, Optional, List
 import os
 
@@ -615,5 +616,37 @@ class Sonde:
             flight_attrs[attr] = float(value) if "AVAPS" not in attr else value
 
         object.__setattr__(self, "flight_attrs", flight_attrs)
+
+        return self
+
+    def get_other_global_attributes(self):
+        nc_global_attrs = {
+            # "title": "Level-2",
+            # "doi": f"{halodrops.data_doi}",
+            # "created with": f"pipeline.py doi:{halodrops.software_doi}",
+            "Conventions": "CF-1.8",
+            "campaign_id": "HALO-(AC)3",
+            "platform_id": self.platform_id,
+            # "instrument_id": "Vaisala RD-41",
+            "product_id": "Level-2",
+            # "AVAPS_Software_version": "Version 4.1.2",
+            "ASPEN_version": self.aspen_ds.AspenVersion
+            if hasattr(self.aspen_ds, "AspenVersion")
+            else self.aspen_ds.AvapsEditorVersion,
+            "ASPEN_processing_time": self.aspen_ds.ProcessingTime,
+            # "JOANNE_version": joanne.__version__,
+            # "launch_date": str(pd.to_datetime(self.launch_time).date()),
+            "launch_time_(UTC)": str(self.aspen_ds.launch_time.values)
+            if hasattr(self.aspen_ds, "launch_time")
+            else str(self.aspen_ds.base_time.values),
+            "sonde_serial_ID": self.serial_id,
+            "author": "Geet George",
+            "author_email": "g.george@tudelft.nl",
+            "featureType": "trajectory",
+            # "reference": halodrops.reference_study,
+            "creation_time": str(datetime.datetime.utcnow()) + " UTC",
+        }
+
+        object.__setattr__(self, "nc_global_attrs", nc_global_attrs)
 
         return self
