@@ -1,4 +1,4 @@
-from .helper.paths import Paths
+from .helper.paths import Flight
 from .sonde import Sonde
 import configparser
 import inspect
@@ -137,9 +137,9 @@ def get_args_for_function(config, function):
     return args
 
 
-def create_and_populate_Paths_object(config: configparser.ConfigParser) -> Paths:
+def create_and_populate_flight_object(config: configparser.ConfigParser) -> Flight:
     """
-    Creates a Paths object and populates it with A-files.
+    Creates a Flight object and populates it with A-files.
 
     Parameters
     ----------
@@ -148,15 +148,15 @@ def create_and_populate_Paths_object(config: configparser.ConfigParser) -> Paths
 
     Returns
     -------
-    Paths
-        A Paths object.
+    Flight
+        A Flight object.
     """
     output = {}
-    mandatory = get_mandatory_args(Paths)
+    mandatory = get_mandatory_args(Flight)
     mandatory_args = get_mandatory_values_from_config(config, mandatory)
-    output["paths"] = Paths(**mandatory_args)
-    output["sondes"] = output["paths"].populate_sonde_instances()
-    return output["paths"], output["sondes"]
+    output["flight"] = Flight(**mandatory_args)
+    output["sondes"] = output["flight"].populate_sonde_instances()
+    return output["flight"], output["sondes"]
 
 
 def iterate_Sonde_method_over_dict_of_Sondes_objects(
@@ -299,10 +299,10 @@ def run_pipeline(pipeline: dict, config: configparser.ConfigParser):
 
 
 pipeline = {
-    "create_paths": {
+    "create_flight": {
         "intake": None,
-        "apply": create_and_populate_Paths_object,
-        "output": ["paths", "sondes"],
+        "apply": create_and_populate_flight_object,
+        "output": ["flight", "sondes"],
     },
     "qc": {
         "intake": "sondes",

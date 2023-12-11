@@ -11,7 +11,7 @@ from halodrops.sonde import Sonde
 module_logger = logging.getLogger("halodrops.helper.paths")
 
 
-class Paths:
+class Flight:
     """
     Deriving paths from the provided directory
 
