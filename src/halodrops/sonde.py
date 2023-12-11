@@ -43,6 +43,26 @@ class Sonde:
         if self.launch_time is not None:
             object.__setattr__(self, "sort_index", self.launch_time)
 
+    def add_flight_id(self, flight_id: str) -> None:
+        """Sets attribute of flight ID
+
+        Parameters
+        ----------
+        flight_id : str
+            The flight ID of the flight during which the sonde was launched
+        """
+        object.__setattr__(self, "flight_id", flight_id)
+
+    def add_platform_id(self, platform_id: str) -> None:
+        """Sets attribute of platform ID
+
+        Parameters
+        ----------
+        platform_id : str
+            The platform ID of the flight during which the sonde was launched
+        """
+        object.__setattr__(self, "platform_id", platform_id)
+
     def add_spatial_coordinates_at_launch(self, launch_coordinates: List) -> None:
         """Sets attributes of spatial coordinates at launch
 
