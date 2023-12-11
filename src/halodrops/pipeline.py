@@ -138,14 +138,12 @@ def get_args_for_function(config, function):
     return args
 
 
-def get_platforms(data_directory, config):
+def get_platforms(config):
     """
     Get platforms based on the directory names in `data_directory` or the user-provided `platforms` values.
 
     Parameters
     ----------
-    data_directory : str
-        The directory where platform data is stored.
     config : ConfigParser instance
         The configuration file parser.
 
@@ -161,6 +159,7 @@ def get_platforms(data_directory, config):
         if a value in `platform_directory_names` does not correspond to a directory in `data_directory`.
 
     """
+    data_directory = config.get("MANDATORY", "data_directory")
     if config.has_option("MANDATORY", "platforms"):
         if not config.has_option("MANDATORY", "platform_directory_names"):
             raise ValueError(
