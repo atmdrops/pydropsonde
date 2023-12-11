@@ -1,3 +1,4 @@
+import ast
 from dataclasses import dataclass, field, KW_ONLY
 from typing import Any, Optional, List
 import os
@@ -490,31 +491,38 @@ class Sonde:
 
             return self
 
-    def get_l2_variables(self, l2_variables=["u_wind", "v_wind", "tdry", "pres", "rh"]):
+    def get_l2_variables(self, l2_variables: dict = hh.l2_variables):
         """
         Gets the variables from aspen_ds to create L2.
 
         Parameters
         ----------
-        l2_variables : list or str, optional
-            The variables to keep for L2.
-            The default variables are 'u_wind', 'v_wind', 'tdry', 'pres', 'rh'
+        l2_variables : dict or str, optional
+            A dictionary where the keys are the variables in aspen_ds to keep for L2.
+            If dictionary items contain a 'rename_to' key, the variable will be renamed to the value of 'rename_to'.
+            The default is the l2_variables dictionary from the helper module.
 
         Returns
         -------
         self : object
-            Returns the sonde object with only the specified variables in _interim_l2_ds.
-            If '_interim_l2_ds' is not already an attribute of the object, it will first be set to 'aspen_ds' before reducing to the variables.
+            Returns the sonde object with only the specified variables (renamed if dictionary has 'rename_to' key) in _interim_l2_ds attribute.
+            If '_interim_l2_ds' is not already an attribute of the object, it will first be set to 'aspen_ds' before reducing to the variables and renaming.
         """
         if isinstance(l2_variables, str):
-            l2_variables = l2_variables.split(",")
+            l2_variables = ast.literal_eval(l2_variables)
+
+        l2_variables_list = list(l2_variables.keys())
 
         if hasattr(self, "_interim_l2_ds"):
             ds = self._interim_l2_ds
         else:
             ds = self.aspen_ds
 
-        ds = ds[l2_variables]
+        ds = ds[l2_variables_list]
+
+        for variable, variable_dict in l2_variables.items():
+            if "rename_to" in variable_dict:
+                ds = ds.rename({variable: variable_dict["rename_to"]})
 
         object.__setattr__(self, "_interim_l2_ds", ds)
 
