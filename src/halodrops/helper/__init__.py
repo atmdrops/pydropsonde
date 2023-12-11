@@ -1,3 +1,17 @@
+# Keys in l2_variables should be variable names in aspen_ds attribute of Sonde object
+l2_variables = {
+    "u_wind": {"rename_to": "u"},
+    "v_wind": {"rename_to": "v"},
+    "tdry": {"rename_to": "ta"},
+    "pres": {"rename_to": "p"},
+    "rh": {},
+    "lat": {},
+    "lon": {},
+    "time": {},
+    "gpsalt": {},
+}
+
+
 def get_bool(s):
     if isinstance(s, bool):
         return s
