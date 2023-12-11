@@ -210,12 +210,19 @@ def create_and_populate_flight_object(config: configparser.ConfigParser) -> Flig
     Flight
         A Flight object.
     """
+    platform_objects = get_platforms(config)
     output = {}
-    mandatory = get_mandatory_args(Flight)
-    mandatory_args = get_mandatory_values_from_config(config, mandatory)
-    output["flight"] = Flight(**mandatory_args)
-    output["sondes"] = output["flight"].populate_sonde_instances()
-    return output["flight"], output["sondes"]
+    output["sondes"] = {}
+    for platform in platform_objects:
+        for flight_id in platform_objects[platform].flight_ids:
+            flight = Flight(
+                platform_objects[platform].data_directory,
+                flight_id,
+                platform,
+                platform_objects[platform].platform_directory_name,
+            )
+            output["sondes"].update(flight.populate_sonde_instances())
+    return output["sondes"]
 
 
 def iterate_Sonde_method_over_dict_of_Sondes_objects(
@@ -361,7 +368,7 @@ pipeline = {
     "create_flight": {
         "intake": None,
         "apply": create_and_populate_flight_object,
-        "output": ["flight", "sondes"],
+        "output": "sondes",
     },
     "qc": {
         "intake": "sondes",
