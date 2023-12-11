@@ -1,14 +1,81 @@
 # Keys in l2_variables should be variable names in aspen_ds attribute of Sonde object
 l2_variables = {
-    "u_wind": {"rename_to": "u"},
-    "v_wind": {"rename_to": "v"},
-    "tdry": {"rename_to": "ta"},
-    "pres": {"rename_to": "p"},
-    "rh": {},
-    "lat": {},
-    "lon": {},
-    "time": {},
-    "gpsalt": {},
+    "u_wind": {
+        "rename_to": "u",
+        "attributes": {
+            "standard_name": "eastward_wind",
+            "long_name": "u component of winds",
+            "units": "m s-1",
+            "coordinates": "time lon lat alt",
+        },
+    },
+    "v_wind": {
+        "rename_to": "v",
+        "attributes": {
+            "standard_name": "northward_wind",
+            "long_name": "v component of winds",
+            "units": "m s-1",
+            "coordinates": "time lon lat alt",
+        },
+    },
+    "tdry": {
+        "rename_to": "ta",
+        "attributes": {
+            "standard_name": "air_temperature",
+            "long_name": "air temperature",
+            "units": "K",
+            "coordinates": "time lon lat alt",
+        },
+    },
+    "pres": {
+        "rename_to": "p",
+        "attributes": {
+            "standard_name": "air_pressure",
+            "long_name": "atmospheric pressure",
+            "units": "Pa",
+            "coordinates": "time lon lat alt",
+        },
+    },
+    "rh": {
+        "attributes": {
+            "standard_name": "relative_humidity",
+            "long_name": "relative humidity",
+            "units": "",
+            "coordinates": "time lon lat alt",
+        }
+    },
+    "lat": {
+        "attributes": {
+            "standard_name": "latitude",
+            "long_name": "latitude",
+            "units": "degree_north",
+            "axis": "Y",
+        }
+    },
+    "lon": {
+        "attributes": {
+            "standard_name": "longitude",
+            "long_name": "longitude",
+            "units": "degree_east",
+            "axis": "X",
+        }
+    },
+    "time": {
+        "attributes": {
+            "standard_name": "time",
+            "long_name": "time of recorded measurement",
+            "axis": "T",
+        }
+    },
+    "gpsalt": {
+        "attributes": {
+            "standard_name": "altitude",
+            "long_name": "gps reported altitude above MSL",
+            "units": "m",
+            "axis": "Z",
+            "positive": "up",
+        }
+    },
 }
 
 
