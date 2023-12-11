@@ -176,7 +176,14 @@ class Sonde:
 
         if hasattr(self, "postaspenfile"):
             ds = xr.open_dataset(self.postaspenfile)
-            if ds.attrs["SondeId"] == self.serial_id:
+            if "SondeId" not in ds.attrs:
+                if ds.attrs["SoundingDescription"].split(" ")[1] == self.serial_id:
+                    object.__setattr__(self, "aspen_ds", ds)
+                else:
+                    raise ValueError(
+                        f"I didn't find the `SondeId` attribute, so checked the `SoundingDescription` attribute. I found the ID in the `SoundingDescription` global attribute ({ds.attrs['SoundingDescription'].split(' ')[1]}) to not match with this instance's `serial_id` attribute ({self.serial_id}). Therefore, I am not storing the xarray dataset as an attribute."
+                    )
+            elif ds.attrs["SondeId"] == self.serial_id:
                 object.__setattr__(self, "aspen_ds", ds)
             else:
                 raise ValueError(
