@@ -78,6 +78,19 @@ l2_variables = {
     },
 }
 
+l2_flight_attributes_map = {
+    "True Air Speed (m/s)": "true_air_speed_(ms-1)",
+    "Ground Speed (m/s)": "ground_speed_(ms-1)",
+    "Software Notes": "AVAPS_software_notes",
+    "Format Notes": "AVAPS_format_notes",
+    "True Heading (deg)": "true_heading_(deg)",
+    "Ground Track (deg)": "ground_track_(deg)",
+    "Longitude (deg)": "aircraft_longitude_(deg_E)",
+    "Latitude (deg)": "aircraft_latitude_(deg_N)",
+    "MSL Altitude (m)": "aircraft_msl_altitude_(m)",
+    "Geopotential Altitude (m)": "aircraft_geopotential_altitude_(m)",
+}
+
 
 def get_bool(s):
     if isinstance(s, bool):

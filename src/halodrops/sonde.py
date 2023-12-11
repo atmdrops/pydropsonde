@@ -580,3 +580,40 @@ class Sonde:
         object.__setattr__(self, "_interim_l2_ds", ds)
 
         return self
+
+    def get_flight_attributes(
+        self, l2_flight_attributes_map: dict = hh.l2_flight_attributes_map
+    ) -> None:
+        """
+        Gets flight attributes from the A-file and adds them to the sonde object.
+
+        Parameters
+        ----------
+        l2_flight_attributes_map : dict or str, optional
+            A dictionary where the keys are the flight attributes in the A-file
+            and the values are the corresponding (renamed) attribute names to be used for the L2 file.
+            The default is the l2_flight_attributes_map dictionary from the helper module.
+
+        Returns
+        -------
+        self : object
+            Returns the sonde object with the flight attributes added as attributes.
+        """
+        flight_attrs = {}
+
+        with open(self.afile, "r") as f:
+            lines = f.readlines()
+
+        for attr in l2_flight_attributes_map.keys():
+            for line_id, line in enumerate(lines):
+                if attr in line:
+                    break
+
+            attr = l2_flight_attributes_map.get(attr, attr)
+
+            value = lines[line_id].split("= ")[1]
+            flight_attrs[attr] = float(value) if "AVAPS" not in attr else value
+
+        object.__setattr__(self, "flight_attrs", flight_attrs)
+
+        return self
