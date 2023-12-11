@@ -1,7 +1,8 @@
-from .helper.paths import Paths
+from .helper.paths import Platform, Flight
 from .sonde import Sonde
 import configparser
 import inspect
+import os
 import xarray as xr
 
 
@@ -137,9 +138,67 @@ def get_args_for_function(config, function):
     return args
 
 
-def create_and_populate_Paths_object(config: configparser.ConfigParser) -> Paths:
+def get_platforms(config):
     """
-    Creates a Paths object and populates it with A-files.
+    Get platforms based on the directory names in `data_directory` or the user-provided `platforms` values.
+
+    Parameters
+    ----------
+    config : ConfigParser instance
+        The configuration file parser.
+
+    Returns
+    -------
+    dict
+        A dictionary where keys are platform names and values are `Platform` objects.
+
+    Raises
+    ------
+    ValueError
+        If `platforms` is specified in the config file but `platform_directory_names` is not, or
+        if a value in `platform_directory_names` does not correspond to a directory in `data_directory`.
+
+    """
+    data_directory = config.get("MANDATORY", "data_directory")
+    if config.has_option("MANDATORY", "platforms"):
+        if not config.has_option("MANDATORY", "platform_directory_names"):
+            raise ValueError(
+                "platform_directory_names must be provided in the config file when platforms is specified"
+            )
+        platforms = config.get("MANDATORY", "platforms").split(",")
+        platform_directory_names = config.get(
+            "MANDATORY", "platform_directory_names"
+        ).split(",")
+        platforms = dict(zip(platforms, platform_directory_names))
+        for directory_name in platform_directory_names:
+            if not os.path.isdir(os.path.join(data_directory, directory_name)):
+                raise ValueError(
+                    f"No directory found for {directory_name} in data_directory"
+                )
+        platform_objects = {}
+        for platform, platform_directory_name in platforms.items():
+            platform_objects[platform] = Platform(
+                data_directory=data_directory,
+                platform_id=platform,
+                platform_directory_name=platform_directory_name,
+            )
+    else:
+        platforms = [
+            name
+            for name in os.listdir(data_directory)
+            if os.path.isdir(os.path.join(data_directory, name))
+        ]
+        platform_objects = {}
+        for platform in platforms:
+            platform_objects[platform] = Platform(
+                data_directory=data_directory, platform_id=platform
+            )
+    return platform_objects
+
+
+def create_and_populate_flight_object(config: configparser.ConfigParser) -> Flight:
+    """
+    Creates a Flight object and populates it with A-files.
 
     Parameters
     ----------
@@ -148,15 +207,22 @@ def create_and_populate_Paths_object(config: configparser.ConfigParser) -> Paths
 
     Returns
     -------
-    Paths
-        A Paths object.
+    Flight
+        A Flight object.
     """
+    platform_objects = get_platforms(config)
     output = {}
-    mandatory = get_mandatory_args(Paths)
-    mandatory_args = get_mandatory_values_from_config(config, mandatory)
-    output["paths"] = Paths(**mandatory_args)
-    output["sondes"] = output["paths"].populate_sonde_instances()
-    return output["paths"], output["sondes"]
+    output["sondes"] = {}
+    for platform in platform_objects:
+        for flight_id in platform_objects[platform].flight_ids:
+            flight = Flight(
+                platform_objects[platform].data_directory,
+                flight_id,
+                platform,
+                platform_objects[platform].platform_directory_name,
+            )
+            output["sondes"].update(flight.populate_sonde_instances())
+    return output["sondes"]
 
 
 def iterate_Sonde_method_over_dict_of_Sondes_objects(
@@ -299,10 +365,10 @@ def run_pipeline(pipeline: dict, config: configparser.ConfigParser):
 
 
 pipeline = {
-    "create_paths": {
+    "create_flight": {
         "intake": None,
-        "apply": create_and_populate_Paths_object,
-        "output": ["paths", "sondes"],
+        "apply": create_and_populate_flight_object,
+        "output": "sondes",
     },
     "qc": {
         "intake": "sondes",

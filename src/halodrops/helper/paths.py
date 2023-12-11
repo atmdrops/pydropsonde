@@ -11,7 +11,39 @@ from halodrops.sonde import Sonde
 module_logger = logging.getLogger("halodrops.helper.paths")
 
 
-class Paths:
+class Platform:
+    """
+    Deriving flight paths from the provided platform directory
+
+    The input should align in terms of hierarchy and nomenclature
+    with the {doc}`Directory Structure </handbook/directory_structure>` that `halodrops` expects.
+    """
+
+    def __init__(
+        self, data_directory, platform_id, platform_directory_name=None
+    ) -> None:
+        self.platform_id = platform_id
+        self.platform_directory_name = platform_directory_name
+        self.data_directory = data_directory
+        self.flight_ids = self.get_flight_ids()
+
+    def get_flight_ids(self):
+        """Returns a list of flight IDs for the given platform directory"""
+        if self.platform_directory_name is None:
+            platform_dir = os.path.join(self.data_directory, self.platform_id)
+        else:
+            platform_dir = os.path.join(
+                self.data_directory, self.platform_directory_name
+            )
+
+        flight_ids = []
+        for flight_dir in os.listdir(platform_dir):
+            if os.path.isdir(os.path.join(platform_dir, flight_dir)):
+                flight_ids.append(flight_dir)
+        return flight_ids
+
+
+class Flight:
     """
     Deriving paths from the provided directory
 
@@ -19,7 +51,9 @@ class Paths:
     with the {doc}`Directory Structure </handbook/directory_structure>` that `halodrops` expects.
     """
 
-    def __init__(self, data_directory, flight_id):
+    def __init__(
+        self, data_directory, flight_id, platform_id, platform_directory_name=None
+    ):
         """Creates an instance of Paths object for a given flight
 
         Parameters
@@ -30,25 +64,33 @@ class Paths:
         `flight_id` : `str`
             Individual flight directory name
 
+        `platform_id` : `str`
+            Platform name
+
         Attributes
         ----------
-        `flight_id`
+        `flight_idpath`
             Path to flight data directory
 
-        `flight_idname`
+        `flight_id`
             Name of flight data directory
 
         `l1dir`
             Path to Level-1 data directory
         """
         self.logger = logging.getLogger("halodrops.helper.paths.Paths")
-        self.flight_id = os.path.join(data_directory, flight_id)
-        self.flight_idname = flight_id
-        self.l0dir = os.path.join(data_directory, flight_id, "Level_0")
-        self.l1dir = os.path.join(data_directory, flight_id, "Level_1")
+        if platform_directory_name is None:
+            platform_directory_name = platform_id
+        self.flight_idpath = os.path.join(
+            data_directory, platform_directory_name, flight_id
+        )
+        self.flight_id = flight_id
+        self.platform_id = platform_id
+        self.l1dir = os.path.join(self.flight_idpath, "Level_1")
+        self.l0dir = os.path.join(self.flight_idpath, "Level_0")
 
         self.logger.info(
-            f"Created Path Instance: {self.flight_id=}; {self.flight_idname=}; {self.l1dir=}"
+            f"Created Path Instance: {self.flight_idpath=}; {self.flight_id=}; {self.l1dir=}"
         )
 
     def get_all_afiles(self):
@@ -69,7 +111,7 @@ class Paths:
         `str`
             Path to quicklooks directory
         """
-        quicklooks_path_str = os.path.join(self.flight_id, "Quicklooks")
+        quicklooks_path_str = os.path.join(self.flight_idpath, "Quicklooks")
         if pp(quicklooks_path_str).exists():
             self.logger.info(f"Path exists: {quicklooks_path_str=}")
         else:
@@ -80,7 +122,7 @@ class Paths:
         return quicklooks_path_str
 
     def populate_sonde_instances(self) -> Dict:
-        """Returns a dictionary of `Sonde` class instances for all A-files found in `flight_id`
+        """Returns a dictionary of `Sonde` class instances for all A-files found in `flight_idpath`
         and also sets the dictionary as value of `Sondes` attribute
         """
         afiles = self.get_all_afiles()
@@ -94,6 +136,8 @@ class Paths:
 
             Sondes[sonde_id] = Sonde(sonde_id, launch_time=launch_time)
             Sondes[sonde_id].add_launch_detect(launch_detect)
+            Sondes[sonde_id].add_flight_id(self.flight_id)
+            Sondes[sonde_id].add_platform_id(self.platform_id)
             Sondes[sonde_id].add_afile(a_file)
             if launch_detect:
                 Sondes[sonde_id].add_postaspenfile()
