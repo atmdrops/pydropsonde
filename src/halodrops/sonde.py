@@ -489,3 +489,33 @@ class Sonde:
             object.__setattr__(self, "_interim_l2_ds", ds)
 
             return self
+
+    def get_l2_variables(self, l2_variables=["u_wind", "v_wind", "tdry", "pres", "rh"]):
+        """
+        Gets the variables from aspen_ds to create L2.
+
+        Parameters
+        ----------
+        l2_variables : list or str, optional
+            The variables to keep for L2.
+            The default variables are 'u_wind', 'v_wind', 'tdry', 'pres', 'rh'
+
+        Returns
+        -------
+        self : object
+            Returns the sonde object with only the specified variables in _interim_l2_ds.
+            If '_interim_l2_ds' is not already an attribute of the object, it will first be set to 'aspen_ds' before reducing to the variables.
+        """
+        if isinstance(l2_variables, str):
+            l2_variables = l2_variables.split(",")
+
+        if hasattr(self, "_interim_l2_ds"):
+            ds = self._interim_l2_ds
+        else:
+            ds = self.aspen_ds
+
+        ds = ds[l2_variables]
+
+        object.__setattr__(self, "_interim_l2_ds", ds)
+
+        return self
