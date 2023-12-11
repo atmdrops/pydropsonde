@@ -1,7 +1,8 @@
-from .helper.paths import Flight
+from .helper.paths import Platform, Flight
 from .sonde import Sonde
 import configparser
 import inspect
+import os
 import xarray as xr
 
 
@@ -135,6 +136,65 @@ def get_args_for_function(config, function):
         args.update(mandatory_args)
 
     return args
+
+
+def get_platforms(data_directory, config):
+    """
+    Get platforms based on the directory names in `data_directory` or the user-provided `platforms` values.
+
+    Parameters
+    ----------
+    data_directory : str
+        The directory where platform data is stored.
+    config : ConfigParser instance
+        The configuration file parser.
+
+    Returns
+    -------
+    dict
+        A dictionary where keys are platform names and values are `Platform` objects.
+
+    Raises
+    ------
+    ValueError
+        If `platforms` is specified in the config file but `platform_directory_names` is not, or
+        if a value in `platform_directory_names` does not correspond to a directory in `data_directory`.
+
+    """
+    if config.has_option("MANDATORY", "platforms"):
+        if not config.has_option("MANDATORY", "platform_directory_names"):
+            raise ValueError(
+                "platform_directory_names must be provided in the config file when platforms is specified"
+            )
+        platforms = config.get("MANDATORY", "platforms").split(",")
+        platform_directory_names = config.get(
+            "MANDATORY", "platform_directory_names"
+        ).split(",")
+        platforms = dict(zip(platforms, platform_directory_names))
+        for directory_name in platform_directory_names:
+            if not os.path.isdir(os.path.join(data_directory, directory_name)):
+                raise ValueError(
+                    f"No directory found for {directory_name} in data_directory"
+                )
+        platform_objects = {}
+        for platform, platform_directory_name in platforms.items():
+            platform_objects[platform] = Platform(
+                data_directory=data_directory,
+                platform_id=platform,
+                platform_directory_name=platform_directory_name,
+            )
+    else:
+        platforms = [
+            name
+            for name in os.listdir(data_directory)
+            if os.path.isdir(os.path.join(data_directory, name))
+        ]
+        platform_objects = {}
+        for platform in platforms:
+            platform_objects[platform] = Platform(
+                data_directory=data_directory, platform_id=platform
+            )
+    return platform_objects
 
 
 def create_and_populate_flight_object(config: configparser.ConfigParser) -> Flight:
