@@ -1,4 +1,6 @@
+import ast
 from dataclasses import dataclass, field, KW_ONLY
+import datetime
 from typing import Any, Optional, List
 import os
 
@@ -41,6 +43,26 @@ class Sonde:
         object.__setattr__(self, "qc", type("", (), {})())
         if self.launch_time is not None:
             object.__setattr__(self, "sort_index", self.launch_time)
+
+    def add_flight_id(self, flight_id: str) -> None:
+        """Sets attribute of flight ID
+
+        Parameters
+        ----------
+        flight_id : str
+            The flight ID of the flight during which the sonde was launched
+        """
+        object.__setattr__(self, "flight_id", flight_id)
+
+    def add_platform_id(self, platform_id: str) -> None:
+        """Sets attribute of platform ID
+
+        Parameters
+        ----------
+        platform_id : str
+            The platform ID of the flight during which the sonde was launched
+        """
+        object.__setattr__(self, "platform_id", platform_id)
 
     def add_spatial_coordinates_at_launch(self, launch_coordinates: List) -> None:
         """Sets attributes of spatial coordinates at launch
@@ -154,7 +176,14 @@ class Sonde:
 
         if hasattr(self, "postaspenfile"):
             ds = xr.open_dataset(self.postaspenfile)
-            if ds.attrs["SondeId"] == self.serial_id:
+            if "SondeId" not in ds.attrs:
+                if ds.attrs["SoundingDescription"].split(" ")[1] == self.serial_id:
+                    object.__setattr__(self, "aspen_ds", ds)
+                else:
+                    raise ValueError(
+                        f"I didn't find the `SondeId` attribute, so checked the `SoundingDescription` attribute. I found the ID in the `SoundingDescription` global attribute ({ds.attrs['SoundingDescription'].split(' ')[1]}) to not match with this instance's `serial_id` attribute ({self.serial_id}). Therefore, I am not storing the xarray dataset as an attribute."
+                    )
+            elif ds.attrs["SondeId"] == self.serial_id:
                 object.__setattr__(self, "aspen_ds", ds)
             else:
                 raise ValueError(
@@ -443,5 +472,303 @@ class Sonde:
         # If the sonde passes all the QC checks, remove all attributes listed in filter_flags
         for flag in filter_flags:
             delattr(self.qc, flag)
+
+        return self
+
+    def convert_to_si(self, variables=["rh", "pres", "tdry"], skip=False):
+        """
+        Converts variables to SI units.
+
+        Parameters
+        ----------
+        variables : list or str, optional
+            The variables to convert to SI units. If a string is provided, it should be a comma-separated list of variables.
+            The default variables are 'rh', 'pres', and 'tdry'.
+
+        skip : bool, optional
+            If set to True, the function will skip the conversion process but will still ensure that the '_interim_l2_ds' attribute is set.
+            If '_interim_l2_ds' is not already an attribute of the object, it will be set to 'aspen_ds'.
+            Default is False.
+
+        Returns
+        -------
+        self : object
+            Returns the sonde object with the specified variables in aspen_ds converted to SI units.
+            If 'skip' is set to True, it returns the sonde object with '_interim_l2_ds' set to 'aspen_ds' if it wasn't already present.
+        """
+        if hh.get_bool(skip):
+            if hasattr(self, "_interim_l2_ds"):
+                return self
+            else:
+                object.__setattr__(self, "_interim_l2_ds", self.aspen_ds)
+                return self
+        else:
+            if isinstance(variables, str):
+                variables = variables.split(",")
+
+            if hasattr(self, "_interim_l2_ds"):
+                ds = self._interim_l2_ds
+            else:
+                ds = self.aspen_ds
+
+            for variable in variables:
+                func = hh.get_si_converter_function_based_on_var(variable)
+                ds = ds.assign({f"{variable}": func(self.aspen_ds[variable])})
+
+            object.__setattr__(self, "_interim_l2_ds", ds)
+
+            return self
+
+    def get_l2_variables(self, l2_variables: dict = hh.l2_variables):
+        """
+        Gets the variables from aspen_ds to create L2.
+
+        Parameters
+        ----------
+        l2_variables : dict or str, optional
+            A dictionary where the keys are the variables in aspen_ds to keep for L2.
+            If dictionary items contain a 'rename_to' key, the variable will be renamed to the value of 'rename_to'.
+            If dictionary items contain a 'attributes' key, the variable will be assigned the attributes in the value of 'attributes'.
+            The default is the l2_variables dictionary from the helper module.
+
+        Returns
+        -------
+        self : object
+            Returns the sonde object with only the specified variables (renamed if dictionary has 'rename_to' key and attributes added if dictionary has 'attributes' key) in _interim_l2_ds attribute.
+            If '_interim_l2_ds' is not already an attribute of the object, it will first be set to 'aspen_ds' before reducing to the variables and renaming.
+        """
+        if isinstance(l2_variables, str):
+            l2_variables = ast.literal_eval(l2_variables)
+
+        l2_variables_list = list(l2_variables.keys())
+
+        if hasattr(self, "_interim_l2_ds"):
+            ds = self._interim_l2_ds
+        else:
+            ds = self.aspen_ds
+
+        ds = ds[l2_variables_list]
+
+        for variable, variable_dict in l2_variables.items():
+            if "attributes" in variable_dict:
+                ds[variable].attrs = variable_dict["attributes"]
+            if "rename_to" in variable_dict:
+                ds = ds.rename({variable: variable_dict["rename_to"]})
+
+        object.__setattr__(self, "_interim_l2_ds", ds)
+
+        return self
+
+    def add_sonde_id_variable(self, variable_name="sonde_id"):
+        """
+        Adds a variable and related attributes to the sonde object with the Sonde object (self)'s serial_id attribute.
+
+        Parameters
+        ----------
+        variable_name : str, optional
+            The name of the variable to be added. Default is 'sonde_id'.
+
+        Returns
+        -------
+        self : object
+            Returns the sonde object with a variable containing serial_id. Name of the variable provided by 'variable_name'.
+        """
+        if hasattr(self, "_interim_l2_ds"):
+            ds = self._interim_l2_ds
+        else:
+            ds = self.aspen_ds
+
+        ds = ds.assign({variable_name: self.serial_id})
+        ds[variable_name].attrs = {
+            "descripion": "unique sonde ID",
+            "long_name": "sonde identifier",
+            "cf_role": "trajectory_id",
+        }
+
+        object.__setattr__(self, "_interim_l2_ds", ds)
+
+        return self
+
+    def get_flight_attributes(
+        self, l2_flight_attributes_map: dict = hh.l2_flight_attributes_map
+    ) -> None:
+        """
+        Gets flight attributes from the A-file and adds them to the sonde object.
+
+        Parameters
+        ----------
+        l2_flight_attributes_map : dict or str, optional
+            A dictionary where the keys are the flight attributes in the A-file
+            and the values are the corresponding (renamed) attribute names to be used for the L2 file.
+            The default is the l2_flight_attributes_map dictionary from the helper module.
+
+        Returns
+        -------
+        self : object
+            Returns the sonde object with the flight attributes added as attributes.
+        """
+        flight_attrs = {}
+
+        with open(self.afile, "r") as f:
+            lines = f.readlines()
+
+        for attr in l2_flight_attributes_map.keys():
+            for line_id, line in enumerate(lines):
+                if attr in line:
+                    break
+
+            attr = l2_flight_attributes_map.get(attr, attr)
+
+            value = lines[line_id].split("= ")[1]
+            flight_attrs[attr] = float(value) if "AVAPS" not in attr else value
+
+        object.__setattr__(self, "flight_attrs", flight_attrs)
+
+        return self
+
+    def get_other_global_attributes(self):
+        nc_global_attrs = {
+            # "title": "Level-2",
+            # "doi": f"{halodrops.data_doi}",
+            # "created with": f"pipeline.py doi:{halodrops.software_doi}",
+            "Conventions": "CF-1.8",
+            "campaign_id": "HALO-(AC)3",
+            "platform_id": self.platform_id,
+            # "instrument_id": "Vaisala RD-41",
+            "product_id": "Level-2",
+            # "AVAPS_Software_version": "Version 4.1.2",
+            "ASPEN_version": self.aspen_ds.AspenVersion
+            if hasattr(self.aspen_ds, "AspenVersion")
+            else self.aspen_ds.AvapsEditorVersion,
+            "ASPEN_processing_time": self.aspen_ds.ProcessingTime,
+            # "JOANNE_version": joanne.__version__,
+            # "launch_date": str(pd.to_datetime(self.launch_time).date()),
+            "launch_time_(UTC)": str(self.aspen_ds.launch_time.values)
+            if hasattr(self.aspen_ds, "launch_time")
+            else str(self.aspen_ds.base_time.values),
+            "sonde_serial_ID": self.serial_id,
+            "author": "Geet George",
+            "author_email": "g.george@tudelft.nl",
+            "featureType": "trajectory",
+            # "reference": halodrops.reference_study,
+            "creation_time": str(datetime.datetime.utcnow()) + " UTC",
+        }
+
+        object.__setattr__(self, "nc_global_attrs", nc_global_attrs)
+
+        return self
+
+    def add_global_attributes_to_interim_l2_ds(self):
+        """
+        Adds global attributes to _interim_l2_ds.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        self : object
+            Returns the sonde object with global attributes added to _interim_l2_ds.
+        """
+        ds = self._interim_l2_ds
+
+        attrs_to_del = []
+        for attr in ds.attrs.keys():
+            attrs_to_del.append(attr)
+
+        for attr in attrs_to_del:
+            del ds.attrs[attr]
+
+        if hasattr(self, "flight_attrs"):
+            for attr, value in self.flight_attrs.items():
+                ds.attrs[attr] = value
+        if hasattr(self, "nc_global_attrs"):
+            for attr, value in self.nc_global_attrs.items():
+                ds.attrs[attr] = value
+
+        object.__setattr__(self, "_interim_l2_ds", ds)
+
+        return self
+
+    def add_compression_and_encoding_properties(
+        self,
+        encoding_variables: dict = hh.encoding_variables,
+        default_variable_compression_properties: dict = hh.variable_compression_properties,
+    ):
+        """
+        Adds compression and encoding properties to _interim_l2_ds.
+
+        Parameters
+        ----------
+        comp : dict or str, optional
+            A dictionary containing the compression properties to be used for the L2 file.
+            The default is the comp dictionary from the helper module.
+
+        Returns
+        -------
+        self : object
+            Returns the sonde object with compression and encoding properties added to _interim_l2_ds.
+        """
+
+        for var in encoding_variables:
+            self._interim_l2_ds[var].encoding = encoding_variables[var]
+
+        for var in self._interim_l2_ds.data_vars:
+            if not encoding_variables.get(var):
+                self._interim_l2_ds[
+                    var
+                ].encoding = default_variable_compression_properties
+
+        return self
+
+    def get_l2_filename(self, l2_filename: str = None):
+        """
+        Gets the L2 filename from the template provided.
+
+        Parameters
+        ----------
+        l2_filename : str, optional
+            The L2 filename. The default is the l2_filename_template from the helper module.
+
+        Returns
+        -------
+        self : object
+            Returns the sonde object with the L2 filename added as an attribute.
+        """
+        if l2_filename is None:
+            l2_filename = hh.l2_filename_template.format(
+                platform=self.platform_id,
+                serial_id=self.serial_id,
+                flight_id=self.flight_id,
+                launch_time=self.launch_time,
+            )
+
+        object.__setattr__(self, "l2_filename", l2_filename)
+
+        return self
+
+    def write_l2(self, l2_dir: str = None):
+        """
+        Writes the L2 file to the specified directory.
+
+        Parameters
+        ----------
+        l2_dir : str, optional
+            The directory to write the L2 file to. The default is the directory of the A-file with '0' replaced by '2'.
+
+        Returns
+        -------
+        self : object
+            Returns the sonde object with the L2 file written to the specified directory using the l2_filename attribute to set the name.
+        """
+
+        if l2_dir is None:
+            l2_dir = os.path.dirname(self.afile)[:-1] + "2"
+
+        if not os.path.exists(l2_dir):
+            os.makedirs(l2_dir)
+
+        self._interim_l2_ds.to_netcdf(os.path.join(l2_dir, self.l2_filename))
 
         return self
