@@ -196,7 +196,9 @@ def get_platforms(config):
     return platform_objects
 
 
-def create_and_populate_flight_object(config: configparser.ConfigParser) -> Flight:
+def create_and_populate_flight_object(
+    config: configparser.ConfigParser,
+) -> (dict[Platform], dict[Sonde]):
     """
     Creates a Flight object and populates it with A-files.
 
@@ -210,8 +212,9 @@ def create_and_populate_flight_object(config: configparser.ConfigParser) -> Flig
     Flight
         A Flight object.
     """
-    platform_objects = get_platforms(config)
     output = {}
+    platform_objects = get_platforms(config)
+    output["platforms"] = platform_objects
     output["sondes"] = {}
     for platform in platform_objects:
         for flight_id in platform_objects[platform].flight_ids:
@@ -222,7 +225,7 @@ def create_and_populate_flight_object(config: configparser.ConfigParser) -> Flig
                 platform_objects[platform].platform_directory_name,
             )
             output["sondes"].update(flight.populate_sonde_instances())
-    return output["sondes"]
+    return output["platforms"], output["sondes"]
 
 
 def iterate_Sonde_method_over_dict_of_Sondes_objects(
@@ -368,7 +371,7 @@ pipeline = {
     "create_flight": {
         "intake": None,
         "apply": create_and_populate_flight_object,
-        "output": "sondes",
+        "output": ["platforms", "sondes"],
     },
     "qc": {
         "intake": "sondes",
