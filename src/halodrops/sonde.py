@@ -747,3 +747,28 @@ class Sonde:
         object.__setattr__(self, "l2_filename", l2_filename)
 
         return self
+
+    def write_l2(self, l2_dir: str = None):
+        """
+        Writes the L2 file to the specified directory.
+
+        Parameters
+        ----------
+        l2_dir : str, optional
+            The directory to write the L2 file to. The default is the directory of the A-file with '0' replaced by '2'.
+
+        Returns
+        -------
+        self : object
+            Returns the sonde object with the L2 file written to the specified directory using the l2_filename attribute to set the name.
+        """
+
+        if l2_dir is None:
+            l2_dir = os.path.dirname(self.afile)[:-1] + "2"
+
+        if not os.path.exists(l2_dir):
+            os.makedirs(l2_dir)
+
+        self._interim_l2_ds.to_netcdf(os.path.join(l2_dir, self.l2_filename))
+
+        return self
