@@ -1,5 +1,5 @@
 from .helper.paths import Platform, Flight
-from .sonde import Sonde
+from .processor import Sonde
 import configparser
 import inspect
 import os

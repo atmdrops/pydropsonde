@@ -1,7 +1,7 @@
 import pytest
 import os
 import xarray as xr
-from halodrops.sonde import Sonde
+from halodrops.processor import Sonde
 
 s_id = "test_this_id"
 launch_time = "2020-02-02 20:22:02"
@@ -11,7 +11,6 @@ postaspenfile_name = f"D{file_name_launch[1:]}QC.nc"
 
 
 def test_Sonde_attrs():
-
     TestSonde_nolaunchtime = Sonde(s_id)
     TestSonde_withlaunchtime = Sonde(s_id, launch_time=launch_time)
 

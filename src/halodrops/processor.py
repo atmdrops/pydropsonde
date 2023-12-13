@@ -772,3 +772,24 @@ class Sonde:
         self._interim_l2_ds.to_netcdf(os.path.join(l2_dir, self.l2_filename))
 
         return self
+
+    def add_l2_ds(self, l2_dir: str = None):
+        """
+        Adds the L2 dataset as an attribute to the sonde object.
+
+        Parameters
+        ----------
+        l2_dir : str, optional
+            The directory to read the L2 file from. The default is the directory of the A-file with '0' replaced by '2'.
+
+        Returns
+        -------
+        self : object
+            Returns the sonde object with the L2 dataset added as an attribute.
+        """
+        if l2_dir is None:
+            l2_dir = os.path.dirname(self.afile)[:-1] + "2"
+
+        self.l2_ds = xr.open_dataset(os.path.join(l2_dir, self.l2_filename))
+
+        return self

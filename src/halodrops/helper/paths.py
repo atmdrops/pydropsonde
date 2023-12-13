@@ -5,7 +5,7 @@ from typing import Dict
 import os.path
 
 from halodrops.helper import rawreader as rr
-from halodrops.sonde import Sonde
+from halodrops.processor import Sonde
 
 # create logger
 module_logger = logging.getLogger("halodrops.helper.paths")
