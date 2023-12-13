@@ -105,6 +105,11 @@ l2_flight_attributes_map = {
 }
 
 
+l2_filename_template = (
+    "HALO-(AC)3_{platform}_{launch_time}_{flight_id}_{serial_id}_Level_2.nc"
+)
+
+
 def get_bool(s):
     if isinstance(s, bool):
         return s

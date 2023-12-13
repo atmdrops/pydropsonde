@@ -721,3 +721,29 @@ class Sonde:
                 ].encoding = default_variable_compression_properties
 
         return self
+
+    def get_l2_filename(self, l2_filename: str = None):
+        """
+        Gets the L2 filename from the template provided.
+
+        Parameters
+        ----------
+        l2_filename : str, optional
+            The L2 filename. The default is the l2_filename_template from the helper module.
+
+        Returns
+        -------
+        self : object
+            Returns the sonde object with the L2 filename added as an attribute.
+        """
+        if l2_filename is None:
+            l2_filename = hh.l2_filename_template.format(
+                platform=self.platform_id,
+                serial_id=self.serial_id,
+                flight_id=self.flight_id,
+                launch_time=self.launch_time,
+            )
+
+        object.__setattr__(self, "l2_filename", l2_filename)
+
+        return self
