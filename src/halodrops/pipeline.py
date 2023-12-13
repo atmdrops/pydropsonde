@@ -384,7 +384,17 @@ pipeline = {
     "create_L2": {
         "intake": "sondes",
         "apply": iterate_Sonde_method_over_dict_of_Sondes_objects,
-        "functions": [],
+        "functions": [
+            "convert_to_si",
+            "get_l2_variables",
+            "add_compression_and_encoding_properties",
+            "get_flight_attributes",
+            "get_other_global_attributes",
+            "add_global_attributes_to_interim_l2_ds",
+            "add_sonde_id_variable",
+            "get_l2_filename",
+            "write_l2",
+        ],
         "output": "sondes",
         "comment": "This steps creates the L2 files after the QC (user says how QC flags are used to go from L1 to L2) and then saves these as L2 NC datasets.",
     },
