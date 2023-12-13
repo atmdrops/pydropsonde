@@ -690,3 +690,34 @@ class Sonde:
         object.__setattr__(self, "_interim_l2_ds", ds)
 
         return self
+
+    def add_compression_and_encoding_properties(
+        self,
+        encoding_variables: dict = hh.encoding_variables,
+        default_variable_compression_properties: dict = hh.variable_compression_properties,
+    ):
+        """
+        Adds compression and encoding properties to _interim_l2_ds.
+
+        Parameters
+        ----------
+        comp : dict or str, optional
+            A dictionary containing the compression properties to be used for the L2 file.
+            The default is the comp dictionary from the helper module.
+
+        Returns
+        -------
+        self : object
+            Returns the sonde object with compression and encoding properties added to _interim_l2_ds.
+        """
+
+        for var in encoding_variables:
+            self._interim_l2_ds[var].encoding = encoding_variables[var]
+
+        for var in self._interim_l2_ds.data_vars:
+            if not encoding_variables.get(var):
+                self._interim_l2_ds[
+                    var
+                ].encoding = default_variable_compression_properties
+
+        return self

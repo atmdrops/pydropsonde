@@ -1,3 +1,5 @@
+import numpy as np
+
 # Keys in l2_variables should be variable names in aspen_ds attribute of Sonde object
 l2_variables = {
     "u_wind": {
@@ -77,6 +79,17 @@ l2_variables = {
         }
     },
 }
+
+encoding_variables = {
+    "time": {"units": "seconds since 1970-01-01", "dtype": "float"},
+}
+
+variable_compression_properties = dict(
+    zlib=True,
+    complevel=4,
+    fletcher32=True,
+    _FillValue=np.finfo("float32").max,
+)
 
 l2_flight_attributes_map = {
     "True Air Speed (m/s)": "true_air_speed_(ms-1)",
