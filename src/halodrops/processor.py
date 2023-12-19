@@ -778,7 +778,7 @@ class Sonde:
             "launch_time_(UTC)": str(self.aspen_ds.launch_time.values)
             if hasattr(self.aspen_ds, "launch_time")
             else str(self.aspen_ds.base_time.values),
-            "is_floater": self.is_floater,
+            "is_floater": self.is_floater.__str__(),
             "sonde_serial_ID": self.serial_id,
             "author": "Geet George",
             "author_email": "g.george@tudelft.nl",
