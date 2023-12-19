@@ -234,6 +234,71 @@ class Sonde:
                 f"The attribute `launch_detect` does not exist for Sonde {self.serial_id}."
             )
 
+    def detect_floater(
+        self,
+        gpsalt_threshold: float = 25,
+        consecutive_time_steps: int = 3,
+        skip: bool = False,
+    ):
+        """
+        Detects if a sonde is a floater.
+
+        Parameters
+        ----------
+        gpsalt_threshold : float, optional
+            The gpsalt altitude below which the sonde will check for time periods when gpsalt and pres have not changed. Default is 25.
+        skip : bool, optional
+            If True, the function will return the object without performing any operations. Default is False.
+
+        Returns
+        -------
+        self
+            The object itself with the new `is_floater` attribute added based on the function parameters.
+        """
+        if hh.get_bool(skip):
+            return self
+        else:
+            if isinstance(gpsalt_threshold, str):
+                gpsalt_threshold = float(gpsalt_threshold)
+
+            if hasattr(self, "aspen_ds"):
+                surface_ds = (
+                    self.aspen_ds.where(
+                        self.aspen_ds.gpsalt < gpsalt_threshold, drop=True
+                    )
+                    .sortby("time")
+                    .dropna(dim="time", how="any", subset=["pres", "gpsalt"])
+                )
+                gpsalt_diff = np.diff(surface_ds.gpsalt)
+                pressure_diff = np.diff(surface_ds.pres)
+                gpsalt_diff_below_threshold = (
+                    np.abs(gpsalt_diff) < 1
+                )  # GPS altitude value at surface shouldn't change by more than 1 m
+                pressure_diff_below_threshold = (
+                    np.abs(pressure_diff) < 1
+                )  # Pressure value at surface shouldn't change by more than 1 hPa
+                floater = gpsalt_diff_below_threshold & pressure_diff_below_threshold
+                if np.any(floater):
+                    object.__setattr__(self, "is_floater", True)
+                    for time_index in range(len(floater) - consecutive_time_steps + 1):
+                        if np.all(
+                            floater[time_index : time_index + consecutive_time_steps]
+                        ):
+                            landing_time = surface_ds.time[time_index - 1].values
+                            break
+
+                    object.__setattr__(self, "landing_time", landing_time)
+                    print(
+                        f"{self.serial_id}: Floater detected! The landing time is estimated as {landing_time}."
+                    )
+                else:
+                    object.__setattr__(self, "is_floater", False)
+            else:
+                raise ValueError(
+                    "The attribute `aspen_ds` does not exist. Please run `add_aspen_ds` method first."
+                )
+            return self
+
     def profile_fullness(
         self,
         variable_dict={"u_wind": 4, "v_wind": 4, "rh": 2, "tdry": 2, "pres": 2},
