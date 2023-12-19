@@ -299,6 +299,33 @@ class Sonde:
                 )
             return self
 
+    def crop_aspen_ds_to_landing_time(self):
+        """
+        Crops the aspen_ds to the time period before landing.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        self
+            The object itself with the new `cropped_aspen_ds` attribute added if the sonde is a floater.
+        """
+        if hasattr(self, "is_floater"):
+            if self.is_floater:
+                if hasattr(self, "landing_time"):
+                    object.__setattr__(
+                        self,
+                        "cropped_aspen_ds",
+                        self.aspen_ds.sel(time=slice(self.landing_time, None)),
+                    )
+        else:
+            raise ValueError(
+                "The attribute `is_floater` does not exist. Please run `detect_floater` method first."
+            )
+        return self
+
     def profile_fullness(
         self,
         variable_dict={"u_wind": 4, "v_wind": 4, "rh": 2, "tdry": 2, "pres": 2},
