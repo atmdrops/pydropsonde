@@ -337,6 +337,8 @@ class Sonde:
     ):
         """
         Calculates the profile coverage for a given set of variables, considering their sampling frequency.
+        If the sonde is a floater, the function will take the `cropped_aspen_ds` attribute
+        (calculated with the `crop_aspen_ds_to_landing_time` method) as the dataset to calculate the profile coverage.
 
         This function assumes that the time_dimension coordinates are spaced over 0.25 seconds,
         implying a timestamp_frequency of 4 hertz. This is applicable for ASPEN-processed QC and PQC files,
@@ -380,7 +382,13 @@ class Sonde:
                 fullness_threshold = float(fullness_threshold)
 
             for variable, sampling_frequency in variable_dict.items():
-                dataset = self.aspen_ds[variable]
+                if self.is_floater:
+                    if not hasattr(self, "cropped_aspen_ds"):
+                        self.crop_aspen_ds_to_landing_time()
+                    dataset = self.cropped_aspen_ds[variable]
+                else:
+                    dataset = self.aspen_ds[variable]
+
                 weighed_time_size = len(dataset[time_dimension]) / (
                     timestamp_frequency / sampling_frequency
                 )
