@@ -399,7 +399,7 @@ class Sonde:
         alt_bounds : list, optional
             The lower and upper bounds of altitude in meters to consider for the calculation. Defaults to [0,1000].
         alt_dimension_name : str, optional
-            The name of the altitude dimension. Defaults to "alt".
+            The name of the altitude dimension. Defaults to "alt". If the sonde is a floater, this will be set to "gpsalt" regardless of user-provided value.
         count_threshold : int, optional
             The minimum count of non-null values required for a variable to be considered as having near surface coverage. Defaults to 50.
         add_near_surface_count_attribute : bool, optional
@@ -424,6 +424,14 @@ class Sonde:
                 raise ValueError(
                     "The attribute `aspen_ds` does not exist. Please run `add_aspen_ds` method first."
                 )
+
+            if not hasattr(self, "is_floater"):
+                raise ValueError(
+                    "The attribute `is_floater` does not exist. Please run `detect_floater` method first."
+                )
+
+            if self.is_floater:
+                alt_dimension_name = "gpsalt"
 
             if isinstance(alt_bounds, str):
                 alt_bounds = alt_bounds.split(",")
