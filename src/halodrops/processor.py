@@ -583,6 +583,30 @@ class Sonde:
 
         return self
 
+    def create_interim_l2_ds(self):
+        """
+        Creates an interim L2 dataset from the aspen_ds or cropped_aspen_ds attribute.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        self : object
+            Returns the sonde object with the interim L2 dataset added as an attribute.
+        """
+        if self.is_floater:
+            if not hasattr(self, "cropped_aspen_ds"):
+                self.crop_aspen_ds_to_landing_time()
+            ds = self.cropped_aspen_ds
+        else:
+            ds = self.aspen_ds
+
+        object.__setattr__(self, "_interim_l2_ds", ds)
+
+        return self
+
     def convert_to_si(self, variables=["rh", "pres", "tdry"], skip=False):
         """
         Converts variables to SI units.
@@ -754,6 +778,7 @@ class Sonde:
             "launch_time_(UTC)": str(self.aspen_ds.launch_time.values)
             if hasattr(self.aspen_ds, "launch_time")
             else str(self.aspen_ds.base_time.values),
+            "is_floater": self.is_floater,
             "sonde_serial_ID": self.serial_id,
             "author": "Geet George",
             "author_email": "g.george@tudelft.nl",
