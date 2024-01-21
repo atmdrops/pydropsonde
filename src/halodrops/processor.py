@@ -285,12 +285,18 @@ class Sonde:
                             floater[time_index : time_index + consecutive_time_steps]
                         ):
                             landing_time = surface_ds.time[time_index - 1].values
+                            object.__setattr__(self, "landing_time", landing_time)
+                            print(
+                                f"{self.serial_id}: Floater detected! The landing time is estimated as {landing_time}."
+                            )
                             break
-
-                    object.__setattr__(self, "landing_time", landing_time)
-                    print(
-                        f"{self.serial_id}: Floater detected! The landing time is estimated as {landing_time}."
-                    )
+                        if not hasattr(self, "landing_time"):
+                            print(
+                                f"{self.serial_id}: Floater detected! However, the landing time could not be estimated. Therefore setting landing time as {surface_ds.time[0].values}"
+                            )
+                            object.__setattr__(
+                                self, "landing_time", surface_ds.time[0].values
+                            )
                 else:
                     object.__setattr__(self, "is_floater", False)
             else:
@@ -331,7 +337,7 @@ class Sonde:
         variable_dict={"u_wind": 4, "v_wind": 4, "rh": 2, "tdry": 2, "pres": 2},
         time_dimension="time",
         timestamp_frequency=4,
-        fullness_threshold=0.8,
+        fullness_threshold=0.75,
         add_fullness_fraction_attribute=False,
         skip=False,
     ):
