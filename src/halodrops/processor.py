@@ -929,6 +929,8 @@ class Sonde:
         if l2_dir is None:
             l2_dir = os.path.dirname(self.afile)[:-1] + "2"
 
-        self.l2_ds = xr.open_dataset(os.path.join(l2_dir, self.l2_filename))
+        object.__setattr__(
+            self, "l2_ds", xr.open_dataset(os.path.join(l2_dir, self.l2_filename))
+        )
 
         return self
