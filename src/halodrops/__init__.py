@@ -35,7 +35,6 @@ from . import pipeline as pi
 def main():
     import argparse
     import halodrops
-    import halodrops.api.qc as qc
 
     parser = argparse.ArgumentParser("Arguments")
 
