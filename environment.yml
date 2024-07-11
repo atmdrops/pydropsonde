@@ -3,7 +3,7 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - python=3.10
+  - python>=3.10
   - sphinx
   - ca-certificates
   - openssl
@@ -22,4 +22,3 @@ dependencies:
     - sphinx-book-theme
     - sphinx-last-updated-by-git
     - -e .
-    - git+https://github.com/Geet-George/gogoesgone.git@main

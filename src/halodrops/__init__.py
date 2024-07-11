@@ -1,4 +1,5 @@
 import logging
+from pathlib import Path
 
 # create halodrops logger
 logger = logging.getLogger("halodrops")
@@ -27,9 +28,13 @@ logger.addHandler(fh_info)
 logger.addHandler(fh_debug)
 logger.addHandler(ch)
 
+import configparser
+from . import pipeline as pi
+
 
 def main():
     import argparse
+    import halodrops
 
     parser = argparse.ArgumentParser("Arguments")
 
@@ -63,3 +68,5 @@ def main():
 
             config = configparser.ConfigParser()
             config.read(config_file_path)
+
+    pi.run_pipeline(pi.pipeline, config)
