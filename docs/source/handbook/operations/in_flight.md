@@ -37,7 +37,7 @@ Once the [pre-flight operations](./pre_flight.md) are complete and the tests are
 
  8. If AVAPS is connected to aircraft data (which it should be during flight operations), the meteorological data from the aircraft is taken in automatically.
 
- 9. The dropsonde is now ready. Prepare the sonde for launching. First, disconnect the data cable and put the sonde in the re-conditioning-box. Click on `Continue`.
+ 9. The dropsonde is now ready. Prepare the sonde for launching. First, disconnect the data cable and put the sonde in the re-conditioning-box. Click on `Continue`. An error message might appear if the data cable is removed before clicking `Continue`. It may be solved by leaving the cable in, clicking `Continue`, then removing the cable.
 
     | ![Sonde ready](../../graphics/sonde_ready.png) |
     | :--------------------------------------------: |
