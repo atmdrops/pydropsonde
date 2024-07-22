@@ -234,17 +234,117 @@ class Sonde:
                 f"The attribute `launch_detect` does not exist for Sonde {self.serial_id}."
             )
 
+    def detect_floater(
+        self,
+        gpsalt_threshold: float = 25,
+        consecutive_time_steps: int = 3,
+        skip: bool = False,
+    ):
+        """
+        Detects if a sonde is a floater.
+
+        Parameters
+        ----------
+        gpsalt_threshold : float, optional
+            The gpsalt altitude below which the sonde will check for time periods when gpsalt and pres have not changed. Default is 25.
+        skip : bool, optional
+            If True, the function will return the object without performing any operations. Default is False.
+
+        Returns
+        -------
+        self
+            The object itself with the new `is_floater` attribute added based on the function parameters.
+        """
+        if hh.get_bool(skip):
+            return self
+        else:
+            if isinstance(gpsalt_threshold, str):
+                gpsalt_threshold = float(gpsalt_threshold)
+
+            if hasattr(self, "aspen_ds"):
+                surface_ds = (
+                    self.aspen_ds.where(
+                        self.aspen_ds.gpsalt < gpsalt_threshold, drop=True
+                    )
+                    .sortby("time")
+                    .dropna(dim="time", how="any", subset=["pres", "gpsalt"])
+                )
+                gpsalt_diff = np.diff(surface_ds.gpsalt)
+                pressure_diff = np.diff(surface_ds.pres)
+                gpsalt_diff_below_threshold = (
+                    np.abs(gpsalt_diff) < 1
+                )  # GPS altitude value at surface shouldn't change by more than 1 m
+                pressure_diff_below_threshold = (
+                    np.abs(pressure_diff) < 1
+                )  # Pressure value at surface shouldn't change by more than 1 hPa
+                floater = gpsalt_diff_below_threshold & pressure_diff_below_threshold
+                if np.any(floater):
+                    object.__setattr__(self, "is_floater", True)
+                    for time_index in range(len(floater) - consecutive_time_steps + 1):
+                        if np.all(
+                            floater[time_index : time_index + consecutive_time_steps]
+                        ):
+                            landing_time = surface_ds.time[time_index - 1].values
+                            object.__setattr__(self, "landing_time", landing_time)
+                            print(
+                                f"{self.serial_id}: Floater detected! The landing time is estimated as {landing_time}."
+                            )
+                            break
+                        if not hasattr(self, "landing_time"):
+                            print(
+                                f"{self.serial_id}: Floater detected! However, the landing time could not be estimated. Therefore setting landing time as {surface_ds.time[0].values}"
+                            )
+                            object.__setattr__(
+                                self, "landing_time", surface_ds.time[0].values
+                            )
+                else:
+                    object.__setattr__(self, "is_floater", False)
+            else:
+                raise ValueError(
+                    "The attribute `aspen_ds` does not exist. Please run `add_aspen_ds` method first."
+                )
+            return self
+
+    def crop_aspen_ds_to_landing_time(self):
+        """
+        Crops the aspen_ds to the time period before landing.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        self
+            The object itself with the new `cropped_aspen_ds` attribute added if the sonde is a floater.
+        """
+        if hasattr(self, "is_floater"):
+            if self.is_floater:
+                if hasattr(self, "landing_time"):
+                    object.__setattr__(
+                        self,
+                        "cropped_aspen_ds",
+                        self.aspen_ds.sel(time=slice(self.landing_time, None)),
+                    )
+        else:
+            raise ValueError(
+                "The attribute `is_floater` does not exist. Please run `detect_floater` method first."
+            )
+        return self
+
     def profile_fullness(
         self,
         variable_dict={"u_wind": 4, "v_wind": 4, "rh": 2, "tdry": 2, "pres": 2},
         time_dimension="time",
         timestamp_frequency=4,
-        fullness_threshold=0.8,
+        fullness_threshold=0.75,
         add_fullness_fraction_attribute=False,
         skip=False,
     ):
         """
         Calculates the profile coverage for a given set of variables, considering their sampling frequency.
+        If the sonde is a floater, the function will take the `cropped_aspen_ds` attribute
+        (calculated with the `crop_aspen_ds_to_landing_time` method) as the dataset to calculate the profile coverage.
 
         This function assumes that the time_dimension coordinates are spaced over 0.25 seconds,
         implying a timestamp_frequency of 4 hertz. This is applicable for ASPEN-processed QC and PQC files,
@@ -288,7 +388,13 @@ class Sonde:
                 fullness_threshold = float(fullness_threshold)
 
             for variable, sampling_frequency in variable_dict.items():
-                dataset = self.aspen_ds[variable]
+                if self.is_floater:
+                    if not hasattr(self, "cropped_aspen_ds"):
+                        self.crop_aspen_ds_to_landing_time()
+                    dataset = self.cropped_aspen_ds[variable]
+                else:
+                    dataset = self.aspen_ds[variable]
+
                 weighed_time_size = len(dataset[time_dimension]) / (
                     timestamp_frequency / sampling_frequency
                 )
@@ -334,7 +440,7 @@ class Sonde:
         alt_bounds : list, optional
             The lower and upper bounds of altitude in meters to consider for the calculation. Defaults to [0,1000].
         alt_dimension_name : str, optional
-            The name of the altitude dimension. Defaults to "alt".
+            The name of the altitude dimension. Defaults to "alt". If the sonde is a floater, this will be set to "gpsalt" regardless of user-provided value.
         count_threshold : int, optional
             The minimum count of non-null values required for a variable to be considered as having near surface coverage. Defaults to 50.
         add_near_surface_count_attribute : bool, optional
@@ -359,6 +465,14 @@ class Sonde:
                 raise ValueError(
                     "The attribute `aspen_ds` does not exist. Please run `add_aspen_ds` method first."
                 )
+
+            if not hasattr(self, "is_floater"):
+                raise ValueError(
+                    "The attribute `is_floater` does not exist. Please run `detect_floater` method first."
+                )
+
+            if self.is_floater:
+                alt_dimension_name = "gpsalt"
 
             if isinstance(alt_bounds, str):
                 alt_bounds = alt_bounds.split(",")
@@ -472,6 +586,30 @@ class Sonde:
         # If the sonde passes all the QC checks, remove all attributes listed in filter_flags
         for flag in filter_flags:
             delattr(self.qc, flag)
+
+        return self
+
+    def create_interim_l2_ds(self):
+        """
+        Creates an interim L2 dataset from the aspen_ds or cropped_aspen_ds attribute.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        self : object
+            Returns the sonde object with the interim L2 dataset added as an attribute.
+        """
+        if self.is_floater:
+            if not hasattr(self, "cropped_aspen_ds"):
+                self.crop_aspen_ds_to_landing_time()
+            ds = self.cropped_aspen_ds
+        else:
+            ds = self.aspen_ds
+
+        object.__setattr__(self, "_interim_l2_ds", ds)
 
         return self
 
@@ -646,6 +784,7 @@ class Sonde:
             "launch_time_(UTC)": str(self.aspen_ds.launch_time.values)
             if hasattr(self.aspen_ds, "launch_time")
             else str(self.aspen_ds.base_time.values),
+            "is_floater": self.is_floater.__str__(),
             "sonde_serial_ID": self.serial_id,
             "author": "Geet George",
             "author_email": "g.george@tudelft.nl",
@@ -770,5 +909,28 @@ class Sonde:
             os.makedirs(l2_dir)
 
         self._interim_l2_ds.to_netcdf(os.path.join(l2_dir, self.l2_filename))
+
+        return self
+
+    def add_l2_ds(self, l2_dir: str = None):
+        """
+        Adds the L2 dataset as an attribute to the sonde object.
+
+        Parameters
+        ----------
+        l2_dir : str, optional
+            The directory to read the L2 file from. The default is the directory of the A-file with '0' replaced by '2'.
+
+        Returns
+        -------
+        self : object
+            Returns the sonde object with the L2 dataset added as an attribute.
+        """
+        if l2_dir is None:
+            l2_dir = os.path.dirname(self.afile)[:-1] + "2"
+
+        object.__setattr__(
+            self, "l2_ds", xr.open_dataset(os.path.join(l2_dir, self.l2_filename))
+        )
 
         return self
