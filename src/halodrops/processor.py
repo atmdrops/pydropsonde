@@ -338,7 +338,7 @@ class Sonde:
         time_dimension="time",
         timestamp_frequency=4,
         fullness_threshold=0.75,
-        add_fullness_fraction_attribute=False,
+        add_fullness_fraction_attribute=True,
         skip=False,
     ):
         """
@@ -371,7 +371,7 @@ class Sonde:
             The threshold for the fullness fraction. If the calculated fullness fraction is less than this threshold,
             the profile is considered not full. Default is 0.8.
         add_fullness_fraction_attribute : bool or str, optional
-            If True, the function will add the fullness fraction as an attribute to the object. Default is False.
+            If True, the function will add the fullness fraction as an attribute to the object. Default is True.
             If provided as string, it should be possible to convert it to a boolean value with the helper get_bool function.
         skip : bool, optional
             If True, the function will return the object without performing any operations. Default is False.
