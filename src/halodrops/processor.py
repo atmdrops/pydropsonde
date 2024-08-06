@@ -948,3 +948,28 @@ class Sonde:
         )
 
         return self
+
+    def add_q_and_theta_to_l2_ds(self):
+        """
+        Adds potential temperature and specific humidity to the L2 dataset.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        self : object
+            Returns the sonde object with potential temperature and specific humidity added to the L2 dataset.
+        """
+        if hasattr(self, "_interim_l3_ds"):
+            ds = self._interim_l3_ds
+        else:
+            ds = self.l2_ds
+
+        ds = calc_q_from_rh(ds)
+        ds = calc_theta_from_T(ds)
+
+        object.__setattr__(self, "_interim_l3_ds", ds)
+
+        return self
