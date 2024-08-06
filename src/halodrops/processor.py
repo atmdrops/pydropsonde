@@ -427,7 +427,7 @@ class Sonde:
         alt_bounds=[0, 1000],
         alt_dimension_name="alt",
         count_threshold=50,
-        add_near_surface_count_attribute=False,
+        add_near_surface_count_attribute=True,
         skip=False,
     ):
         """
@@ -444,7 +444,7 @@ class Sonde:
         count_threshold : int, optional
             The minimum count of non-null values required for a variable to be considered as having near surface coverage. Defaults to 50.
         add_near_surface_count_attribute : bool, optional
-            If True, adds the count of non-null values as an attribute for every variable to the object. Defaults to False.
+            If True, adds the count of non-null values as an attribute for every variable to the object. Defaults to True.
         skip : bool, optional
             If True, skips the calculation and returns the object as is. Defaults to False.
 
