@@ -775,15 +775,19 @@ class Sonde:
             # "instrument_id": "Vaisala RD-41",
             "product_id": "Level-2",
             # "AVAPS_Software_version": "Version 4.1.2",
-            "ASPEN_version": self.aspen_ds.AspenVersion
-            if hasattr(self.aspen_ds, "AspenVersion")
-            else self.aspen_ds.AvapsEditorVersion,
+            "ASPEN_version": (
+                self.aspen_ds.AspenVersion
+                if hasattr(self.aspen_ds, "AspenVersion")
+                else self.aspen_ds.AvapsEditorVersion
+            ),
             "ASPEN_processing_time": self.aspen_ds.ProcessingTime,
             # "JOANNE_version": joanne.__version__,
             # "launch_date": str(pd.to_datetime(self.launch_time).date()),
-            "launch_time_(UTC)": str(self.aspen_ds.launch_time.values)
-            if hasattr(self.aspen_ds, "launch_time")
-            else str(self.aspen_ds.base_time.values),
+            "launch_time_(UTC)": (
+                str(self.aspen_ds.launch_time.values)
+                if hasattr(self.aspen_ds, "launch_time")
+                else str(self.aspen_ds.base_time.values)
+            ),
             "is_floater": self.is_floater.__str__(),
             "sonde_serial_ID": self.serial_id,
             "author": "Geet George",
