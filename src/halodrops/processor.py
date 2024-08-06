@@ -519,7 +519,7 @@ class Sonde:
         Parameters
         ----------
         filter_flags : str or list, optional
-            Comma-separated string or list of QC-related attribute names to be checked. Each item can be a specific attribute name or a prefix to include all attributes starting with that prefix. You can also provide 'all_except_<prefix>' to filter all flags except those starting with '<prefix>'. If 'all_except_<prefix>' is provided, it should be the only value in filter_flags. If not provided, all QC attributes will be checked.
+            Comma-separated string or list of QC-related attribute names to be checked. Each item can be a specific attribute name or a prefix to include all attributes starting with that prefix. You can also provide 'all_except_<prefix>' to filter all flags except those starting with '<prefix>'. If 'all_except_<prefix>' is provided, it should be the only value in filter_flags. If not provided, no sondes will be filtered.
 
         Returns
         -------
@@ -534,7 +534,7 @@ class Sonde:
         all_qc_attributes = [attr for attr in dir(self.qc) if not attr.startswith("__")]
 
         if filter_flags is None:
-            filter_flags = all_qc_attributes
+            filter_flags = []
         elif isinstance(filter_flags, str):
             filter_flags = filter_flags.split(",")
         elif isinstance(filter_flags, list):
