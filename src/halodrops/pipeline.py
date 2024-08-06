@@ -378,7 +378,7 @@ pipeline = {
         "apply": iterate_Sonde_method_over_dict_of_Sondes_objects,
         "functions": [
             "filter_no_launch_detect",
-            "add_postaspenfile",
+            "run_aspen",
             "add_aspen_ds",
         ],
         "output": "sondes",
