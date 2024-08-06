@@ -797,6 +797,16 @@ class Sonde:
             "creation_time": str(datetime.datetime.utcnow()) + " UTC",
         }
 
+        for attr in dir(self):
+            if attr.startswith("near_surface_count_"):
+                nc_global_attrs[attr] = getattr(self, attr)
+            if attr.startswith("profile_fullness_fraction_"):
+                nc_global_attrs[attr] = getattr(self, attr)
+
+        for attr in dir(self.qc):
+            if not attr.startswith("__"):
+                nc_global_attrs[f"qc_{attr}"] = int(getattr(self.qc, attr))
+
         object.__setattr__(self, "nc_global_attrs", nc_global_attrs)
 
         return self
