@@ -338,7 +338,7 @@ class Sonde:
         time_dimension="time",
         timestamp_frequency=4,
         fullness_threshold=0.75,
-        add_fullness_fraction_attribute=False,
+        add_fullness_fraction_attribute=True,
         skip=False,
     ):
         """
@@ -371,7 +371,7 @@ class Sonde:
             The threshold for the fullness fraction. If the calculated fullness fraction is less than this threshold,
             the profile is considered not full. Default is 0.8.
         add_fullness_fraction_attribute : bool or str, optional
-            If True, the function will add the fullness fraction as an attribute to the object. Default is False.
+            If True, the function will add the fullness fraction as an attribute to the object. Default is True.
             If provided as string, it should be possible to convert it to a boolean value with the helper get_bool function.
         skip : bool, optional
             If True, the function will return the object without performing any operations. Default is False.
@@ -427,7 +427,7 @@ class Sonde:
         alt_bounds=[0, 1000],
         alt_dimension_name="alt",
         count_threshold=50,
-        add_near_surface_count_attribute=False,
+        add_near_surface_count_attribute=True,
         skip=False,
     ):
         """
@@ -444,7 +444,7 @@ class Sonde:
         count_threshold : int, optional
             The minimum count of non-null values required for a variable to be considered as having near surface coverage. Defaults to 50.
         add_near_surface_count_attribute : bool, optional
-            If True, adds the count of non-null values as an attribute for every variable to the object. Defaults to False.
+            If True, adds the count of non-null values as an attribute for every variable to the object. Defaults to True.
         skip : bool, optional
             If True, skips the calculation and returns the object as is. Defaults to False.
 
@@ -519,7 +519,7 @@ class Sonde:
         Parameters
         ----------
         filter_flags : str or list, optional
-            Comma-separated string or list of QC-related attribute names to be checked. Each item can be a specific attribute name or a prefix to include all attributes starting with that prefix. You can also provide 'all_except_<prefix>' to filter all flags except those starting with '<prefix>'. If 'all_except_<prefix>' is provided, it should be the only value in filter_flags. If not provided, all QC attributes will be checked.
+            Comma-separated string or list of QC-related attribute names to be checked. Each item can be a specific attribute name or a prefix to include all attributes starting with that prefix. You can also provide 'all_except_<prefix>' to filter all flags except those starting with '<prefix>'. If 'all_except_<prefix>' is provided, it should be the only value in filter_flags. If not provided, no sondes will be filtered.
 
         Returns
         -------
@@ -534,7 +534,7 @@ class Sonde:
         all_qc_attributes = [attr for attr in dir(self.qc) if not attr.startswith("__")]
 
         if filter_flags is None:
-            filter_flags = all_qc_attributes
+            filter_flags = []
         elif isinstance(filter_flags, str):
             filter_flags = filter_flags.split(",")
         elif isinstance(filter_flags, list):
@@ -775,15 +775,19 @@ class Sonde:
             # "instrument_id": "Vaisala RD-41",
             "product_id": "Level-2",
             # "AVAPS_Software_version": "Version 4.1.2",
-            "ASPEN_version": self.aspen_ds.AspenVersion
-            if hasattr(self.aspen_ds, "AspenVersion")
-            else self.aspen_ds.AvapsEditorVersion,
+            "ASPEN_version": (
+                self.aspen_ds.AspenVersion
+                if hasattr(self.aspen_ds, "AspenVersion")
+                else self.aspen_ds.AvapsEditorVersion
+            ),
             "ASPEN_processing_time": self.aspen_ds.ProcessingTime,
             # "JOANNE_version": joanne.__version__,
             # "launch_date": str(pd.to_datetime(self.launch_time).date()),
-            "launch_time_(UTC)": str(self.aspen_ds.launch_time.values)
-            if hasattr(self.aspen_ds, "launch_time")
-            else str(self.aspen_ds.base_time.values),
+            "launch_time_(UTC)": (
+                str(self.aspen_ds.launch_time.values)
+                if hasattr(self.aspen_ds, "launch_time")
+                else str(self.aspen_ds.base_time.values)
+            ),
             "is_floater": self.is_floater.__str__(),
             "sonde_serial_ID": self.serial_id,
             "author": "Geet George",
@@ -792,6 +796,16 @@ class Sonde:
             # "reference": halodrops.reference_study,
             "creation_time": str(datetime.datetime.utcnow()) + " UTC",
         }
+
+        for attr in dir(self):
+            if attr.startswith("near_surface_count_"):
+                nc_global_attrs[attr] = getattr(self, attr)
+            if attr.startswith("profile_fullness_fraction_"):
+                nc_global_attrs[attr] = getattr(self, attr)
+
+        for attr in dir(self.qc):
+            if not attr.startswith("__"):
+                nc_global_attrs[f"qc_{attr}"] = int(getattr(self.qc, attr))
 
         object.__setattr__(self, "nc_global_attrs", nc_global_attrs)
 
