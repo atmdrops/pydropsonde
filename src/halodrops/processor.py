@@ -139,6 +139,7 @@ class Sonde:
             path_to_postaspenfile = os.path.join(l1dir, l1name)
 
         if not os.path.exists(path_to_postaspenfile):
+            os.makedirs(l1dir, exist_ok=True)
             subprocess.run(
                 [
                     "docker",
