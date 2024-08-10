@@ -56,6 +56,7 @@ class Sonde:
             if the user specifies path_structure="flightid_first".
         """
         object.__setattr__(self, "path_structure", path_structure)
+        return self
 
 
     def add_flight_id(self, flight_id: str) -> None:
