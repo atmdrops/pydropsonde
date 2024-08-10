@@ -43,6 +43,20 @@ class Sonde:
         object.__setattr__(self, "qc", type("", (), {})())
         if self.launch_time is not None:
             object.__setattr__(self, "sort_index", self.launch_time)
+        
+        
+    def add_path_structure(self, path_structure="levels_first"):
+        
+        """ Sets attribute of file structure
+        Parameters:
+        ----------
+        path_structure : str, optional
+            The structure of the paths to store data. Default is to have "/pathtodata/Level_#/flight_id". 
+            But to be backwards compatible it is possible to use the old structure of "/pathtodata/flight_id/Level_#"
+            if the user specifies path_structure="flightid_first".
+        """
+        object.__setattr__(self, "path_structure", path_structure)
+
 
     def add_flight_id(self, flight_id: str) -> None:
         """Sets attribute of flight ID
@@ -137,10 +151,19 @@ class Sonde:
 
         if path_to_postaspenfile is None:
             if hasattr(self, "afile"):
-                path_to_l1dir = os.path.dirname(self.afile)[:-1] + "1"
-                postaspenfile = (
-                    "D" + os.path.basename(self.afile).split(".")[0][1:] + "QC.nc"
-                )
+                
+                if self.path_structure == "levels_first":
+                    path_to_l1dir = os.path.dirname(self.afile).replace("Level_0", "Level_1")
+                    print(path_to_l1dir)
+                    postaspenfile = (
+                        "D" + os.path.basename(self.afile).split(".")[0][1:] + "QC.nc"
+                    )
+                elif self.path_structure == "flightid_first":
+                    path_to_l1dir = os.path.dirname(self.afile)[:-1] + "1"
+                    postaspenfile = (
+                        "D" + os.path.basename(self.afile).split(".")[0][1:] + "QC.nc"
+                    )
+                    
                 path_to_postaspenfile = os.path.join(path_to_l1dir, postaspenfile)
                 if os.path.exists(path_to_postaspenfile):
                     object.__setattr__(self, "postaspenfile", path_to_postaspenfile)
@@ -165,6 +188,7 @@ class Sonde:
                 )
         return self
 
+
     def add_aspen_ds(self) -> None:
         """Sets attribute with an xarray Dataset read from post-ASPEN file
 
@@ -173,7 +197,8 @@ class Sonde:
 
         If the `postaspenfile` attribute doesn't exist, function will print out an error
         """
-
+        
+        print(self.postaspenfile)
         if hasattr(self, "postaspenfile"):
             ds = xr.open_dataset(self.postaspenfile)
             if "SondeId" not in ds.attrs:
@@ -901,38 +926,43 @@ class Sonde:
 
         return self
 
-    def write_l2(self, l2_dir: str = None):
+    def write_l2(self, l2dir: str = None):
         """
         Writes the L2 file to the specified directory.
 
         Parameters
         ----------
-        l2_dir : str, optional
+        l2dir : str, optional
             The directory to write the L2 file to. The default is the directory of the A-file with '0' replaced by '2'.
-
+    
         Returns
         -------
         self : object
             Returns the sonde object with the L2 file written to the specified directory using the l2_filename attribute to set the name.
         """
 
-        if l2_dir is None:
-            l2_dir = os.path.dirname(self.afile)[:-1] + "2"
+        if l2dir is None:
+            
+            if self.path_structure == "levels_first":
+                l2dir = os.path.dirname(self.afile).replace("Level_0", "Level_2")
+            elif self.path_structure == "flightid_first":
+                l2dir = os.path.dirname(self.afile)[:-1] + "2"
+            print("L2", l2dir)
 
-        if not os.path.exists(l2_dir):
-            os.makedirs(l2_dir)
+        if not os.path.exists(l2dir):
+            os.makedirs(l2dir)
 
-        self._interim_l2_ds.to_netcdf(os.path.join(l2_dir, self.l2_filename))
+        self._interim_l2_ds.to_netcdf(os.path.join(l2dir, self.l2_filename))
 
         return self
 
-    def add_l2_ds(self, l2_dir: str = None):
+    def add_l2_ds(self, l2dir: str = None):
         """
         Adds the L2 dataset as an attribute to the sonde object.
 
         Parameters
         ----------
-        l2_dir : str, optional
+        l2dir : str, optional
             The directory to read the L2 file from. The default is the directory of the A-file with '0' replaced by '2'.
 
         Returns
@@ -940,11 +970,14 @@ class Sonde:
         self : object
             Returns the sonde object with the L2 dataset added as an attribute.
         """
-        if l2_dir is None:
-            l2_dir = os.path.dirname(self.afile)[:-1] + "2"
+        if l2dir is None:
+            if self.path_structure == "levels_first":
+                l2dir = os.path.dirname(self.afile).replace("Level_0", "Level_2")
+            elif self.path_structure == "flightid_first":
+                l2dir = os.path.dirname(self.afile)[:-1] + "2"
 
         object.__setattr__(
-            self, "l2_ds", xr.open_dataset(os.path.join(l2_dir, self.l2_filename))
+            self, "l2_ds", xr.open_dataset(os.path.join(l2dir, self.l2_filename))
         )
 
         return self
