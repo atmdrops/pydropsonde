@@ -93,6 +93,7 @@ def test_sonde_add_postaspenfile_without_launch(temp_afile_nolaunchdetected):
     """
     sonde = Sonde(serial_id=s_id)
     sonde.add_afile(temp_afile_nolaunchdetected)
+    sonde.add_path_structure()
     with pytest.raises(ValueError):
         sonde.add_postaspenfile()
 
@@ -105,6 +106,7 @@ def test_sonde_add_postaspenfile_with_only_afile(
     """
     sonde = Sonde(serial_id=s_id)
     sonde.add_afile(temp_afile_launchdetected)
+    sonde.add_path_structure()
     sonde.add_postaspenfile()
     assert sonde.postaspenfile == temp_postaspenfile
 
