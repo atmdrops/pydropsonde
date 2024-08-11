@@ -155,7 +155,6 @@ class Sonde:
                 
                 if self.path_structure == "levels_first":
                     path_to_l1dir = os.path.dirname(self.afile).replace("Level_0", "Level_1")
-                    print(path_to_l1dir)
                     postaspenfile = (
                         "D" + os.path.basename(self.afile).split(".")[0][1:] + "QC.nc"
                     )
@@ -199,7 +198,6 @@ class Sonde:
         If the `postaspenfile` attribute doesn't exist, function will print out an error
         """
         
-        print(self.postaspenfile)
         if hasattr(self, "postaspenfile"):
             ds = xr.open_dataset(self.postaspenfile)
             if "SondeId" not in ds.attrs:
@@ -948,7 +946,6 @@ class Sonde:
                 l2_dir = os.path.dirname(self.afile).replace("Level_0", "Level_2")
             elif self.path_structure == "flightid_first":
                 l2_dir = os.path.dirname(self.afile)[:-1] + "2"
-            print("L2", l2_dir)
 
         if not os.path.exists(l2_dir):
             os.makedirs(l2_dir)
