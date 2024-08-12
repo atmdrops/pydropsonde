@@ -3,6 +3,7 @@ from dataclasses import dataclass, field, KW_ONLY
 import datetime
 from typing import Any, Optional, List
 import os
+import subprocess
 
 import numpy as np
 import xarray as xr
@@ -106,13 +107,13 @@ class Sonde:
         object.__setattr__(self, "afile", path_to_afile)
         return self
 
-    def add_postaspenfile(self, path_to_postaspenfile: str = None) -> None:
-        """Sets attribute with path to post-ASPEN file of the sonde
+    def run_aspen(self, path_to_postaspenfile: str = None) -> None:
+        """Runs aspen and sets attribute with path to post-ASPEN file of the sonde
 
         If the A-file path is known for the sonde, i.e. if the attribute `path_to_afile` exists,
         then the function will attempt to look for a post-ASPEN file of the same date-time as in the A-file's name.
         Sometimes, the post-ASPEN file might not exist (e.g. because launch was not detected), and in
-        such cases, an exception will be raised.
+        such cases, ASPEN will run in a docker image and create the file.
 
         If the A-file path is not known for the sonde, the function will expect the argument
         `path_to_postaspenfile` to be not empty.
@@ -122,47 +123,42 @@ class Sonde:
         path_to_postaspenfile : str, optional
             The path to the post-ASPEN file. If not provided, the function will attempt to construct the path from the `afile` attribute.
 
-        Raises
-        ------
-        ValueError
-            If the `afile` attribute does not exist when `path_to_postaspenfile` is not provided.
-            If the post-ASPEN file does not exist at the constructed or provided path, and launch was detected in the A-file.
-            If the launch was not detected in the A-file.
-
         Attributes Set
         --------------
         postaspenfile : str
             The path to the post-ASPEN file. This attribute is set if the file exists at the constructed or provided path.
         """
 
-        if path_to_postaspenfile is None:
-            if hasattr(self, "afile"):
-                path_to_l1dir = os.path.dirname(self.afile)[:-1] + "1"
-                postaspenfile = (
-                    "D" + os.path.basename(self.afile).split(".")[0][1:] + "QC.nc"
-                )
-                path_to_postaspenfile = os.path.join(path_to_l1dir, postaspenfile)
-                if os.path.exists(path_to_postaspenfile):
-                    object.__setattr__(self, "postaspenfile", path_to_postaspenfile)
-                else:
-                    if rr.check_launch_detect_in_afile(self.afile):
-                        raise ValueError(
-                            f"The post-ASPEN file for {self.serial_id} with filename {postaspenfile} does not exist. Therefore, I am not setting the `postaspenfile` attribute. I checked and found that launch was detected for {self.serial_id}."
-                        )
-                    else:
-                        raise ValueError(
-                            f"Launch not detected for {self.serial_id}. Therefore, {postaspenfile} does not exist and I am not setting the `postaspenfile` attribute."
-                        )
-            else:
-                raise ValueError("The attribute `path_to_afile` doesn't exist.")
+        l0dir = os.path.dirname(self.afile)
+        aname = os.path.basename(self.afile)
+        dname = "D" + aname[1:]
+        l1dir = l0dir[:-1] + "1"
+        l1name = dname.split(".")[0] + "QC.nc"
 
-        else:
-            if os.path.exists(path_to_postaspenfile):
-                object.__setattr__(self, "postaspenfile", path_to_postaspenfile)
-            else:
-                raise ValueError(
-                    f"The post-ASPEN file for your provided {path_to_postaspenfile=} does not exist. Therefore, I am not setting the `postaspenfile` attribute."
-                )
+        if path_to_postaspenfile is None:
+            path_to_postaspenfile = os.path.join(l1dir, l1name)
+
+        if not os.path.exists(path_to_postaspenfile):
+            os.makedirs(l1dir, exist_ok=True)
+            subprocess.run(
+                [
+                    "docker",
+                    "run",
+                    "--rm",
+                    "--mount",
+                    f"type=bind,source={l0dir},target=/input",
+                    "--mount",
+                    f"type=bind,source={l1dir},target=/output",
+                    "ghcr.io/atmdrops/aspenqc:4.0.2",
+                    "-i",
+                    f"/input/{dname}",
+                    "-n",
+                    f"/output/{l1name}",
+                ],
+                check=True,
+            )
+
+        object.__setattr__(self, "postaspenfile", path_to_postaspenfile)
         return self
 
     def add_aspen_ds(self) -> None:

@@ -373,11 +373,20 @@ pipeline = {
         "apply": create_and_populate_flight_object,
         "output": ["platforms", "sondes"],
     },
-    "qc": {
+    "create_L1": {
         "intake": "sondes",
         "apply": iterate_Sonde_method_over_dict_of_Sondes_objects,
         "functions": [
             "filter_no_launch_detect",
+            "run_aspen",
+            "add_aspen_ds",
+        ],
+        "output": "sondes",
+    },
+    "qc": {
+        "intake": "sondes",
+        "apply": iterate_Sonde_method_over_dict_of_Sondes_objects,
+        "functions": [
             "detect_floater",
             "profile_fullness",
             "near_surface_coverage",

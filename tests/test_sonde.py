@@ -87,25 +87,13 @@ def test_sonde_add_afile(temp_afile_launchdetected, temp_afile_nolaunchdetected)
     assert sonde.afile == temp_afile_nolaunchdetected
 
 
-def test_sonde_add_postaspenfile_without_launch(temp_afile_nolaunchdetected):
-    """
-    Test the addition of a post-ASPEN file when a launch has not been detected.
-    """
-    sonde = Sonde(serial_id=s_id)
-    sonde.add_afile(temp_afile_nolaunchdetected)
-    with pytest.raises(ValueError):
-        sonde.add_postaspenfile()
-
-
-def test_sonde_add_postaspenfile_with_only_afile(
-    temp_afile_launchdetected, temp_postaspenfile
-):
+def test_sonde_run_aspen_with_only_afile(temp_afile_launchdetected, temp_postaspenfile):
     """
     Test the addition of a post-ASPEN file when an A-file has been added.
     """
     sonde = Sonde(serial_id=s_id)
     sonde.add_afile(temp_afile_launchdetected)
-    sonde.add_postaspenfile()
+    sonde.run_aspen()
     assert sonde.postaspenfile == temp_postaspenfile
 
 
@@ -115,7 +103,7 @@ def test_sonde_add_aspen_ds(temp_afile_launchdetected, temp_postaspenfile):
     """
     sonde = Sonde(serial_id=s_id)
     sonde.add_afile(temp_afile_launchdetected)
-    sonde.add_postaspenfile(temp_postaspenfile)
+    sonde.run_aspen(temp_postaspenfile)
     sonde.add_aspen_ds()
     assert isinstance(sonde.aspen_ds, xr.Dataset)
     assert sonde.aspen_ds.attrs["SondeId"] == s_id
@@ -129,6 +117,6 @@ def test_sonde_add_aspen_ds_with_mismatched_sonde_id(
     """
     sonde = Sonde(serial_id=s_id[:-1])
     sonde.add_afile(temp_afile_launchdetected)
-    sonde.add_postaspenfile(temp_postaspenfile)
+    sonde.run_aspen(temp_postaspenfile)
     with pytest.raises(ValueError):
         sonde.add_aspen_ds()

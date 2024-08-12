@@ -139,9 +139,6 @@ class Flight:
             Sondes[sonde_id].add_flight_id(self.flight_id)
             Sondes[sonde_id].add_platform_id(self.platform_id)
             Sondes[sonde_id].add_afile(a_file)
-            if launch_detect:
-                Sondes[sonde_id].add_postaspenfile()
-                Sondes[sonde_id].add_aspen_ds()
 
         object.__setattr__(self, "Sondes", Sondes)
 
