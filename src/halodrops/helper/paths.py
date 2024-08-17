@@ -5,7 +5,7 @@ from typing import Dict
 import os.path
 
 from halodrops.helper import rawreader as rr
-from halodrops.sonde import Sonde
+from halodrops.processor import Sonde
 
 # create logger
 module_logger = logging.getLogger("halodrops.helper.paths")
@@ -139,9 +139,6 @@ class Flight:
             Sondes[sonde_id].add_flight_id(self.flight_id)
             Sondes[sonde_id].add_platform_id(self.platform_id)
             Sondes[sonde_id].add_afile(a_file)
-            if launch_detect:
-                Sondes[sonde_id].add_postaspenfile()
-                Sondes[sonde_id].add_aspen_ds()
 
         object.__setattr__(self, "Sondes", Sondes)
 

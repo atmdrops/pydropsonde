@@ -1,6 +1,7 @@
 """
 Module to read from raw files, mostly to gather metadata from A files
 """
+
 from datetime import datetime
 import logging
 from typing import List
@@ -31,6 +32,7 @@ def check_launch_detect_in_afile(a_file: "str") -> bool:
     """
 
     with open(a_file, "r") as f:
+
         module_logger.debug(f"Opened File: {a_file=}")
         lines = f.readlines()
 
