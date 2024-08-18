@@ -884,7 +884,9 @@ class Sonde:
 
         return self
 
-    def get_l2_filename(self, l2_filename: str = None):
+    def get_l2_filename(
+        self, l2_filename: str = None, l2_filename_template: str = None
+    ):
         """
         Gets the L2 filename from the template provided.
 
@@ -898,13 +900,22 @@ class Sonde:
         self : object
             Returns the sonde object with the L2 filename added as an attribute.
         """
+
         if l2_filename is None:
-            l2_filename = hh.l2_filename_template.format(
-                platform=self.platform_id,
-                serial_id=self.serial_id,
-                flight_id=self.flight_id,
-                launch_time=self.launch_time,
-            )
+            if l2_filename_template:
+                l2_filename = l2_filename_template.format(
+                    platform=self.platform_id,
+                    serial_id=self.serial_id,
+                    flight_id=self.flight_id,
+                    launch_time=self.launch_time.strftime("%Y-%m-%d_%H-%M"),
+                )
+            else:
+                l2_filename = hh.l2_filename_template.format(
+                    platform=self.platform_id,
+                    serial_id=self.serial_id,
+                    flight_id=self.flight_id,
+                    launch_time=self.launch_time.strftime("%Y-%m-%d_%H-%M"),
+                )
 
         object.__setattr__(self, "l2_filename", l2_filename)
 
@@ -950,7 +961,7 @@ class Sonde:
             Returns the sonde object with the L2 dataset added as an attribute.
         """
         if l2_dir is None:
-            self.l2_dir
+            l2_dir = self.l2_dir
 
         object.__setattr__(
             self, "l2_ds", xr.open_dataset(os.path.join(l2_dir, self.l2_filename))
