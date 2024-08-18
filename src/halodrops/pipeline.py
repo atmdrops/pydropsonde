@@ -222,8 +222,8 @@ def create_and_populate_flight_object(
                 platform_objects[platform].data_directory,
                 flight_id,
                 platform,
-                platform_objects[platform].platform_directory_name,
             )
+
             output["sondes"].update(flight.populate_sonde_instances())
     return output["platforms"], output["sondes"]
 
