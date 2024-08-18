@@ -6,6 +6,7 @@ import os.path
 
 from halodrops.helper import rawreader as rr
 from halodrops.processor import Sonde
+from halodrops.helper import platform_path_template, flight_path_template
 
 # create logger
 module_logger = logging.getLogger("halodrops.helper.paths")
@@ -24,7 +25,7 @@ class Platform:
         data_directory,
         platform_id,
         platform_directory_name=None,
-        path_structure="{platform}/Level_0",
+        path_structure=platform_path_template,
     ) -> None:
         self.platform_id = platform_id
         self.platform_directory_name = platform_directory_name
@@ -43,7 +44,7 @@ class Platform:
         flight_ids = []
 
         dir_with_flights = self.path_structure.format(platform=platform_dir)
-        print(dir_with_flights)
+
         for flight_id in os.listdir(dir_with_flights):
             if os.path.isdir(os.path.join(dir_with_flights, flight_id)):
                 flight_ids.append(flight_id)
@@ -63,7 +64,7 @@ class Flight:
         data_directory,
         flight_id,
         platform_id,
-        path_structure="{platform}/Level_0/{flight}",
+        path_structure=flight_path_template,
     ):
         """Creates an instance of Paths object for a given flight
 

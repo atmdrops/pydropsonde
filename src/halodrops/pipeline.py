@@ -1,4 +1,5 @@
 from .helper.paths import Platform, Flight
+from .helper.__init__ import platform_path_template, flight_path_template
 from .processor import Sonde
 import configparser
 import inspect
@@ -160,6 +161,9 @@ def get_platforms(config):
 
     """
     data_directory = config.get("MANDATORY", "data_directory")
+    path_structure = config.get(
+        "MANDATORY", "platform_path_structure", fallback=platform_path_template
+    )
     if config.has_option("MANDATORY", "platforms"):
         if not config.has_option("MANDATORY", "platform_directory_names"):
             raise ValueError(
@@ -181,6 +185,7 @@ def get_platforms(config):
                 data_directory=data_directory,
                 platform_id=platform,
                 platform_directory_name=platform_directory_name,
+                path_structure=platform_path_template,
             )
     else:
         platforms = [
@@ -191,7 +196,9 @@ def get_platforms(config):
         platform_objects = {}
         for platform in platforms:
             platform_objects[platform] = Platform(
-                data_directory=data_directory, platform_id=platform
+                data_directory=data_directory,
+                platform_id=platform,
+                path_structure=platform_path_template,
             )
     return platform_objects
 
@@ -213,7 +220,11 @@ def create_and_populate_flight_object(
         A Flight object.
     """
     output = {}
+
     platform_objects = get_platforms(config)
+    path_structure = config.get(
+        "MANDATORY", "flight_path_structure", fallback=flight_path_template
+    )
     output["platforms"] = platform_objects
     output["sondes"] = {}
     for platform in platform_objects:
@@ -222,6 +233,7 @@ def create_and_populate_flight_object(
                 platform_objects[platform].data_directory,
                 flight_id,
                 platform,
+                path_structure=path_structure,
             )
 
             output["sondes"].update(flight.populate_sonde_instances())
