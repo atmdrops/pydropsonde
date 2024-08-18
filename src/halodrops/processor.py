@@ -1,6 +1,6 @@
 import ast
 from dataclasses import dataclass, field, KW_ONLY
-import datetime
+from datetime import datetime
 from typing import Any, Optional, List
 import os
 import subprocess
@@ -802,7 +802,7 @@ class Sonde:
             "author_email": "g.george@tudelft.nl",
             "featureType": "trajectory",
             # "reference": halodrops.reference_study,
-            "creation_time": str(datetime.datetime.utcnow()) + " UTC",
+            "creation_time": str(datetime.utcnow()) + " UTC",
         }
 
         for attr in dir(self):
@@ -906,14 +906,18 @@ class Sonde:
                     platform=self.platform_id,
                     serial_id=self.serial_id,
                     flight_id=self.flight_id,
-                    launch_time=self.launch_time.strftime("%Y-%m-%d_%H-%M"),
+                    launch_time=self.launch_time.astype(datetime).strftime(
+                        "%Y-%m-%d_%H-%M"
+                    ),
                 )
             else:
                 l2_filename = hh.l2_filename_template.format(
                     platform=self.platform_id,
                     serial_id=self.serial_id,
                     flight_id=self.flight_id,
-                    launch_time=self.launch_time.strftime("%Y-%m-%d_%H-%M"),
+                    launch_time=self.launch_time.astype(datetime).strftime(
+                        "%Y-%m-%d_%H-%M"
+                    ),
                 )
 
         object.__setattr__(self, "l2_filename", l2_filename)
