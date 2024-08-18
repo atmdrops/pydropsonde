@@ -779,7 +779,6 @@ class Sonde:
             # "doi": f"{halodrops.data_doi}",
             # "created with": f"pipeline.py doi:{halodrops.software_doi}",
             "Conventions": "CF-1.8",
-            "campaign_id": "HALO-(AC)3",
             "platform_id": self.platform_id,
             # "instrument_id": "Vaisala RD-41",
             "product_id": "Level-2",
