@@ -185,7 +185,7 @@ def get_platforms(config):
                 data_directory=data_directory,
                 platform_id=platform,
                 platform_directory_name=platform_directory_name,
-                path_structure=platform_path_template,
+                path_structure=path_structure,
             )
     else:
         platforms = [
@@ -198,7 +198,7 @@ def get_platforms(config):
             platform_objects[platform] = Platform(
                 data_directory=data_directory,
                 platform_id=platform,
-                path_structure=platform_path_template,
+                path_structure=path_structure,
             )
     return platform_objects
 
