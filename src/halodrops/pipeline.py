@@ -1,5 +1,5 @@
 from .helper.paths import Platform, Flight
-from .helper.__init__ import platform_path_template, flight_path_template
+from .helper.__init__ import path_to_flight_ids, path_to_l0_files
 from .processor import Sonde
 import configparser
 import inspect
@@ -162,16 +162,16 @@ def get_platforms(config):
     """
     data_directory = config.get("MANDATORY", "data_directory")
     path_structure = config.get(
-        "MANDATORY", "platform_path_structure", fallback=platform_path_template
+        "OPTIONAL", "path_to_flight_ids", fallback=path_to_flight_ids
     )
-    if config.has_option("MANDATORY", "platforms"):
-        if not config.has_option("MANDATORY", "platform_directory_names"):
+    if config.has_option("OPTIONAL", "platforms"):
+        if not config.has_option("OPTIONAL", "platform_directory_names"):
             raise ValueError(
                 "platform_directory_names must be provided in the config file when platforms is specified"
             )
-        platforms = config.get("MANDATORY", "platforms").split(",")
+        platforms = config.get("OPTIONAL", "platforms").split(",")
         platform_directory_names = config.get(
-            "MANDATORY", "platform_directory_names"
+            "OPTIONAL", "platform_directory_names"
         ).split(",")
         platforms = dict(zip(platforms, platform_directory_names))
         for directory_name in platform_directory_names:
@@ -223,7 +223,7 @@ def create_and_populate_flight_object(
 
     platform_objects = get_platforms(config)
     path_structure = config.get(
-        "MANDATORY", "flight_path_structure", fallback=flight_path_template
+        "OPTIONAL", "path_to_l0_files", fallback=path_to_l0_files
     )
     output["platforms"] = platform_objects
     output["sondes"] = {}

@@ -94,8 +94,8 @@ variable_compression_properties = dict(
 )
 
 
-platform_path_template = "{platform}/Level_0"
-flight_path_template = "{platform}/Level_0/{flight_id}"
+path_to_flight_ids = "{platform}/Level_0"
+path_to_l0_files = "{platform}/Level_0/{flight_id}"
 
 l2_flight_attributes_map = {
     "True Air Speed (m/s)": "true_air_speed_(ms-1)",

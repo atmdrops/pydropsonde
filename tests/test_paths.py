@@ -5,7 +5,7 @@ import pytest
 main_data_directory = "./example_data"
 platform_id = "HALO"
 flightdate = "20200119"
-path_structure = "{platform}/Level_0/{flight}"
+path_structure = "{platform}/Level_0/{flight_id}"
 platform_path_structure = "{platform}/Level_0"
 
 l1_path = os.path.join(main_data_directory, platform_id, "Level_1", flightdate)
