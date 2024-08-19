@@ -93,6 +93,10 @@ variable_compression_properties = dict(
     _FillValue=np.finfo("float32").max,
 )
 
+
+path_to_flight_ids = "{platform}/Level_0"
+path_to_l0_files = "{platform}/Level_0/{flight_id}"
+
 l2_flight_attributes_map = {
     "True Air Speed (m/s)": "true_air_speed_(ms-1)",
     "Ground Speed (m/s)": "ground_speed_(ms-1)",
@@ -107,9 +111,7 @@ l2_flight_attributes_map = {
 }
 
 
-l2_filename_template = (
-    "HALO-(AC)3_{platform}_{launch_time}_{flight_id}_{serial_id}_Level_2.nc"
-)
+l2_filename_template = "{platform}_{launch_time}_{flight_id}_{serial_id}_Level_2.nc"
 
 
 def get_bool(s):

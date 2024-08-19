@@ -1,4 +1,5 @@
 from .helper.paths import Platform, Flight
+from .helper.__init__ import path_to_flight_ids, path_to_l0_files
 from .processor import Sonde
 import configparser
 import inspect
@@ -160,14 +161,17 @@ def get_platforms(config):
 
     """
     data_directory = config.get("MANDATORY", "data_directory")
-    if config.has_option("MANDATORY", "platforms"):
-        if not config.has_option("MANDATORY", "platform_directory_names"):
+    path_structure = config.get(
+        "OPTIONAL", "path_to_flight_ids", fallback=path_to_flight_ids
+    )
+    if config.has_option("OPTIONAL", "platforms"):
+        if not config.has_option("OPTIONAL", "platform_directory_names"):
             raise ValueError(
                 "platform_directory_names must be provided in the config file when platforms is specified"
             )
-        platforms = config.get("MANDATORY", "platforms").split(",")
+        platforms = config.get("OPTIONAL", "platforms").split(",")
         platform_directory_names = config.get(
-            "MANDATORY", "platform_directory_names"
+            "OPTIONAL", "platform_directory_names"
         ).split(",")
         platforms = dict(zip(platforms, platform_directory_names))
         for directory_name in platform_directory_names:
@@ -181,6 +185,7 @@ def get_platforms(config):
                 data_directory=data_directory,
                 platform_id=platform,
                 platform_directory_name=platform_directory_name,
+                path_structure=path_structure,
             )
     else:
         platforms = [
@@ -191,7 +196,9 @@ def get_platforms(config):
         platform_objects = {}
         for platform in platforms:
             platform_objects[platform] = Platform(
-                data_directory=data_directory, platform_id=platform
+                data_directory=data_directory,
+                platform_id=platform,
+                path_structure=path_structure,
             )
     return platform_objects
 
@@ -213,7 +220,11 @@ def create_and_populate_flight_object(
         A Flight object.
     """
     output = {}
+
     platform_objects = get_platforms(config)
+    path_structure = config.get(
+        "OPTIONAL", "path_to_l0_files", fallback=path_to_l0_files
+    )
     output["platforms"] = platform_objects
     output["sondes"] = {}
     for platform in platform_objects:
@@ -222,6 +233,7 @@ def create_and_populate_flight_object(
                 platform_objects[platform].data_directory,
                 flight_id,
                 platform,
+                path_structure=path_structure,
             )
 
             output["sondes"].update(flight.populate_sonde_instances())

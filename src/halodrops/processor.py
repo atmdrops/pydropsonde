@@ -1,6 +1,6 @@
 import ast
 from dataclasses import dataclass, field, KW_ONLY
-import datetime
+from datetime import datetime
 from typing import Any, Optional, List
 import os
 import subprocess
@@ -779,7 +779,6 @@ class Sonde:
             # "doi": f"{halodrops.data_doi}",
             # "created with": f"pipeline.py doi:{halodrops.software_doi}",
             "Conventions": "CF-1.8",
-            "campaign_id": "HALO-(AC)3",
             "platform_id": self.platform_id,
             # "instrument_id": "Vaisala RD-41",
             "product_id": "Level-2",
@@ -803,7 +802,7 @@ class Sonde:
             "author_email": "g.george@tudelft.nl",
             "featureType": "trajectory",
             # "reference": halodrops.reference_study,
-            "creation_time": str(datetime.datetime.utcnow()) + " UTC",
+            "creation_time": str(datetime.utcnow()) + " UTC",
         }
 
         for attr in dir(self):
@@ -884,7 +883,9 @@ class Sonde:
 
         return self
 
-    def get_l2_filename(self, l2_filename: str = None):
+    def get_l2_filename(
+        self, l2_filename: str = None, l2_filename_template: str = None
+    ):
         """
         Gets the L2 filename from the template provided.
 
@@ -898,13 +899,26 @@ class Sonde:
         self : object
             Returns the sonde object with the L2 filename added as an attribute.
         """
+
         if l2_filename is None:
-            l2_filename = hh.l2_filename_template.format(
-                platform=self.platform_id,
-                serial_id=self.serial_id,
-                flight_id=self.flight_id,
-                launch_time=self.launch_time,
-            )
+            if l2_filename_template:
+                l2_filename = l2_filename_template.format(
+                    platform=self.platform_id,
+                    serial_id=self.serial_id,
+                    flight_id=self.flight_id,
+                    launch_time=self.launch_time.astype(datetime).strftime(
+                        "%Y-%m-%d_%H-%M"
+                    ),
+                )
+            else:
+                l2_filename = hh.l2_filename_template.format(
+                    platform=self.platform_id,
+                    serial_id=self.serial_id,
+                    flight_id=self.flight_id,
+                    launch_time=self.launch_time.astype(datetime).strftime(
+                        "%Y-%m-%d_%H-%M"
+                    ),
+                )
 
         object.__setattr__(self, "l2_filename", l2_filename)
 
@@ -950,7 +964,7 @@ class Sonde:
             Returns the sonde object with the L2 dataset added as an attribute.
         """
         if l2_dir is None:
-            self.l2_dir
+            l2_dir = self.l2_dir
 
         object.__setattr__(
             self, "l2_ds", xr.open_dataset(os.path.join(l2_dir, self.l2_filename))
