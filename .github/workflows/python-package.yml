@@ -34,3 +34,6 @@ jobs:
         micromamba run -n testenv pytest --import-mode=importlib .
     - name: pre-commit
       uses: pre-commit/action@v3.0.0
+    - name: Build docs
+      run: |
+        micromamba run -n testenv sphinx-build -n -b html docs/source/ docs/build/
