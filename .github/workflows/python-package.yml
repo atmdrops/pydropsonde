@@ -2,11 +2,7 @@
 
 name: Python package
 
-on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+on: [push, pull_request]
 
 jobs:
   build:
@@ -28,9 +24,12 @@ jobs:
         generate-run-shell: true
         environment-name: testenv
         environment-file: environment.yml
+    - name: pre-commit
+      uses: pre-commit/action@v3.0.0
     - name: Run pytest in micromamba environment
       run: |
         micromamba install -n testenv pytest
         micromamba run -n testenv pytest --import-mode=importlib .
-    - name: pre-commit
-      uses: pre-commit/action@v3.0.0
+    - name: Build docs
+      run: |
+        micromamba run -n testenv sphinx-build -n -b html docs/source/ docs/build/
