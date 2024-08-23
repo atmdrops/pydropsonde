@@ -1,19 +1,21 @@
 # Installation
 
-Ideally, it would be:
+For now, halodrops is not a `pip` or `conda` package.
+You can either clone the repository by
 
-```console
-pip install halodrops
+```
+git clone git@github.com:Geet-George/halodrops.git
 ```
 
-or
+and create a respective python environment with `conda` from the base folder directory:
 
-```console
-conda install halodrops
 ```
+conda env create -f environment.yml
+```
+This will install halodrops in development mode.
 
-It is highly recommended to use [`mamba`](https://mamba.readthedocs.io/en/latest/) as
+Alternatively, you can directly install the package from github using pip
 
-```console
-mamba install halodrops
+```
+pip install git+https://github.com/Geet-George/halodrops.git#egg=halodrops
 ```
