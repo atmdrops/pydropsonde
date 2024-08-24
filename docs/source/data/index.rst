@@ -4,8 +4,8 @@ Data
 
 This section outlines procedures for how to go about doing the quality control, the processing and the generation of data products.
 
- Data Directory Structure
- ------------------------
+Data Directory Structure
+------------------------
 
 Usually dropsonde data has a ``platform`` from which it was meassured and a ``flight_id`` from the exact flight it was taken from. After the processing each flight will have data on different levels of processing. ``pydropsonde`` uses the following levels.
 
