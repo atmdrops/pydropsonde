@@ -13,7 +13,8 @@ classifiers = [
 packages = [{include = "pydropsonde"}]
 
 [tool.poetry.dependencies]
-python = ">=3.12"
+python = "=3.12"
+metpy = "*"
 numpy = "*"
 xarray = "*"
 scipy = "*"

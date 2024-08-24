@@ -9,7 +9,7 @@
 import sys
 import os
 
-sys.path.insert(0, os.path.abspath("../../pydropsonde"))
+sys.path.insert(0, os.path.abspath("../pydropsonde"))
 
 project = "pydropsonde"
 copyright = "2024, Geet George, Helene Gloeckner, Theresa Mieslinger, Nina Robbins"
@@ -23,9 +23,7 @@ autosummary_generate = True
 templates_path = ["_templates"]
 exclude_patterns = []
 
-
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 html_theme = "alabaster"
-html_static_path = ["_static"]
