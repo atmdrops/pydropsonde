@@ -1,7 +1,7 @@
 import pytest
 import os
 import xarray as xr
-from halodrops.processor import Sonde
+from pydropsonde.processor import Sonde
 
 s_id = "test_this_id"
 flight_id = "test_this_flight"

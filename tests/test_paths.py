@@ -1,4 +1,4 @@
-from halodrops.helper import paths
+from pydropsonde.helper import paths
 import os
 import pytest
 
