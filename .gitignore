@@ -43,6 +43,6 @@ docs/build/
 # Dev
 sample/*
 sandbox/*
-src/_version.py
+_version.py
 **/*.log
 **/*.doc*
