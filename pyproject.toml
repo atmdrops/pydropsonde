@@ -21,7 +21,7 @@ scipy = "*"
 matplotlib = "*"
 cartopy = "*"
 pyproj = "*"
-pandas = "*" 
+pandas = "*"
 
 [tool.poetry.group.test.dependencies]
 pytest = "*"
