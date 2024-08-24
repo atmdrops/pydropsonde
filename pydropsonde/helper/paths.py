@@ -4,12 +4,12 @@ from pathlib import Path as pp
 from typing import Dict
 import os.path
 
-from halodrops.helper import rawreader as rr
-from halodrops.processor import Sonde
-from halodrops.helper import path_to_flight_ids, path_to_l0_files
+from pydropsonde.helper import rawreader as rr
+from pydropsonde.processor import Sonde
+from pydropsonde.helper import path_to_flight_ids, path_to_l0_files
 
 # create logger
-module_logger = logging.getLogger("halodrops.helper.paths")
+module_logger = logging.getLogger("pydropsonde.helper.paths")
 
 
 class Platform:
@@ -17,7 +17,7 @@ class Platform:
     Deriving flight paths from the provided platform directory
 
     The input should align in terms of hierarchy and nomenclature
-    with the {doc}`Directory Structure </handbook/directory_structure>` that `halodrops` expects.
+    with the {doc}`Directory Structure </handbook/directory_structure>` that `pydropsonde` expects.
     """
 
     def __init__(

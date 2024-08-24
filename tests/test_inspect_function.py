@@ -1,6 +1,6 @@
 import configparser
 import pytest
-from halodrops.pipeline import (
+from pydropsonde.pipeline import (
     get_mandatory_args,
     get_mandatory_values_from_config,
     get_nondefaults_from_config,
@@ -22,8 +22,8 @@ def config_and_function():
     config.add_section("MANDATORY")
     config.set("MANDATORY", "a", "1")
 
-    if "halodrops" not in test_func.__module__:
-        test_func.__module__ = f"halodrops.{test_func.__module__}"
+    if "pydropsonde" not in test_func.__module__:
+        test_func.__module__ = f"pydropsonde.{test_func.__module__}"
 
     return config, test_func
 

@@ -8,8 +8,8 @@ import subprocess
 import numpy as np
 import xarray as xr
 
-from halodrops.helper import rawreader as rr
-import halodrops.helper as hh
+from pydropsonde.helper import rawreader as rr
+import pydropsonde.helper as hh
 
 _no_default = object()
 
@@ -776,8 +776,8 @@ class Sonde:
     def get_other_global_attributes(self):
         nc_global_attrs = {
             # "title": "Level-2",
-            # "doi": f"{halodrops.data_doi}",
-            # "created with": f"pipeline.py doi:{halodrops.software_doi}",
+            # "doi": f"{pydropsonde.data_doi}",
+            # "created with": f"pipeline.py doi:{pydropsonde.software_doi}",
             "Conventions": "CF-1.8",
             "platform_id": self.platform_id,
             # "instrument_id": "Vaisala RD-41",
@@ -801,7 +801,7 @@ class Sonde:
             "author": "Geet George",
             "author_email": "g.george@tudelft.nl",
             "featureType": "trajectory",
-            # "reference": halodrops.reference_study,
+            # "reference": pydropsonde.reference_study,
             "creation_time": str(datetime.utcnow()) + " UTC",
         }
 

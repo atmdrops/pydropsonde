@@ -9,7 +9,7 @@ from typing import List
 import numpy as np
 
 # create logger
-module_logger = logging.getLogger("halodrops.helper.rawreader")
+module_logger = logging.getLogger("pydropsonde.helper.rawreader")
 
 
 def check_launch_detect_in_afile(a_file: "str") -> bool:
