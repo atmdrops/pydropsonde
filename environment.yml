@@ -1,23 +1,23 @@
-name: halodrops_env
+name: pydropsonde_env
 channels:
   - conda-forge
   - defaults
 dependencies:
-  - python>=3.10
-  - sphinx
+  - python=3.12
   - ca-certificates
-  - openssl
-  - myst-parser
   - certifi
-  - sphinx-autobuild
-  - numpy
-  - nbsphinx
-  - pip>=20.1
-  - xarray
-  - netcdf4
   - ipython
-  - pre-commit
   - metpy
+  - myst-parser
+  - nbsphinx
+  - netcdf4
+  - numpy
+  - openssl
+  - pre-commit
+  - sphinx
+  - sphinx-autobuild
+  - xarray
+  - pip
   - pip:
     - sphinx-autodoc2
     - sphinx-book-theme

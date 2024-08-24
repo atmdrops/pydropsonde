@@ -98,7 +98,7 @@ def get_nondefaults_from_config(
         A dictionary of non-default arguments for the function.
     """
 
-    section_name = f"{obj.__module__}.{obj.__qualname__}".split("halodrops.")[1]
+    section_name = f"{obj.__module__}.{obj.__qualname__}".split("pydropsonde.")[1]
 
     if section_name in config.sections():
         nondefault_args = config[section_name]

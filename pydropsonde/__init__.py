@@ -1,8 +1,8 @@
 import logging
 from pathlib import Path
 
-# create halodrops logger
-logger = logging.getLogger("halodrops")
+# create pydropsonde logger
+logger = logging.getLogger("pydropsonde")
 logger.setLevel(logging.DEBUG)
 
 # File Handler
@@ -34,16 +34,15 @@ from . import pipeline as pi
 
 def main():
     import argparse
-    import halodrops
 
     parser = argparse.ArgumentParser("Arguments")
 
     parser.add_argument(
         "-c",
         "--config_file_path",
-        default="./halodrops.cfg",
-        help="config file path for halodrops, "
-        + "by default the config file is halodrops.cfg in the current directory."
+        default="./dropsonde.cfg",
+        help="config file path for pydropsonde, "
+        + "by default the config file is dropsonde.cfg in the current directory."
         + "Otherwise path to directory and filename need to be defined",
     )
 
@@ -52,7 +51,6 @@ def main():
 
     config_file_path = args.config_file_path
     config_dirname = os.path.dirname(config_file_path)
-    config_basename = os.path.basename(config_file_path)
 
     # check if given config file directory exists
     if not os.path.exists(config_dirname):
