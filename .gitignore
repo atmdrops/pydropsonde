@@ -29,7 +29,8 @@ halodrops_env/
 
 # Sphinx documentation
 docs/build/
-
+**/_autosummary
+**/_build
 # Visual Studio Code
 .vscode/*
 

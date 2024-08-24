@@ -1,11 +1,11 @@
-# This workflow will install Python dependencies using mamba, run tests and check pre-commit
+## This workflow will install Python dependencies using mamba, run tests and check pre-commit
 
 name: Python package
 
 on: [push, pull_request]
 
 jobs:
-  build:
+  test:
 
     runs-on: ubuntu-latest
     strategy:
@@ -23,13 +23,10 @@ jobs:
         init-shell: bash
         generate-run-shell: true
         environment-name: testenv
-        environment-file: environment.yml
+        environment-file: environment.yaml
     - name: pre-commit
       uses: pre-commit/action@v3.0.0
     - name: Run pytest in micromamba environment
       run: |
         micromamba install -n testenv pytest
         micromamba run -n testenv pytest --import-mode=importlib .
-    - name: Build docs
-      run: |
-        micromamba run -n testenv sphinx-build -n -b html docs/source/ docs/build/

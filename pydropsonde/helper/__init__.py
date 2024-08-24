@@ -215,7 +215,7 @@ def calc_q_from_rh(ds):
 
     Output :
 
-        q : Specific humidity values
+        ds : Dataset with q added
 
     Function to estimate specific humidity from the relative humidity, temperature and pressure in the given dataset.
     """
