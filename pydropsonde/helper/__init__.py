@@ -80,6 +80,15 @@ l2_variables = {
             "positive": "up",
         }
     },
+    "alt": {
+        "attributes": {
+            "standard_name": "altitude",
+            "long_name": "altitude above MSL",
+            "units": "m",
+            "axis": "Z",
+            "positive": "up",
+        }
+    },
 }
 
 encoding_variables = {
