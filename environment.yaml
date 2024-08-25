@@ -13,6 +13,7 @@ dependencies:
   - numpy
   - openssl
   - pre-commit
+  - pytest
   - sphinx
   - sphinx-autobuild
   - xarray

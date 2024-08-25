@@ -990,8 +990,8 @@ class Sonde:
         else:
             ds = self.l2_ds
 
-        ds = calc_q_from_rh(ds)
-        ds = calc_theta_from_T(ds)
+        ds = hh.calc_q_from_rh(ds)
+        ds = hh.calc_theta_from_T(ds)
 
         object.__setattr__(self, "_interim_l3_ds", ds)
 
