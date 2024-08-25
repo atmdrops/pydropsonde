@@ -1012,22 +1012,21 @@ class Sonde:
 
         return self
 
-    def remove_non_mono_incr_alt(self):
-
+    def remove_non_mono_incr_alt(self, alt_var="alt"):
         """
-        This function removes the indices in the geopotential height ('gpsalt')
+        This function removes the indices in the some height variable that are not monotonically increasing
         """
         _prep_l3_ds = self._prep_l3_ds.load()
-        gps_alt = _prep_l3_ds.gpsalt
-        curr_alt = gps_alt.isel(time=0)
-        for i in range(len(gps_alt)):
-            if gps_alt[i] > curr_alt:
-                gps_alt[i] = np.nan
-            elif ~np.isnan(gps_alt[i]):
-                curr_alt = gps_alt[i]
-        _prep_l3_ds["gpsalt"] = gps_alt
+        alt = _prep_l3_ds[alt_var]
+        curr_alt = alt.isel(time=0)
+        for i in range(len(alt)):
+            if alt[i] > curr_alt:
+                alt[i] = np.nan
+            elif ~np.isnan(alt[i]):
+                curr_alt = alt[i]
+        _prep_l3_ds[alt_var] = alt
 
-        mask = ~np.isnan(gps_alt)
+        mask = ~np.isnan(alt)
         object.__setattr__(
             self,
             "_prep_l3_ds",
@@ -1037,6 +1036,7 @@ class Sonde:
 
     def interpolate_alt(
         self,
+        alt_var="alt",
         interp_start=-5,
         interp_stop=14515,
         interp_step=10,
@@ -1048,14 +1048,14 @@ class Sonde:
         """
         interpolation_grid = np.arange(interp_start, interp_stop, interp_step)
 
-        if not (self._prep_l3_ds["gpsalt"].diff(dim="time") < 0).any():
+        if not (self._prep_l3_ds[alt_var].diff(dim="time") < 0).any():
             warnings.warn(
                 f"your altitude for sonde {self._interim_l3_ds.sonde_id.values} is not sorted."
             )
-        ds = self._prep_l3_ds.swap_dims({"time": "gpsalt"}).load()
+        ds = self._prep_l3_ds.swap_dims({"time": alt_var}).load()
 
         if method == "linear_interpolate":
-            interp_ds = ds.interp(gpsalt=interpolation_grid)
+            interp_ds = ds.interp({alt_var: interpolation_grid})
         elif method == "bin":
 
             interpolation_bins = interpolation_grid.astype("int")
@@ -1065,21 +1065,21 @@ class Sonde:
                 interp_step,
             )
             interp_ds = ds.groupby_bins(
-                "gpsalt",
+                alt_var,
                 interpolation_bins,
                 labels=interpolation_label,
-            ).mean(dim="gpsalt")
+            ).mean(dim=alt_var)
             # somehow coordinates are lost and need to be added again
             for coord in ["lat", "lon", "time"]:
                 interp_ds = interp_ds.assign_coords(
                     {
                         coord: (
-                            "gpsalt",
+                            alt_var,
                             ds[coord]
                             .groupby_bins(
-                                "gpsalt", interpolation_bins, labels=interpolation_label
+                                alt_var, interpolation_bins, labels=interpolation_label
                             )
-                            .mean("gpsalt")
+                            .mean(alt_var)
                             .values,
                         )
                     }
@@ -1087,9 +1087,9 @@ class Sonde:
             interp_ds = (
                 interp_ds.transpose()
                 .interpolate_na(
-                    dim="gpsalt_bins", max_gap=max_gap_fill, use_coordinate=True
+                    dim=f"{alt_var}_bins", max_gap=max_gap_fill, use_coordinate=True
                 )
-                .rename({"gpsalt_bins": "gpsalt", "time": "interpolated_time"})
+                .rename({f"{alt_var}_bins": alt_var, "time": "interpolated_time"})
             )
 
         object.__setattr__(self, "_prep_l3_ds", interp_ds)
@@ -1136,6 +1136,7 @@ class Gridded:
             )
         else:
             raise ValueError("No sondes and no l3 directory given, cannot continue ")
+        return self
 
     def get_l3_filename(self, l3_filename: str = None):
         if l3_filename is None:
