@@ -3,6 +3,7 @@ channels:
   - conda-forge
 dependencies:
   - python=3.12
+  - bottleneck
   - ca-certificates
   - certifi
   - ipython
@@ -13,6 +14,7 @@ dependencies:
   - numpy
   - openssl
   - pre-commit
+  - pytest
   - sphinx
   - sphinx-autobuild
   - xarray

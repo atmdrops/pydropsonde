@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import Any, Optional, List
 import os
 import subprocess
+import warnings
 
 import numpy as np
 import xarray as xr
@@ -966,10 +967,19 @@ class Sonde:
         if l2_dir is None:
             l2_dir = self.l2_dir
 
-        object.__setattr__(
-            self, "l2_ds", xr.open_dataset(os.path.join(l2_dir, self.l2_filename))
-        )
+        try:
+            object.__setattr__(
+                self, "l2_ds", xr.open_dataset(os.path.join(l2_dir, self.l2_filename))
+            )
+            return self
+        except FileNotFoundError:
+            return None
 
+    def create_prep_l3(self):
+        _prep_l3_ds = self.l2_ds.assign_coords(
+            {"sonde_id": ("sonde_id", [self.l2_ds.sonde_id.values])}
+        ).sortby("time")
+        object.__setattr__(self, "_prep_l3_ds", _prep_l3_ds)
         return self
 
     def add_q_and_theta_to_l2_ds(self):
@@ -985,14 +995,163 @@ class Sonde:
         self : object
             Returns the sonde object with potential temperature and specific humidity added to the L2 dataset.
         """
-        if hasattr(self, "_interim_l3_ds"):
-            ds = self._interim_l3_ds
-        else:
-            ds = self.l2_ds
+        ds = self._prep_l3_ds
 
-        ds = calc_q_from_rh(ds)
-        ds = calc_theta_from_T(ds)
+        ds = hh.calc_q_from_rh(ds)
+        ds = hh.calc_theta_from_T(ds)
 
         object.__setattr__(self, "_interim_l3_ds", ds)
+
+        return self
+
+    def remove_non_mono_incr_alt(self):
+
+        """
+        This function removes the indices in the geopotential height ('gpsalt')
+        """
+        _prep_l3_ds = self._prep_l3_ds.load()
+        gps_alt = _prep_l3_ds.gpsalt
+        curr_alt = gps_alt.isel(time=0)
+        for i in range(len(gps_alt)):
+            if gps_alt[i] > curr_alt:
+                gps_alt[i] = np.nan
+            elif ~np.isnan(gps_alt[i]):
+                curr_alt = gps_alt[i]
+        _prep_l3_ds["gpsalt"] = gps_alt
+
+        mask = ~np.isnan(gps_alt)
+        object.__setattr__(
+            self,
+            "_prep_l3_ds",
+            _prep_l3_ds.sel(time=mask),
+        )
+        return self
+
+    def interpolate_alt(
+        self,
+        interp_start=-5,
+        interp_stop=14515,
+        interp_step=10,
+        max_gap_fill: int = 50,
+        method: str = "bin",
+    ):
+        """
+        Ineterpolate sonde data along comon altitude grid to prepare concatenation
+        """
+        interpolation_grid = np.arange(interp_start, interp_stop, interp_step)
+
+        if not (self._prep_l3_ds["gpsalt"].diff(dim="time") < 0).any():
+            warnings.warn(
+                f"your altitude for sonde {self._interim_l3_ds.sonde_id.values} is not sorted."
+            )
+        ds = self._prep_l3_ds.swap_dims({"time": "gpsalt"}).load()
+
+        if method == "linear_interpolate":
+            interp_ds = ds.interp(gpsalt=interpolation_grid)
+        elif method == "bin":
+
+            interpolation_bins = interpolation_grid.astype("int")
+            interpolation_label = np.arange(
+                interp_start + interp_step / 2,
+                interp_stop - interp_step / 2,
+                interp_step,
+            )
+            interp_ds = ds.groupby_bins(
+                "gpsalt",
+                interpolation_bins,
+                labels=interpolation_label,
+            ).mean(dim="gpsalt")
+            # somehow coordinates are lost and need to be added again
+            for coord in ["lat", "lon", "time"]:
+                interp_ds = interp_ds.assign_coords(
+                    {
+                        coord: (
+                            "gpsalt",
+                            ds[coord]
+                            .groupby_bins(
+                                "gpsalt", interpolation_bins, labels=interpolation_label
+                            )
+                            .mean("gpsalt")
+                            .values,
+                        )
+                    }
+                )
+            interp_ds = (
+                interp_ds.transpose()
+                .interpolate_na(
+                    dim="gpsalt_bins", max_gap=max_gap_fill, use_coordinate=True
+                )
+                .rename({"gpsalt_bins": "gpsalt", "time": "interpolated_time"})
+            )
+
+        object.__setattr__(self, "_prep_l3_ds", interp_ds)
+
+        return self
+
+    def prepare_l2_for_gridded(self):
+        """
+        Prepares l2 datasets to be concatenated to gridded.
+        adds all attributes as variables to avoid conflicts when concatenating because attributes are different
+        (and not lose information)
+        """
+        _prep_l3_ds = self._prep_l3_ds
+        for attr, value in self._prep_l3_ds.attrs.items():
+            _prep_l3_ds[attr] = value
+
+        _prep_l3_ds.attrs.clear()
+        object.__setattr__(self, "_prep_l3_ds", _prep_l3_ds)
+        return self
+
+
+@dataclass(order=True)
+class Gridded:
+    sondes: dict
+    flight_id: str
+    platform_id: str
+
+    def concat_sondes(self):
+        """
+        function to concatenate all sondes using the combination of all measurement times and launch times
+        """
+        list_of_l2_ds = [sonde._prep_l3_ds for sonde in self.sondes.values()]
+        combined = xr.combine_by_coords(list_of_l2_ds)
+        self._interim_l3_ds = combined
+        return self
+
+    def get_l3_dir(self, l3_dirname: str = None):
+        if l3_dirname:
+            self.l3_dir = l3_dirname
+        elif not self.sondes is None:
+            self.l3_dir = list(self.sondes.values())[0].l3_dir
+        else:
+            raise ValueError("No sondes and no l3 directory given, cannot continue ")
+
+    def get_l3_filename(
+        self, l3_filename_template: str = None, l3_filename: str = None
+    ):
+        if l3_filename is None:
+            if l3_filename_template is None:
+                l3_filename = hh.l3_filename_template.format(
+                    platform=self.platform_id,
+                    flight_id=self.flight_id,
+                )
+            else:
+                l3_filename = l3_filename_template.format(
+                    platform=self.platform_id,
+                    flight_id=self.flight_id,
+                )
+
+        self.l3_filename = l3_filename
+
+        return self
+
+    def write_l3(self, l3_dir: str = None):
+        if l3_dir is None:
+            l3_dir = self.l3_dir
+
+        if not os.path.exists(l3_dir):
+            os.makedirs(l3_dir)
+
+        self._interim_l3_ds.to_netcdf(os.path.join(l3_dir, self.l3_filename))
 
         return self

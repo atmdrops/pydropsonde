@@ -1,6 +1,6 @@
 from .helper.paths import Platform, Flight
 from .helper.__init__ import path_to_flight_ids, path_to_l0_files
-from .processor import Sonde
+from .processor import Sonde, Gridded
 import configparser
 import inspect
 import os
@@ -99,7 +99,6 @@ def get_nondefaults_from_config(
     """
 
     section_name = f"{obj.__module__}.{obj.__qualname__}".split("pydropsonde.")[1]
-
     if section_name in config.sections():
         nondefault_args = config[section_name]
     else:
@@ -284,12 +283,26 @@ def iterate_Sonde_method_over_dict_of_Sondes_objects(
     return my_dict
 
 
-def sondes_to_gridded(sondes: dict) -> xr.Dataset:
-    pass
+def sondes_to_gridded(sondes: dict, config: configparser.ConfigParser):
+    flight_id = list(sondes.values())[0].flight_id
+    platform_id = list(sondes.values())[0].platform_id
+    gridded = Gridded(sondes, flight_id, platform_id)
+    gridded.concat_sondes()
+    return gridded
 
 
-def iterate_method_over_dataset(dataset: xr.Dataset, functions: list) -> xr.Dataset:
-    pass
+def iterate_method_over_dataset(
+    obj: Gridded,
+    functions: list,
+    config: configparser.ConfigParser,
+) -> xr.Dataset:
+    """
+    This is NOT what the function should do in the end. only used to save the base-l3
+    """
+    for function_name in functions:
+        function = getattr(Gridded, function_name)
+        result = function(obj, **get_args_for_function(config, function))
+    return result
 
 
 def gridded_to_pattern(
@@ -424,26 +437,34 @@ pipeline = {
         "output": "sondes",
         "comment": "This steps creates the L2 files after the QC (user says how QC flags are used to go from L1 to L2) and then saves these as L2 NC datasets.",
     },
-    # "read_and_process_L2": {
-    #     "intake": "sondes",
-    #     "apply": iterate_Sonde_method_over_dict_of_Sondes_objects,
-    #     "functions": [],
-    #     "output": "sondes",
-    #     "comment": "This step reads from the saved L2 files and prepares individual sonde datasets before they can be concatenated to create L3.",
-    # },
-    # "concatenate_L2": {
-    #     "intake": "sondes",
-    #     "apply": sondes_to_gridded,
-    #     "output": "gridded",
-    #     "comment": "This step concatenates the individual sonde datasets to create the L3 dataset and saves it as an NC file.",
-    # },
-    # "create_L3": {
-    #     "intake": "gridded",
-    #     "apply": iterate_method_over_dataset,
-    #     "functions": [],
-    #     "output": "gridded",
-    #     "comment": "This step creates the L3 dataset after adding additional products.",
-    # },
+    "process_L2": {
+        "intake": "sondes",
+        "apply": iterate_Sonde_method_over_dict_of_Sondes_objects,
+        "functions": [
+            "get_l2_filename",
+            "add_l2_ds",
+            "create_prep_l3",
+            "add_q_and_theta_to_l2_ds",
+            "remove_non_mono_incr_alt",
+            "interpolate_alt",
+            "prepare_l2_for_gridded",
+        ],
+        "output": "sondes",
+        "comment": "This step reads from the saved L2 files and prepares individual sonde datasets before they can be concatenated to create L3.",
+    },
+    "concatenate_L2": {
+        "intake": "sondes",
+        "apply": sondes_to_gridded,
+        "output": "gridded",
+        "comment": "This step concatenates the individual sonde datasets to create the L3 dataset.",
+    },
+    "create_L3": {
+        "intake": "gridded",
+        "apply": iterate_method_over_dataset,
+        "functions": ["get_l3_dir", "get_l3_filename", "write_l3"],
+        "output": "gridded",
+        "comment": "This step creates the L3 dataset after adding additional products.",
+    },
     # "create_patterns": {
     #     "intake": "gridded",
     #     "apply": gridded_to_pattern,
