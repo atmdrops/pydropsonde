@@ -966,10 +966,19 @@ class Sonde:
         if l2_dir is None:
             l2_dir = self.l2_dir
 
-        object.__setattr__(
-            self, "l2_ds", xr.open_dataset(os.path.join(l2_dir, self.l2_filename))
-        )
+        try:
+            object.__setattr__(
+                self, "l2_ds", xr.open_dataset(os.path.join(l2_dir, self.l2_filename))
+            )
+            return self
+        except FileNotFoundError:
+            return None
 
+    def create_prep_l3(self):
+        _prep_l3_ds = self.l2_ds.assign_coords(
+            {"sonde_id": ("sonde_id", [self.l2_ds.sonde_id.values])}
+        ).sortby("time")
+        object.__setattr__(self, "_prep_l3_ds", _prep_l3_ds)
         return self
 
     def add_q_and_theta_to_l2_ds(self):
@@ -985,10 +994,7 @@ class Sonde:
         self : object
             Returns the sonde object with potential temperature and specific humidity added to the L2 dataset.
         """
-        if hasattr(self, "_interim_l3_ds"):
-            ds = self._interim_l3_ds
-        else:
-            ds = self.l2_ds
+        ds = self._prep_l3_ds
 
         ds = hh.calc_q_from_rh(ds)
         ds = hh.calc_theta_from_T(ds)
