@@ -7,6 +7,7 @@ from pydropsonde.pipeline import (
     get_args_for_function,
 )
 
+
 # Define a function for testing
 @pytest.fixture
 def test_func(a, b=2):
@@ -24,7 +25,6 @@ def config_and_function():
 
     if "pydropsonde" not in test_func.__module__:
         test_func.__module__ = f"pydropsonde.{test_func.__module__}"
-
     return config, test_func
 
 
