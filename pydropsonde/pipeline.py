@@ -1,6 +1,6 @@
 from .helper.paths import Platform, Flight
 from .helper.__init__ import path_to_flight_ids, path_to_l0_files
-from .processor import Sonde
+from .processor import Sonde, Gridded
 import configparser
 import inspect
 import os
@@ -284,8 +284,12 @@ def iterate_Sonde_method_over_dict_of_Sondes_objects(
     return my_dict
 
 
-def sondes_to_gridded(sondes: dict) -> xr.Dataset:
-    pass
+def sondes_to_gridded(sondes: dict, config: configparser.ConfigParser):
+    flight_id = list(sondes.values())[0].flight_id
+    platform_id = list(sondes.values())[0].platform_id
+    gridded = Gridded(sondes, flight_id, platform_id)
+    gridded.concat_sondes()
+    return gridded
 
 
 def iterate_method_over_dataset(dataset: xr.Dataset, functions: list) -> xr.Dataset:
@@ -438,6 +442,12 @@ pipeline = {
         ],
         "output": "sondes",
         "comment": "This step reads from the saved L2 files and prepares individual sonde datasets before they can be concatenated to create L3.",
+    },
+    "concatenate_L2": {
+        "intake": "sondes",
+        "apply": sondes_to_gridded,
+        "output": "gridded",
+        "comment": "This step concatenates the individual sonde datasets to create the L3 dataset.",
     },
     # "create_patterns": {
     #     "intake": "gridded",

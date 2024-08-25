@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import Any, Optional, List
 import os
 import subprocess
+import warnings
 
 import numpy as np
 import xarray as xr
@@ -1001,4 +1002,118 @@ class Sonde:
 
         object.__setattr__(self, "_interim_l3_ds", ds)
 
+        return self
+
+    def remove_non_mono_incr_alt(self):
+
+        """
+        This function removes the indices in the geopotential height ('gpsalt')
+        """
+        _prep_l3_ds = self._prep_l3_ds.load()
+        gps_alt = _prep_l3_ds.gpsalt
+        curr_alt = gps_alt.isel(time=0)
+        for i in range(len(gps_alt)):
+            if gps_alt[i] > curr_alt:
+                gps_alt[i] = np.nan
+            elif ~np.isnan(gps_alt[i]):
+                curr_alt = gps_alt[i]
+        _prep_l3_ds["gpsalt"] = gps_alt
+
+        mask = ~np.isnan(gps_alt)
+        object.__setattr__(
+            self,
+            "_prep_l3_ds",
+            _prep_l3_ds.sel(time=mask),
+        )
+        return self
+
+    def interpolate_alt(
+        self,
+        interp_start=-5,
+        interp_stop=14515,
+        interp_step=10,
+        max_gap_fill: int = 50,
+        method: str = "bin",
+    ):
+        """
+        Ineterpolate sonde data along comon altitude grid to prepare concatenation
+        """
+        interpolation_grid = np.arange(interp_start, interp_stop, interp_step)
+
+        if not (self._prep_l3_ds["gpsalt"].diff(dim="time") < 0).any():
+            warnings.warn(
+                f"your altitude for sonde {self._interim_l3_ds.sonde_id.values} is not sorted."
+            )
+        ds = self._prep_l3_ds.swap_dims({"time": "gpsalt"}).load()
+
+        if method == "linear_interpolate":
+            interp_ds = ds.interp(gpsalt=interpolation_grid)
+        elif method == "bin":
+
+            interpolation_bins = interpolation_grid.astype("int")
+            interpolation_label = np.arange(
+                interp_start + interp_step / 2,
+                interp_stop - interp_step / 2,
+                interp_step,
+            )
+            interp_ds = ds.groupby_bins(
+                "gpsalt",
+                interpolation_bins,
+                labels=interpolation_label,
+            ).mean(dim="gpsalt")
+            # somehow coordinates are lost and need to be added again
+            for coord in ["lat", "lon", "time"]:
+                interp_ds = interp_ds.assign_coords(
+                    {
+                        coord: (
+                            "gpsalt",
+                            ds[coord]
+                            .groupby_bins(
+                                "gpsalt", interpolation_bins, labels=interpolation_label
+                            )
+                            .mean("gpsalt")
+                            .values,
+                        )
+                    }
+                )
+            interp_ds = (
+                interp_ds.transpose()
+                .interpolate_na(
+                    dim="gpsalt_bins", max_gap=max_gap_fill, use_coordinate=True
+                )
+                .rename({"gpsalt_bins": "gpsalt", "time": "interpolated_time"})
+            )
+
+        object.__setattr__(self, "_prep_l3_ds", interp_ds)
+
+        return self
+
+    def prepare_l2_for_gridded(self):
+        """
+        Prepares l2 datasets to be concatenated to gridded.
+        adds all attributes as variables to avoid conflicts when concatenating because attributes are different
+        (and not lose information)
+        """
+        _prep_l3_ds = self._prep_l3_ds
+        for attr, value in self._prep_l3_ds.attrs.items():
+            _prep_l3_ds[attr] = value
+
+        _prep_l3_ds.attrs.clear()
+        object.__setattr__(self, "_prep_l3_ds", _prep_l3_ds)
+        return self
+
+
+@dataclass(order=True)
+class Gridded:
+    sondes: dict
+    flight_id: str
+    platform_id: str
+
+    def concat_sondes(self):
+        """
+        function to concatenate all sondes using the combination of all measurement times and launch times
+        """
+        list_of_l2_ds = [sonde._prep_l3_ds for sonde in self.sondes.values()]
+        combined = xr.combine_by_coords(list_of_l2_ds)
+        self._interim_l3_ds = combined
         return self
