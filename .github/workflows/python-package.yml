@@ -6,7 +6,6 @@ on: [push, pull_request]
 
 jobs:
   test:
-
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -30,3 +29,23 @@ jobs:
       run: |
         micromamba install -n testenv pytest
         micromamba run -n testenv pytest --import-mode=importlib .
+  pipeline:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash -l {0}
+    steps:
+    - uses: actions/checkout@v4
+    - name: initialize conda
+      uses: conda-incubator/setup-miniconda@v3
+      with:
+        activate-environment: dropsonde_test
+        auto-activate-base: false
+        use-mamba: true
+        miniforge-variant: Mambaforge
+        miniforge-version: latest
+    - name: install conda environment
+      run:
+        mamba env update -n dropsonde_test -f environment.yaml
+    - name: run pydropsonde
+      run: pydropsonde -c ./dropsonde.cfg

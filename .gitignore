@@ -47,3 +47,7 @@ sandbox/*
 _version.py
 **/*.log
 **/*.doc*
+
+# Level 2 - 4
+example_data/**/Level_2
+example_data/**/Level_3
