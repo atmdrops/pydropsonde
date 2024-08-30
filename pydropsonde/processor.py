@@ -1137,18 +1137,11 @@ class Gridded:
         else:
             raise ValueError("No sondes and no l3 directory given, cannot continue ")
 
-    def get_l3_filename(
-        self, l3_filename_template: str = None, l3_filename: str = None
-    ):
+    def get_l3_filename(self, l3_filename: str = None):
         if l3_filename is None:
-            if l3_filename_template is None:
-                l3_filename = hh.l3_filename_template.format(
-                    platform=self.platform_id,
-                )
-            else:
-                l3_filename = l3_filename_template.format(
-                    platform=self.platform_id,
-                )
+            l3_filename = hh.l3_filename
+        else:
+            l3_filename = l3_filename
 
         self.l3_filename = l3_filename
 
