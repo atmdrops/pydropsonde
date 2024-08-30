@@ -45,9 +45,10 @@ class Platform:
         flight_ids = []
 
         dir_with_flights = self.path_structure.format(platform=platform_dir)
-        for flight_id in os.listdir(dir_with_flights):
-            if os.path.isdir(os.path.join(dir_with_flights, flight_id)):
-                flight_ids.append(flight_id)
+        if os.path.isdir(dir_with_flights):
+            for flight_id in os.listdir(dir_with_flights):
+                if os.path.isdir(os.path.join(dir_with_flights, flight_id)):
+                    flight_ids.append(flight_id)
         return flight_ids
 
 
