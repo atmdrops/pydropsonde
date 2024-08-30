@@ -1096,7 +1096,7 @@ class Sonde:
 
         return self
 
-    def prepare_l2_for_gridded(self):
+    def add_attributes_as_var(self):
         """
         Prepares l2 datasets to be concatenated to gridded.
         adds all attributes as variables to avoid conflicts when concatenating because attributes are different

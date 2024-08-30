@@ -449,11 +449,10 @@ pipeline = {
         "functions": [
             "get_l2_filename",
             "add_l2_ds",
-            "create_prep_l3",
             "add_q_and_theta_to_l2_ds",
             "remove_non_mono_incr_alt",
             "interpolate_alt",
-            "prepare_l2_for_gridded",
+            "add_attributes_as_var",
         ],
         "output": "sondes",
         "comment": "This step reads from the saved L2 files and prepares individual sonde datasets before they can be concatenated to create L3.",
