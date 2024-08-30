@@ -1114,8 +1114,6 @@ class Sonde:
 @dataclass(order=True)
 class Gridded:
     sondes: dict
-    flight_id: str
-    platform_id: str
 
     def concat_sondes(self):
         """
@@ -1130,8 +1128,11 @@ class Gridded:
         if l3_dir:
             self.l3_dir = l3_dir
         elif not self.sondes is None:
-            self.l3_dir = list(self.sondes.values())[0].l2_dir.replace(
-                "Level_2", "Level_3"
+            self.l3_dir = (
+                list(self.sondes.values())[0]
+                .l2_dir.replace("Level_2", "Level_3")
+                .replace(list(self.sondes.values())[0].flight_id, "")
+                .replace(list(self.sondes.values())[0].platform_id, "")
             )
         else:
             raise ValueError("No sondes and no l3 directory given, cannot continue ")
