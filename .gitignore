@@ -49,5 +49,6 @@ _version.py
 **/*.doc*
 
 # Level 2 - 4
-example_data/**/Level_2
-example_data/**/Level_3
+example_data/**/Level_2/*
+example_data/**/Level_3/*
+**/*_interim*
