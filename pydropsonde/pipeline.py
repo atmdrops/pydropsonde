@@ -280,15 +280,14 @@ def iterate_Sonde_method_over_dict_of_Sondes_objects(
             result = function(value, **get_args_for_function(config, function))
             if result is not None:
                 new_dict[key] = result
-        my_dict = new_dict
+
+            my_dict = new_dict
 
     return my_dict
 
 
 def sondes_to_gridded(sondes: dict, config: configparser.ConfigParser):
-    flight_id = list(sondes.values())[0].flight_id
-    platform_id = list(sondes.values())[0].platform_id
-    gridded = Gridded(sondes, flight_id, platform_id)
+    gridded = Gridded(sondes)
     gridded.concat_sondes()
     return gridded
 
@@ -449,7 +448,7 @@ pipeline = {
             "add_q_and_theta_to_l2_ds",
             "remove_non_mono_incr_alt",
             "interpolate_alt",
-            "prepare_l2_for_gridded",
+            "add_attributes_as_var",
         ],
         "output": "sondes",
         "comment": "This step reads from the saved L2 files and prepares individual sonde datasets before they can be concatenated to create L3.",
