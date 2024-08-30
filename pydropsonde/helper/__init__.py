@@ -185,7 +185,7 @@ def calc_q_from_rh(ds):
     )
     q = mpcalc.specific_humidity_from_mixing_ratio(vmr)
 
-    ds["q"] = (ds.rh.dims, q.magnitude)
+    ds = ds.assign(q=(ds.rh.dims, q.magnitude))
     ds["q"].attrs = dict(
         standard_name="specific humidity",
         long_name="specific humidity",
@@ -210,7 +210,7 @@ def calc_theta_from_T(ds):
     theta = mpcalc.potential_temperature(
         ds.p.values * units.Pa, ds.ta.values * units.kelvin
     )
-    ds["theta"] = (ds.ta.dims, theta.magnitude)
+    ds = ds.assign(theta=(ds.ta.dims, theta.magnitude))
     ds["theta"].attrs = dict(
         standard_name="potential temperature",
         long_name="potential temperature",
