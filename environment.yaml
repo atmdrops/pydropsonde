@@ -6,6 +6,7 @@ dependencies:
   - bottleneck
   - ca-certificates
   - certifi
+  - ipykernel
   - ipython
   - metpy
   - myst-parser

@@ -180,6 +180,7 @@ def get_platforms(config):
                 )
         platform_objects = {}
         for platform, platform_directory_name in platforms.items():
+
             platform_objects[platform] = Platform(
                 data_directory=data_directory,
                 platform_id=platform,

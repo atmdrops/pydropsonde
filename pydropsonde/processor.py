@@ -1130,24 +1130,20 @@ class Gridded:
         if l3_dir:
             self.l3_dir = l3_dir
         elif not self.sondes is None:
-            self.l3_dir = list(self.sondes.values())[0].l2_dir.replace(
-                "Level_2", "Level_3"
+            self.l3_dir = (
+                list(self.sondes.values())[0]
+                .l2_dir.replace("Level_2", "Level_3")
+                .replace(list(self.sondes.values())[0].flight_id, "")
+                .replace(list(self.sondes.values())[0].platform_id, "")
             )
         else:
             raise ValueError("No sondes and no l3 directory given, cannot continue ")
 
-    def get_l3_filename(
-        self, l3_filename_template: str = None, l3_filename: str = None
-    ):
+    def get_l3_filename(self, l3_filename: str = None):
         if l3_filename is None:
-            if l3_filename_template is None:
-                l3_filename = hh.l3_filename_template.format(
-                    platform=self.platform_id,
-                )
-            else:
-                l3_filename = l3_filename_template.format(
-                    platform=self.platform_id,
-                )
+            l3_filename = hh.l3_filename
+        else:
+            l3_filename = l3_filename
 
         self.l3_filename = l3_filename
 
