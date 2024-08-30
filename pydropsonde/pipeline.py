@@ -276,19 +276,23 @@ def iterate_Sonde_method_over_dict_of_Sondes_objects(
     for function_name in functions:
         new_dict = {}
         for key, value in my_dict.items():
-            function = getattr(Sonde, function_name)
-            result = function(value, **get_args_for_function(config, function))
-            if result is not None:
-                new_dict[key] = result
+            if value.cont:
+                function = getattr(Sonde, function_name)
+                result = function(value, **get_args_for_function(config, function))
+                if result is not None:
+                    new_dict[key] = result
+            else:
+                new_dict[key] = value
+                print(
+                    f"I skipped {function_name} because the interim l3 is already there for sonde {value.serial_id}."
+                )
         my_dict = new_dict
 
     return my_dict
 
 
 def sondes_to_gridded(sondes: dict, config: configparser.ConfigParser):
-    flight_id = list(sondes.values())[0].flight_id
-    platform_id = list(sondes.values())[0].platform_id
-    gridded = Gridded(sondes, flight_id, platform_id)
+    gridded = Gridded(sondes)
     gridded.concat_sondes()
     return gridded
 
