@@ -4,14 +4,12 @@ import xarray as xr
 from pydropsonde.processor import Gridded
 
 sondes = None
-flight_id = "20240811"
-platform_id = "HALO"
 l3_default = f"Level_3.nc"
 
 
 @pytest.fixture
 def gridded():
-    return Gridded(sondes, flight_id=flight_id, platform_id=platform_id)
+    return Gridded(sondes)
 
 
 def test_l3_dir(gridded):
