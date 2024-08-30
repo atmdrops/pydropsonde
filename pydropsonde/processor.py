@@ -11,6 +11,7 @@ import xarray as xr
 
 from pydropsonde.helper import rawreader as rr
 import pydropsonde.helper as hh
+from _version import __version__
 
 _no_default = object()
 
@@ -33,6 +34,7 @@ class Sonde:
 
     sort_index: np.datetime64 = field(init=False, repr=False)
     serial_id: str
+    cont: bool = True
     _: KW_ONLY
     launch_time: Optional[Any] = None
 
@@ -990,6 +992,29 @@ class Sonde:
         object.__setattr__(self, "_prep_l3_ds", _prep_l3_ds)
         return self
 
+    def check_interim_l3(
+        self, interim_l3_path: str = None, interim_l3_filename: str = None
+    ):
+        if interim_l3_path is None:
+            interim_l3_path = self.l2_dir.replace("Level_2", "Level_3_interim").replace(
+                self.flight_id, ""
+            )
+        if interim_l3_filename is None:
+            interim_l3_filename = "interim_l3_{sonde_id}_{version}.nc".format(
+                sonde_id=self.serial_id, version=__version__
+            )
+        else:
+            interim_l3_filename = interim_l3_filename.format(
+                sonde_id=self.serial_id, version=__version__
+            )
+        if os.path.exists(interim_l3_path + interim_l3_filename):
+            ds = xr.open_dataset(interim_l3_path + interim_l3_filename)
+            object.__setattr__(self, "_interim_l3_ds", ds)
+            object.__setattr__(self, "cont", False)
+            return self
+        else:
+            return self
+
     def add_q_and_theta_to_l2_ds(self):
         """
         Adds potential temperature and specific humidity to the L2 dataset.
@@ -1110,6 +1135,23 @@ class Sonde:
         object.__setattr__(self, "_prep_l3_ds", _prep_l3_ds)
         return self
 
+    def make_prep_interim(self):
+        object.__setattr__(self, "_interim_l3_ds", self._prep_l3_ds)
+        return self
+
+    def save_interim_l3(self, interim_l3_path: str = None, interim_l3_name: str = None):
+        if interim_l3_path is None:
+            interim_l3_path = self.l2_dir.replace("Level_2", "Level_3_interim").replace(
+                self.flight_id, ""
+            )
+        if interim_l3_name is None:
+            interim_l3_name = "interim_l3_{sonde_id}_{version}.nc".format(
+                sonde_id=self.serial_id, version=__version__
+            )
+        os.makedirs(interim_l3_path, exist_ok=True)
+        self._interim_l3_ds.to_netcdf(interim_l3_path + interim_l3_name)
+        return self
+
 
 @dataclass(order=True)
 class Gridded:
@@ -1119,7 +1161,7 @@ class Gridded:
         """
         function to concatenate all sondes using the combination of all measurement times and launch times
         """
-        list_of_l2_ds = [sonde._prep_l3_ds for sonde in self.sondes.values()]
+        list_of_l2_ds = [sonde._interim_l3_ds for sonde in self.sondes.values()]
         combined = xr.combine_by_coords(list_of_l2_ds)
         self._interim_l3_ds = combined
         return self
