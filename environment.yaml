@@ -18,10 +18,10 @@ dependencies:
   - pytest
   - sphinx
   - sphinx-autobuild
-  - typhon
   - xarray
   - pip
   - pip:
+    - typhon
     - sphinx-autodoc2
     - sphinx-book-theme
     - sphinx-last-updated-by-git
