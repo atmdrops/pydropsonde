@@ -18,6 +18,7 @@ dependencies:
   - pytest
   - sphinx
   - sphinx-autobuild
+  - typhon
   - xarray
   - pip
   - pip:

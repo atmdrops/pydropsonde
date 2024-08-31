@@ -1,5 +1,6 @@
 import numpy as np
 import metpy.calc as mpcalc
+import typhon
 from metpy.units import units
 
 # Keys in l2_variables should be variable names in aspen_ds attribute of Sonde object
@@ -178,20 +179,20 @@ def calc_q_from_rh(ds):
 
     Function to estimate specific humidity from the relative humidity, temperature and pressure in the given dataset.
     """
-    vmr = mpcalc.mixing_ratio_from_relative_humidity(
-        ds["p"].values * units.Pa,
-        ds.ta.values * units.kelvin,
-        (ds.rh * 100) * units.percent,
+    vmr = typhon.physics.relative_humidity2vmr(
+        RH=ds.rh.values,
+        p=ds.p.values,
+        T=ds.ta.values,
+        e_eq=typhon.physics.e_eq_mixed_mk,
     )
-    q = mpcalc.specific_humidity_from_mixing_ratio(vmr)
 
-    ds = ds.assign(q=(ds.rh.dims, q.magnitude))
+    q = typhon.physics.vmr2specific_humidity(vmr)
+    ds = ds.assign(q=(ds.ta.dims, q))
     ds["q"].attrs = dict(
         standard_name="specific humidity",
         long_name="specific humidity",
-        units=str(q.units),
+        units="kg/kg ",
     )
-
     return ds
 
 
