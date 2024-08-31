@@ -1012,6 +1012,14 @@ class Sonde:
 
         return self
 
+    def add_iwv(self):
+        ds = self._prep_l3_ds
+        iwv = hh.calc_iwv(ds)
+        ds = xr.merge([ds, iwv])
+        object.__setattr__(self, "_prep_l3_ds", ds)
+
+        return self
+
     def remove_non_mono_incr_alt(self, alt_var="alt"):
         """
         This function removes the indices in the some height variable that are not monotonically increasing
@@ -1121,6 +1129,7 @@ class Gridded:
         """
         list_of_l2_ds = [sonde._prep_l3_ds for sonde in self.sondes.values()]
         combined = xr.combine_by_coords(list_of_l2_ds)
+        combined["iwv"] = combined.iwv.mean("alt")
         self._interim_l3_ds = combined
         return self
 

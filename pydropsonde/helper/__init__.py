@@ -2,6 +2,7 @@ import numpy as np
 import metpy.calc as mpcalc
 import typhon
 from metpy.units import units
+import xarray as xr
 
 # Keys in l2_variables should be variable names in aspen_ds attribute of Sonde object
 l2_variables = {
@@ -269,6 +270,28 @@ def calc_q_from_rh(ds):
         units="kg/kg ",
     )
     return ds
+
+
+def calc_iwv(ds, sonde_dim="sonde_id", alt_dim="alt"):
+    ds = ds.sortby("alt")
+    pressure = ds.p.values
+    temperature = ds.ta.values
+    alt = ds[alt_dim].values
+
+    vmr = typhon.physics.specific_humidity2vmr(
+        q=ds.q.values,
+    )
+    mask_p = ~np.isnan(pressure)
+    mask_t = ~np.isnan(temperature)
+    mask_vmr = ~np.isnan(vmr)
+    mask = mask_p & mask_t & mask_vmr
+    iwv = typhon.physics.integrate_water_vapor(
+        vmr[mask], pressure[mask], T=temperature[mask], z=alt[mask]
+    )
+    ds_iwv = xr.DataArray([iwv], dims=[sonde_dim], coords={})
+    ds_iwv.name = "iwv"
+    ds_iwv.attrs = {"standard name": "integrated water vapor", "units": "kg/m^2"}
+    return ds_iwv
 
 
 def calc_theta_from_T(ds):
