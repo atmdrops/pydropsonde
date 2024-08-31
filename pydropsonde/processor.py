@@ -11,7 +11,7 @@ import xarray as xr
 
 from pydropsonde.helper import rawreader as rr
 import pydropsonde.helper as hh
-from _version import __version__
+from ._version import __version__
 
 _no_default = object()
 
