@@ -167,6 +167,81 @@ def get_si_converter_function_based_on_var(var_name):
     return func
 
 
+def calc_saturation_pressure(temperature_K, method="hardy1998"):
+    """
+    Calculate saturation water vapor pressure
+
+    Input
+    -----
+    temperature_K : array
+        array of temperature in Kevlin or dew point temperature for actual vapor pressure
+    method : str
+        Formula used for calculating the saturation pressure
+            'hardy1998' : ITS-90 Formulations for Vapor Pressure, Frostpoint Temperature,
+                Dewpoint Temperature, and Enhancement Factors in the Range –100 to +100 C,
+                Bob Hardy, Proceedings of the Third International Symposium on Humidity and Moisture,
+                1998 (same as used in Aspen software after May 2018)
+
+    Return
+    ------
+    e_sw : array
+        saturation pressure (Pa)
+
+    Examples
+    --------
+    >>> calc_saturation_pressure([273.15])
+    array([ 611.2129107])
+
+    >>> calc_saturation_pressure([273.15, 293.15, 253.15])
+    array([  611.2129107 ,  2339.26239586,   125.58350529])
+    """
+
+    if method == "hardy1998":
+        g = np.empty(8)
+        g[0] = -2.8365744 * 10**3
+        g[1] = -6.028076559 * 10**3
+        g[2] = 1.954263612 * 10**1
+        g[3] = -2.737830188 * 10 ** (-2)
+        g[4] = 1.6261698 * 10 ** (-5)
+        g[5] = 7.0229056 * 10 ** (-10)
+        g[6] = -1.8680009 * 10 ** (-13)
+        g[7] = 2.7150305
+
+        e_sw = np.zeros_like(temperature_K)
+
+        for t, temp in enumerate(temperature_K):
+            ln_e_sw = np.sum([g[i] * temp ** (i - 2) for i in range(0, 7)]) + g[
+                7
+            ] * np.log(temp)
+            e_sw[t] = np.exp(ln_e_sw)
+        return e_sw
+
+
+def calc_q_from_rh_sondes(ds):
+    """
+    Input :
+
+        ds : Dataset
+
+    Output :
+
+        q : Specific humidity values
+
+    Function to estimate specific humidity from the relative humidity, temperature and pressure in the given dataset.
+    """
+    e_s = calc_saturation_pressure(ds.ta.values)
+    w_s = mpcalc.mixing_ratio(e_s * units.Pa, ds.p.values * units.Pa).magnitude
+    w = ds.rh.values * w_s
+    q = w / (1 + w)
+    ds = ds.assign(q=(ds.rh.dims, q))
+    ds["q"].attrs = dict(
+        standard_name="specific humidity",
+        long_name="specific humidity",
+        units="kg/kg ",
+    )
+    return ds
+
+
 def calc_q_from_rh(ds):
     """
     Input :
