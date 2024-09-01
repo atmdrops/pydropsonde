@@ -1074,6 +1074,7 @@ class Sonde:
         interp_stop=14515,
         interp_step=10,
         max_gap_fill: int = 50,
+        p_log=True,
         method: str = "bin",
     ):
         """
@@ -1086,7 +1087,8 @@ class Sonde:
                 f"your altitude for sonde {self._interim_l3_ds.sonde_id.values} is not sorted."
             )
         ds = self._prep_l3_ds.swap_dims({"time": alt_var}).load()
-
+        if p_log:
+            ds = ds.assign(p=(ds.p.dims, np.log(ds.p.values)))
         if method == "linear_interpolate":
             interp_ds = ds.interp({alt_var: interpolation_grid})
         elif method == "bin":
@@ -1124,6 +1126,9 @@ class Sonde:
                 )
                 .rename({f"{alt_var}_bins": alt_var, "time": "interpolated_time"})
             )
+
+        if p_log:
+            interp_ds = ds.assign(p=(ds.p.dims, np.exp(ds.p.values)))
 
         object.__setattr__(self, "_prep_l3_ds", interp_ds)
 
