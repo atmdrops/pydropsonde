@@ -1,6 +1,8 @@
 import numpy as np
 import metpy.calc as mpcalc
+import typhon
 from metpy.units import units
+import xarray as xr
 
 # Keys in l2_variables should be variable names in aspen_ds attribute of Sonde object
 l2_variables = {
@@ -166,6 +168,81 @@ def get_si_converter_function_based_on_var(var_name):
     return func
 
 
+def calc_saturation_pressure(temperature_K, method="hardy1998"):
+    """
+    Calculate saturation water vapor pressure
+
+    Input
+    -----
+    temperature_K : array
+        array of temperature in Kevlin or dew point temperature for actual vapor pressure
+    method : str
+        Formula used for calculating the saturation pressure
+            'hardy1998' : ITS-90 Formulations for Vapor Pressure, Frostpoint Temperature,
+                Dewpoint Temperature, and Enhancement Factors in the Range –100 to +100 C,
+                Bob Hardy, Proceedings of the Third International Symposium on Humidity and Moisture,
+                1998 (same as used in Aspen software after May 2018)
+
+    Return
+    ------
+    e_sw : array
+        saturation pressure (Pa)
+
+    Examples
+    --------
+    >>> calc_saturation_pressure([273.15])
+    array([ 611.2129107])
+
+    >>> calc_saturation_pressure([273.15, 293.15, 253.15])
+    array([  611.2129107 ,  2339.26239586,   125.58350529])
+    """
+
+    if method == "hardy1998":
+        g = np.empty(8)
+        g[0] = -2.8365744 * 10**3
+        g[1] = -6.028076559 * 10**3
+        g[2] = 1.954263612 * 10**1
+        g[3] = -2.737830188 * 10 ** (-2)
+        g[4] = 1.6261698 * 10 ** (-5)
+        g[5] = 7.0229056 * 10 ** (-10)
+        g[6] = -1.8680009 * 10 ** (-13)
+        g[7] = 2.7150305
+
+        e_sw = np.zeros_like(temperature_K)
+
+        for t, temp in enumerate(temperature_K):
+            ln_e_sw = np.sum([g[i] * temp ** (i - 2) for i in range(0, 7)]) + g[
+                7
+            ] * np.log(temp)
+            e_sw[t] = np.exp(ln_e_sw)
+        return e_sw
+
+
+def calc_q_from_rh_sondes(ds):
+    """
+    Input :
+
+        ds : Dataset
+
+    Output :
+
+        q : Specific humidity values
+
+    Function to estimate specific humidity from the relative humidity, temperature and pressure in the given dataset.
+    """
+    e_s = calc_saturation_pressure(ds.ta.values)
+    w_s = mpcalc.mixing_ratio(e_s * units.Pa, ds.p.values * units.Pa).magnitude
+    w = ds.rh.values * w_s
+    q = w / (1 + w)
+    ds = ds.assign(q=(ds.rh.dims, q))
+    ds["q"].attrs = dict(
+        standard_name="specific humidity",
+        long_name="specific humidity",
+        units="kg/kg ",
+    )
+    return ds
+
+
 def calc_q_from_rh(ds):
     """
     Input :
@@ -178,21 +255,43 @@ def calc_q_from_rh(ds):
 
     Function to estimate specific humidity from the relative humidity, temperature and pressure in the given dataset.
     """
-    vmr = mpcalc.mixing_ratio_from_relative_humidity(
-        ds["p"].values * units.Pa,
-        ds.ta.values * units.kelvin,
-        (ds.rh * 100) * units.percent,
+    vmr = typhon.physics.relative_humidity2vmr(
+        RH=ds.rh.values,
+        p=ds.p.values,
+        T=ds.ta.values,
+        e_eq=typhon.physics.e_eq_mixed_mk,
     )
-    q = mpcalc.specific_humidity_from_mixing_ratio(vmr)
 
-    ds = ds.assign(q=(ds.rh.dims, q.magnitude))
+    q = typhon.physics.vmr2specific_humidity(vmr)
+    ds = ds.assign(q=(ds.ta.dims, q))
     ds["q"].attrs = dict(
         standard_name="specific humidity",
         long_name="specific humidity",
-        units=str(q.units),
+        units="kg/kg ",
     )
-
     return ds
+
+
+def calc_iwv(ds, sonde_dim="sonde_id", alt_dim="alt"):
+    ds = ds.sortby("alt")
+    pressure = ds.p.values
+    temperature = ds.ta.values
+    alt = ds[alt_dim].values
+
+    vmr = typhon.physics.specific_humidity2vmr(
+        q=ds.q.values,
+    )
+    mask_p = ~np.isnan(pressure)
+    mask_t = ~np.isnan(temperature)
+    mask_vmr = ~np.isnan(vmr)
+    mask = mask_p & mask_t & mask_vmr
+    iwv = typhon.physics.integrate_water_vapor(
+        vmr[mask], pressure[mask], T=temperature[mask], z=alt[mask]
+    )
+    ds_iwv = xr.DataArray([iwv], dims=[sonde_dim], coords={})
+    ds_iwv.name = "iwv"
+    ds_iwv.attrs = {"standard name": "integrated water vapor", "units": "kg/m^2"}
+    return ds_iwv
 
 
 def calc_theta_from_T(ds):
