@@ -3,6 +3,7 @@ from .helper.__init__ import path_to_flight_ids, path_to_l0_files
 from .processor import Sonde, Gridded
 import configparser
 import inspect
+from tqdm import tqdm
 import os
 import xarray as xr
 
@@ -275,7 +276,7 @@ def iterate_Sonde_method_over_dict_of_Sondes_objects(
 
     for function_name in functions:
         new_dict = {}
-        for key, value in my_dict.items():
+        for key, value in tqdm(my_dict.items()):
             function = getattr(Sonde, function_name)
             result = function(value, **get_args_for_function(config, function))
             if result is not None:
@@ -442,6 +443,7 @@ pipeline = {
         "intake": "sondes",
         "apply": iterate_Sonde_method_over_dict_of_Sondes_objects,
         "functions": [
+            "check_interim_l3",
             "get_l2_filename",
             "add_l2_ds",
             "create_prep_l3",
@@ -450,6 +452,8 @@ pipeline = {
             "remove_non_mono_incr_alt",
             "interpolate_alt",
             "add_attributes_as_var",
+            "make_prep_interim",
+            "save_interim_l3",
         ],
         "output": "sondes",
         "comment": "This step reads from the saved L2 files and prepares individual sonde datasets before they can be concatenated to create L3.",
