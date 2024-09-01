@@ -125,6 +125,18 @@ l2_filename_template = "{platform}_{launch_time}_{flight_id}_{serial_id}_Level_2
 l3_filename = "Level_3.nc"
 
 
+def add_encoding(ds):
+    return {
+        var: {
+            "compression": "zstd",
+            "dtype": "float32",
+            # "chunksizes": get_chunks(dataset[var].dims),
+        }
+        for var in ds.variables
+        if var not in ds.dims
+    }
+
+
 def get_bool(s):
     if isinstance(s, bool):
         return s

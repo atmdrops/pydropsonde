@@ -1166,8 +1166,9 @@ class Sonde:
         (and not lose information)
         """
         _prep_l3_ds = self._prep_l3_ds
-        for attr, value in self._prep_l3_ds.attrs.items():
-            _prep_l3_ds[attr] = value
+
+        # for attr, value in self._prep_l3_ds.attrs.items():
+        #    _prep_l3_ds[attr] = value
 
         _prep_l3_ds.attrs.clear()
         object.__setattr__(self, "_prep_l3_ds", _prep_l3_ds)
@@ -1238,7 +1239,9 @@ class Gridded:
 
         if not os.path.exists(l3_dir):
             os.makedirs(l3_dir)
-
-        self._interim_l3_ds.to_netcdf(os.path.join(l3_dir, self.l3_filename))
+        encoding = hh.add_encoding(self._interim_l3_ds)
+        self._interim_l3_ds.to_netcdf(
+            os.path.join(l3_dir, self.l3_filename), encoding=encoding
+        )
 
         return self
