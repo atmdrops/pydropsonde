@@ -359,5 +359,36 @@ def calc_T_from_theta(ds):
         long_name="air temperature",
         units=str(ta.units),
     )
+    return ds
 
+
+def calc_wind_dir_and_speed(ds):
+    """
+    Calculates wind direction between 0 and 360 according to https://confluence.ecmwf.int/pages/viewpage.action?pageId=133262398
+
+    """
+    w_dir = (180 + np.arctan2(ds.u.values, ds.v.values) * 180 / np.pi) % 360
+    w_spd = np.sqrt(ds.u.values**2 + ds.v.values**2)
+
+    ds = ds.assign(
+        w_dir=(
+            ds.u.dims,
+            w_dir,
+            dict(
+                standard_name="wind_from_direction",
+                units="degree",
+            ),
+        )
+    )
+
+    ds = ds.assign(
+        w_spd=(
+            ds.u.dims,
+            w_spd,
+            dict(
+                standard_name="wind_speed",
+                units="m s-1",
+            ),
+        )
+    )
     return ds
