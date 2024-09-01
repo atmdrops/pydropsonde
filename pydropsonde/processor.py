@@ -1005,9 +1005,17 @@ class Sonde:
         """
         ds = self._prep_l3_ds
 
-        ds = hh.calc_q_from_rh(ds)
+        ds = hh.calc_q_from_rh_sondes(ds)
         ds = hh.calc_theta_from_T(ds)
 
+        object.__setattr__(self, "_prep_l3_ds", ds)
+
+        return self
+
+    def add_iwv(self):
+        ds = self._prep_l3_ds
+        iwv = hh.calc_iwv(ds)
+        ds = xr.merge([ds, iwv])
         object.__setattr__(self, "_prep_l3_ds", ds)
 
         return self
@@ -1121,6 +1129,7 @@ class Gridded:
         """
         list_of_l2_ds = [sonde._prep_l3_ds for sonde in self.sondes.values()]
         combined = xr.combine_by_coords(list_of_l2_ds)
+        combined["iwv"] = combined.iwv.mean("alt")
         self._interim_l3_ds = combined
         return self
 
