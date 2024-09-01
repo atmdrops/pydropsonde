@@ -46,7 +46,7 @@ l2_variables = {
         "attributes": {
             "standard_name": "relative_humidity",
             "long_name": "relative humidity",
-            "units": "",
+            "units": "1",
             "coordinates": "time lon lat alt",
         }
     },
@@ -299,11 +299,15 @@ def calc_q_from_rh_sondes(ds):
     w_s = mpcalc.mixing_ratio(e_s * units.Pa, ds.p.values * units.Pa).magnitude
     w = ds.rh.values * w_s
     q = w / (1 + w)
-    ds = ds.assign(q=(ds.rh.dims, q))
-    ds["q"].attrs = dict(
-        standard_name="specific humidity",
-        long_name="specific humidity",
-        units="kg/kg ",
+    ds = ds.assign(
+        q=(
+            ds.rh.dims,
+            q,
+            dict(
+                standard_name="specific_humidity",
+                units="1",
+            ),
+        )
     )
     return ds
 
@@ -328,12 +332,17 @@ def calc_q_from_rh(ds):
     )
 
     q = physics.vmr2specific_humidity(vmr)
-    ds = ds.assign(q=(ds.ta.dims, q))
-    ds["q"].attrs = dict(
-        standard_name="specific humidity",
-        long_name="specific humidity",
-        units="kg/kg ",
+    ds = ds.assign(
+        q=(
+            ds.ta.dims,
+            q,
+            dict(
+                standard_name="specific_humidity",
+                units="1",
+            ),
+        )
     )
+
     return ds
 
 
@@ -367,9 +376,19 @@ def calc_iwv(ds, sonde_dim="sonde_id", alt_dim="alt"):
     iwv = physics.integrate_water_vapor(
         vmr[mask], pressure[mask], T=temperature[mask], z=alt[mask]
     )
-    ds_iwv = xr.DataArray([iwv], dims=[sonde_dim], coords={})
-    ds_iwv.name = "iwv"
-    ds_iwv.attrs = {"standard name": "integrated water vapor", "units": "kg/m^2"}
+
+    ds_iwv = xr.DataArray(
+        [iwv],
+        dims=[sonde_dim],
+        coords={},
+        name="iwv",
+        attrs=dict(
+            standard_name="atmosphere_mass_content_of_water_vapor",
+            long_name="integrated water vapour",
+            units="kg m-2",
+        ),
+    )
+
     ds = xr.merge([ds, ds_iwv])
     return ds
 
@@ -390,13 +409,16 @@ def calc_theta_from_T(ds):
         ds.p.values * units(ds.p.attrs["units"]),
         ds.ta.values * units(ds.ta.attrs["units"]),
     )
-    ds = ds.assign(theta=(ds.ta.dims, theta.magnitude))
-    ds["theta"].attrs = dict(
-        standard_name="air_potential_temperature",
-        long_name="potential temperature",
-        units=str(theta.units),
+    ds = ds.assign(
+        theta=(
+            ds.ta.dims,
+            theta.magnitude,
+            dict(
+                standard_name="air_potential_temperature",
+                units=str(theta.units),
+            ),
+        )
     )
-
     return ds
 
 
