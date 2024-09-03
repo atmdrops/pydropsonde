@@ -411,6 +411,30 @@ def calc_T_v(ds):
     return ds
 
 
+def calc_theta_v(ds):
+    mr = mpcalc.mixing_ratio_from_specific_humidity(
+        ds.q.values * units(ds.q.attrs["units"])
+    )
+
+    theta_v = mpcalc.virtual_potential_temperature(
+        pressure=ds.p.values * units(ds.p.attrs["units"]),
+        temperature=ds.ta.values * units(ds.ta.attrs["units"]),
+        mixing_ratio=mr,
+    )
+    ds = ds.assign(
+        theta_v=(
+            ds.ta.dims,
+            theta_v.magnitude,
+            dict(
+                standard_name="",
+                long_name="virtual potential temperature",
+                units=str(theta_v.units),
+            ),
+        )
+    )
+    return ds
+
+
 def calc_wind_dir_and_speed(ds):
     """
     Calculates wind direction between 0 and 360 according to https://confluence.ecmwf.int/pages/viewpage.action?pageId=133262398
