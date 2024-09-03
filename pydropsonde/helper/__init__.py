@@ -388,6 +388,29 @@ def calc_theta_e(ds):
     return ds
 
 
+def calc_T_v(ds):
+    mr = mpcalc.mixing_ratio_from_specific_humidity(
+        ds.q.values * units(ds.q.attrs["units"])
+    )
+
+    tv = mpcalc.virtual_temperature(
+        temperature=ds.ta.values * units(ds.ta.attrs["units"]),
+        mixing_ratio=mr,
+    )
+    ds = ds.assign(
+        tv=(
+            ds.ta.dims,
+            tv.magnitude,
+            dict(
+                standard_name="virtual_temperature",
+                long_name="virtual temperature",
+                units=str(tv.units),
+            ),
+        )
+    )
+    return ds
+
+
 def calc_wind_dir_and_speed(ds):
     """
     Calculates wind direction between 0 and 360 according to https://confluence.ecmwf.int/pages/viewpage.action?pageId=133262398
