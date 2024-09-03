@@ -1056,6 +1056,13 @@ class Sonde:
 
         return self
 
+    def add_thetas(self):
+        ds = self._prep_l3_ds
+        ds = hh.calc_theta_e(ds)
+        object.__setattr__(self, "_prep_l3_ds", ds)
+
+        return self
+
     def add_wind(self):
 
         ds = self._prep_l3_ds

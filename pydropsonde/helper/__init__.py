@@ -362,6 +362,32 @@ def calc_T_from_theta(ds):
     return ds
 
 
+def calc_theta_e(ds):
+    dewpoint = mpcalc.dewpoint_from_specific_humidity(
+        pressure=ds.p.values * units(ds.p.attrs["units"]),
+        temperature=ds.ta.values * units(ds.ta.attrs["units"]),
+        specific_humidity=ds.q.values * units(ds.q.attrs["units"]),
+    )
+    theta_e = mpcalc.equivalent_potential_temperature(
+        pressure=ds.p.values * units(ds.p.attrs["units"]),
+        temperature=ds.ta.values * units(ds.ta.attrs["units"]),
+        dewpoint=dewpoint,
+    )
+
+    ds = ds.assign(
+        theta_e=(
+            ds.ta.dims,
+            theta_e.magnitude,
+            dict(
+                standard_name="air_equivalent_potential_temperature",
+                long_name="equivalent potential temperature",
+                units=str(theta_e.units),
+            ),
+        )
+    )
+    return ds
+
+
 def calc_wind_dir_and_speed(ds):
     """
     Calculates wind direction between 0 and 360 according to https://confluence.ecmwf.int/pages/viewpage.action?pageId=133262398
