@@ -981,6 +981,7 @@ class Sonde:
             object.__setattr__(
                 self, "l2_ds", xr.open_dataset(os.path.join(l2_dir, self.l2_filename))
             )
+
             return self
         except FileNotFoundError:
             return None
@@ -1094,7 +1095,7 @@ class Sonde:
             )
         ds = self._prep_l3_ds.swap_dims({"time": alt_var}).load()
         if p_log:
-            ds = ds.assign(p=(ds.p.dims, np.log(ds.p.values)))
+            ds = ds.assign(p=(ds.p.dims, np.log(ds.p.values), ds.p.attrs))
         if method == "linear_interpolate":
             interp_ds = ds.interp({alt_var: interpolation_grid})
         elif method == "bin":
@@ -1134,10 +1135,9 @@ class Sonde:
             )
 
         if p_log:
-            interp_ds = ds.assign(p=(ds.p.dims, np.exp(ds.p.values)))
+            interp_ds = ds.assign(p=(ds.p.dims, np.exp(ds.p.values), ds.p.attrs))
 
         object.__setattr__(self, "_prep_l3_ds", interp_ds)
-
         return self
 
     def add_attributes_as_var(self):

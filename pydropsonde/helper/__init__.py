@@ -324,7 +324,8 @@ def calc_theta_from_T(ds):
     Function to estimate potential temperature from the temperature and pressure in the given dataset.
     """
     theta = mpcalc.potential_temperature(
-        ds.p.values * units.Pa, ds.ta.values * units.kelvin
+        ds.p.values * units(ds.p.attrs["units"]),
+        ds.ta.values * units(ds.ta.attrs["units"]),
     )
     ds = ds.assign(theta=(ds.ta.dims, theta.magnitude))
     ds["theta"].attrs = dict(
