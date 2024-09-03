@@ -454,6 +454,7 @@ pipeline = {
             "recalc_rh_and_ta",
             "add_wind",
             "add_attributes_as_var",
+            "rename_attr_vars",
             "make_prep_interim",
             "save_interim_l3",
         ],
@@ -469,7 +470,7 @@ pipeline = {
     "create_L3": {
         "intake": "gridded",
         "apply": iterate_method_over_dataset,
-        "functions": ["get_l3_dir", "get_l3_filename", "write_l3"],
+        "functions": ["get_l3_dir", "get_l3_filename", "get_all_attrs", "write_l3"],
         "output": "gridded",
         "comment": "This step creates the L3 dataset after adding additional products.",
     },

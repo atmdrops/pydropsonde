@@ -125,7 +125,7 @@ l2_filename_template = "{platform}_{launch_time}_{flight_id}_{serial_id}_Level_2
 l3_filename = "Level_3.nc"
 
 
-def add_encoding(ds):
+def add_encoding(ds, exceptions=None):
     return {
         var: {
             "compression": "zstd",
@@ -134,6 +134,7 @@ def add_encoding(ds):
         }
         for var in ds.variables
         if var not in ds.dims
+        if var not in exceptions
     }
 
 
