@@ -11,8 +11,8 @@ rh = np.repeat(0.8, 10)
 
 ds = xr.Dataset(
     data_vars=dict(
-        ta=(["alt"], T),
-        p=(["alt"], p),
+        ta=(["alt"], T, {"units": "kelvin"}),
+        p=(["alt"], p, {"units": "Pa"}),
         rh=(["alt"], rh),
         q=(["alt"], q),
     ),
@@ -30,3 +30,9 @@ def test_q2rh2q():
     rh2q = hh.calc_q_from_rh(ds)
     q2rh = hh.calc_rh_from_q(rh2q)
     assert np.all(np.round(ds.rh.values, 3) == np.round(q2rh.rh.values, 3))
+
+
+def test_t2theta2t():
+    t2theta = hh.calc_theta_from_T(ds)
+    theta2t = hh.calc_T_from_theta(t2theta)
+    assert np.all(np.round(ds.ta.values, 2) == np.round(theta2t.ta.values, 2))
