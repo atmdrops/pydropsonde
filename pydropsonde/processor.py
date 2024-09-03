@@ -1037,10 +1037,16 @@ class Sonde:
 
         return self
 
+    def recalc_rh_and_ta(self):
+        ds = self._prep_l3_ds
+        ds = hh.calc_rh_from_q(ds)
+        ds = hh.calc_T_from_theta(ds)
+        object.__setattr__(self, "_prep_l3_ds", ds)
+        return self
+
     def add_iwv(self):
         ds = self._prep_l3_ds
-        iwv = hh.calc_iwv(ds)
-        ds = xr.merge([ds, iwv])
+        ds = hh.calc_iwv(ds)
         object.__setattr__(self, "_prep_l3_ds", ds)
 
         return self
@@ -1083,7 +1089,7 @@ class Sonde:
 
         if not (self._prep_l3_ds[alt_var].diff(dim="time") < 0).any():
             warnings.warn(
-                f"your altitude for sonde {self._interim_l3_ds.sonde_id.values} is not sorted."
+                f"your altitude for sonde {self._prep_l3_ds.sonde_id.values} is not sorted."
             )
         ds = self._prep_l3_ds.swap_dims({"time": alt_var}).load()
 

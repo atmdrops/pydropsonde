@@ -272,8 +272,23 @@ def calc_q_from_rh(ds):
     return ds
 
 
+def calc_rh_from_q(ds):
+    vmr = typhon.physics.specific_humidity2vmr(q=ds.q.values)
+    rh = typhon.physics.vmr2relative_humidity(
+        vmr=vmr, p=ds.p.values, T=ds.ta.values, e_eq=typhon.physics.e_eq_mixed_mk
+    )
+    ds = ds.assign(rh=(ds.q.dims, rh))
+    ds["rh"].attrs = dict(
+        standard_name="relative humidity",
+        long_name="relative humidity",
+        units="",
+        method="water until 0degC, ice below -23degC, mixed between",
+    )
+    return ds
+
+
 def calc_iwv(ds, sonde_dim="sonde_id", alt_dim="alt"):
-    ds = ds.sortby("alt")
+    # ds = ds.copy().sortby("alt")
     pressure = ds.p.values
     temperature = ds.ta.values
     alt = ds[alt_dim].values
@@ -291,7 +306,9 @@ def calc_iwv(ds, sonde_dim="sonde_id", alt_dim="alt"):
     ds_iwv = xr.DataArray([iwv], dims=[sonde_dim], coords={})
     ds_iwv.name = "iwv"
     ds_iwv.attrs = {"standard name": "integrated water vapor", "units": "kg/m^2"}
-    return ds_iwv
+
+    ds = xr.merge([ds, ds_iwv])
+    return ds
 
 
 def calc_theta_from_T(ds):
@@ -314,6 +331,32 @@ def calc_theta_from_T(ds):
         standard_name="potential temperature",
         long_name="potential temperature",
         units=str(theta.units),
+    )
+
+    return ds
+
+
+def calc_T_from_theta(ds):
+    """
+    Input :
+
+        dataset : Dataset
+
+    Output :
+
+        theta : Potential temperature values
+
+    Function to estimate potential temperature from the temperature and pressure in the given dataset.
+    """
+    ta = mpcalc.temperature_from_potential_temperature(
+        ds.p.values * units(ds.p.attrs["units"]),
+        ds.theta.values * units(ds.theta.attrs["units"]),
+    )
+    ds = ds.assign(ta=(ds.ta.dims, ta.magnitude))
+    ds["ta"].attrs = dict(
+        standard_name="air temperature",
+        long_name="air temperature",
+        units=str(ta.units),
     )
 
     return ds
