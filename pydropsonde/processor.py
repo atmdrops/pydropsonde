@@ -1052,6 +1052,13 @@ class Sonde:
 
         return self
 
+    def add_wind(self):
+
+        ds = self._prep_l3_ds
+        ds = hh.calc_wind_dir_and_speed(ds)
+        object.__setattr__(self, "_prep_l3_ds", ds)
+        return self
+
     def remove_non_mono_incr_alt(self, alt_var="alt"):
         """
         This function removes the indices in the some height variable that are not monotonically increasing
