@@ -809,7 +809,7 @@ class Sonde:
             "launch_time_(UTC)": (
                 str(self.aspen_ds.launch_time.values)
                 if hasattr(self.aspen_ds, "launch_time")
-                else str(self.aspen_ds.base_time.values)
+                else np.datetime64(self.aspen_ds.base_time.values)
             ),
             "is_floater": self.is_floater.__str__(),
             "sonde_serial_ID": self.serial_id,
@@ -1190,7 +1190,15 @@ class Sonde:
                 ds[var_name] = ds[var_name].assign_attrs(units=unit)
             except IndexError:
                 pass
-        ds["launch_time"].attrs = {"time_zone": ds.launch_time.attrs["units"]}
+        ds = ds.assign(
+            dict(
+                launch_time=(
+                    "sonde_id",
+                    [ds.launch_time.astype(np.datetime64).values],
+                    {"time_zone": ds.launch_time.attrs["units"]},
+                )
+            )
+        )
 
         object.__setattr__(self, "attrs", attrs)
         object.__setattr__(self, "_prep_l3_ds", ds)
@@ -1268,9 +1276,11 @@ class Gridded:
 
         if not os.path.exists(l3_dir):
             os.makedirs(l3_dir)
-        encoding = hh.add_encoding(self._interim_l3_ds, exceptions=self.attrs)
-        self._interim_l3_ds.to_netcdf(
-            os.path.join(l3_dir, self.l3_filename), encoding=encoding
+        encoding = hh.add_encoding(self._interim_l3_ds)
+        (
+            self._interim_l3_ds.to_netcdf(
+                os.path.join(l3_dir, self.l3_filename), encoding=encoding
+            )
         )
 
         return self

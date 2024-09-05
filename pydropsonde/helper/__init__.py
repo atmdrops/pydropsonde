@@ -125,17 +125,68 @@ l2_filename_template = "{platform}_{launch_time}_{flight_id}_{serial_id}_Level_2
 l3_filename = "Level_3.nc"
 
 
-def add_encoding(ds, exceptions=None):
-    return {
+def get_chunks(ds, var):
+    dimensions = ds[var].dims
+    chunks = {
+        "sonde_id": min(256, ds.sonde_id.size),
+        "alt": min(350, ds.sonde_id.size),
+    }
+
+    return tuple((chunks[d] for d in dimensions))
+
+
+def add_encoding(ds, exceptions=[]):
+    variables = [
+        "u",
+        "v",
+        "ta",
+        "p",
+        "rh",
+        "lat",
+        "lon",
+        "gpsalt",
+        "alt",
+        "sonde_id",
+        "q",
+        "iwv",
+        "w_dir",
+        "w_spd",
+    ]
+
+    enc_var = {
         var: {
             "compression": "zstd",
             "dtype": "float32",
-            # "chunksizes": get_chunks(dataset[var].dims),
+            "chunksizes": get_chunks(ds, var),
         }
-        for var in ds.variables
+        for var in variables
         if var not in ds.dims
         if var not in exceptions
     }
+    enc_time = {
+        var: {
+            "compression": "zstd",
+            "chunksizes": get_chunks(ds, var),
+            "_FillValue": np.datetime64("NaT"),
+        }
+        for var in ["interp_time", "launch_time"]
+    }
+    enc_var.update(enc_time)
+
+    enc_attr = {
+        var: {
+            "compression": "zstd",
+            "chunksizes": get_chunks(ds, var),
+            "dtype": "float32",
+        }
+        for var in ds.variables
+        if var not in ds.dims
+        if var not in variables
+        if var not in ["interp_time", "launch_time"]
+        if ds[var].dtype == "float64"
+    }
+    enc_var.update(enc_attr)
+    return enc_var
 
 
 def get_bool(s):

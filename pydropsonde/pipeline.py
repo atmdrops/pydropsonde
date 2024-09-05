@@ -470,7 +470,7 @@ pipeline = {
     "create_L3": {
         "intake": "gridded",
         "apply": iterate_method_over_dataset,
-        "functions": ["get_l3_dir", "get_l3_filename", "get_all_attrs", "write_l3"],
+        "functions": ["get_l3_dir", "get_l3_filename", "write_l3"],
         "output": "gridded",
         "comment": "This step creates the L3 dataset after adding additional products.",
     },
