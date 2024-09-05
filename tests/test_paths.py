@@ -5,6 +5,7 @@ import pytest
 main_data_directory = "./example_data"
 platform_id = "HALO"
 flightdate = "20200119"
+flightdate2 = "20200122"
 path_structure = "{platform}/Level_0/{flight_id}"
 platform_path_structure = "{platform}/Level_0"
 
@@ -31,7 +32,8 @@ def platform():
 
 def test_get_flight_ids(platform):
     flight_ids = platform.get_flight_ids()
-    assert flight_ids[0] == flightdate
+    assert flightdate in flight_ids
+    assert flightdate2 in flight_ids
 
 
 def test_l1_path(flight):
