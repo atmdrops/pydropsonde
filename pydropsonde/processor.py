@@ -1089,7 +1089,7 @@ class Sonde:
         self,
         alt_var="alt",
         interp_start=-5,
-        interp_stop=14515,
+        interp_stop=14600,
         interp_step=10,
         max_gap_fill: int = 50,
         p_log=True,
@@ -1104,26 +1104,29 @@ class Sonde:
             warnings.warn(
                 f"your altitude for sonde {self._prep_l3_ds.sonde_id.values} is not sorted."
             )
-        ds = self._prep_l3_ds.swap_dims({"time": alt_var}).load()
+        ds = (self._prep_l3_ds.swap_dims({"time": alt_var})).load()
         if p_log:
             ds = ds.assign(p=(ds.p.dims, np.log(ds.p.values), ds.p.attrs))
         if method == "linear_interpolate":
             interp_ds = ds.interp({alt_var: interpolation_grid})
         elif method == "bin":
-
             interpolation_bins = interpolation_grid.astype("int")
             interpolation_label = np.arange(
                 interp_start + interp_step / 2,
                 interp_stop - interp_step / 2,
                 interp_step,
             )
-            interp_ds = ds.groupby_bins(
-                alt_var,
-                interpolation_bins,
-                labels=interpolation_label,
-            ).mean(dim=alt_var)
+            try:
+                interp_ds = ds.groupby_bins(
+                    alt_var,
+                    interpolation_bins,
+                    labels=interpolation_label,
+                ).mean(dim=alt_var)
+            except ValueError:
+                warnings.warn(f"No level 2 data for sonde {self.serial_id}")
+                return None
             # somehow coordinates are lost and need to be added again
-            for coord in ["lat", "lon", "time"]:
+            for coord in ["lat", "lon", "time", "gpsalt"]:
                 interp_ds = interp_ds.assign_coords(
                     {
                         coord: (
@@ -1134,19 +1137,24 @@ class Sonde:
                             )
                             .mean(alt_var)
                             .values,
+                            ds[coord].attrs,
                         )
                     }
                 )
+
             interp_ds = (
                 interp_ds.transpose()
                 .interpolate_na(
                     dim=f"{alt_var}_bins", max_gap=max_gap_fill, use_coordinate=True
                 )
-                .rename({f"{alt_var}_bins": alt_var, "time": "interpolated_time"})
+                .rename({f"{alt_var}_bins": alt_var, "time": "interp_time"})
+                .reset_coords(["interp_time", "lat", "lon", "gpsalt"])
             )
 
         if p_log:
-            interp_ds = ds.assign(p=(ds.p.dims, np.exp(ds.p.values), ds.p.attrs))
+            interp_ds = interp_ds.assign(
+                p=(interp_ds.p.dims, np.exp(interp_ds.p.values), interp_ds.p.attrs)
+            )
 
         object.__setattr__(self, "_prep_l3_ds", interp_ds)
         return self
