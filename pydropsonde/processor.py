@@ -1013,7 +1013,7 @@ class Sonde:
                 sonde_id=self.serial_id, version=__version__
             )
         if os.path.exists(os.path.join(interim_l3_path, interim_l3_filename)):
-            ds = xr.open_dataset(interim_l3_path + interim_l3_filename)
+            ds = xr.open_dataset(os.path.join(interim_l3_path, interim_l3_filename))
             object.__setattr__(self, "_interim_l3_ds", ds)
             object.__setattr__(self, "cont", False)
             return self
