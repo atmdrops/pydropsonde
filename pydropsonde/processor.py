@@ -1199,7 +1199,6 @@ class Sonde:
                 )
             )
         )
-
         object.__setattr__(self, "attrs", attrs)
         object.__setattr__(self, "_prep_l3_ds", ds)
         return self
@@ -1276,7 +1275,7 @@ class Gridded:
 
         if not os.path.exists(l3_dir):
             os.makedirs(l3_dir)
-        encoding = hh.add_encoding(self._interim_l3_ds)
+        encoding = hh.get_encoding(self._interim_l3_ds)
         (
             self._interim_l3_ds.to_netcdf(
                 os.path.join(l3_dir, self.l3_filename), encoding=encoding

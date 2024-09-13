@@ -126,16 +126,17 @@ l3_filename = "Level_3.nc"
 
 
 def get_chunks(ds, var):
-    dimensions = ds[var].dims
+
     chunks = {
         "sonde_id": min(256, ds.sonde_id.size),
-        "alt": min(350, ds.sonde_id.size),
+        "alt": min(350, ds.alt.size),
     }
 
-    return tuple((chunks[d] for d in dimensions))
+    return tuple((chunks[d] for d in ds[var].dims))
 
 
-def add_encoding(ds, exceptions=[]):
+def get_encoding(ds, exclude_vars=None):
+
     variables = [
         "u",
         "v",
@@ -152,20 +153,22 @@ def add_encoding(ds, exceptions=[]):
         "w_dir",
         "w_spd",
     ]
+    if exclude_vars is None:
+        exclude_vars = []
 
     enc_var = {
         var: {
-            "compression": "zstd",
+            "compression": "zlib",
             "dtype": "float32",
             "chunksizes": get_chunks(ds, var),
         }
         for var in variables
         if var not in ds.dims
-        if var not in exceptions
+        if var not in exclude_vars
     }
     enc_time = {
         var: {
-            "compression": "zstd",
+            "compression": "zlib",
             "chunksizes": get_chunks(ds, var),
             "_FillValue": np.datetime64("NaT"),
         }
@@ -175,7 +178,7 @@ def add_encoding(ds, exceptions=[]):
 
     enc_attr = {
         var: {
-            "compression": "zstd",
+            "compression": "zlib",
             "chunksizes": get_chunks(ds, var),
             "dtype": "float32",
         }
