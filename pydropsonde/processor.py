@@ -1200,12 +1200,7 @@ class Gridded:
         function to concatenate all sondes using the combination of all measurement times and launch times
         """
         list_of_l2_ds = [sonde._interim_l3_ds for sonde in self.sondes.values()]
-
-        combined = xr.concat(list_of_l2_ds, dim="sonde_id", join="exact")
-        combined = combined.assign(
-            dict(iwv=("sonde_id", combined.iwv.mean("alt").values, combined.iwv.attrs))
-        )
-        self._interim_l3_ds = combined
+        self._interim_l3_ds = xr.concat(list_of_l2_ds, dim="sonde_id", join="exact")
         return self
 
     def get_l3_dir(self, l3_dir: str = None):
