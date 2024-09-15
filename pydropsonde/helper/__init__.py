@@ -1,7 +1,7 @@
 import numpy as np
 import metpy.calc as mpcalc
-import typhon
 from metpy.units import units
+from . import physics
 import xarray as xr
 
 # Keys in l2_variables should be variable names in aspen_ds attribute of Sonde object
@@ -320,14 +320,14 @@ def calc_q_from_rh(ds):
 
     Function to estimate specific humidity from the relative humidity, temperature and pressure in the given dataset.
     """
-    vmr = typhon.physics.relative_humidity2vmr(
+    vmr = physics.relative_humidity2vmr(
         RH=ds.rh.values,
         p=ds.p.values,
         T=ds.ta.values,
-        e_eq=typhon.physics.e_eq_mixed_mk,
+        e_eq=physics.e_eq_mixed_mk,
     )
 
-    q = typhon.physics.vmr2specific_humidity(vmr)
+    q = physics.vmr2specific_humidity(vmr)
     ds = ds.assign(q=(ds.ta.dims, q))
     ds["q"].attrs = dict(
         standard_name="specific humidity",
@@ -338,9 +338,9 @@ def calc_q_from_rh(ds):
 
 
 def calc_rh_from_q(ds):
-    vmr = typhon.physics.specific_humidity2vmr(q=ds.q.values)
-    rh = typhon.physics.vmr2relative_humidity(
-        vmr=vmr, p=ds.p.values, T=ds.ta.values, e_eq=typhon.physics.e_eq_mixed_mk
+    vmr = physics.specific_humidity2vmr(q=ds.q.values)
+    rh = physics.vmr2relative_humidity(
+        vmr=vmr, p=ds.p.values, T=ds.ta.values, e_eq=physics.e_eq_mixed_mk
     )
     ds = ds.assign(rh=(ds.q.dims, rh))
     ds["rh"].attrs = dict(
@@ -353,25 +353,23 @@ def calc_rh_from_q(ds):
 
 
 def calc_iwv(ds, sonde_dim="sonde_id", alt_dim="alt"):
-    ds = ds.isel(alt=slice(None, None, -1))
     pressure = ds.p.values
     temperature = ds.ta.values
     alt = ds[alt_dim].values
 
-    vmr = typhon.physics.specific_humidity2vmr(
+    vmr = physics.specific_humidity2vmr(
         q=ds.q.values,
     )
     mask_p = ~np.isnan(pressure)
     mask_t = ~np.isnan(temperature)
     mask_vmr = ~np.isnan(vmr)
     mask = mask_p & mask_t & mask_vmr
-    iwv = typhon.physics.integrate_water_vapor(
+    iwv = physics.integrate_water_vapor(
         vmr[mask], pressure[mask], T=temperature[mask], z=alt[mask]
     )
     ds_iwv = xr.DataArray([iwv], dims=[sonde_dim], coords={})
     ds_iwv.name = "iwv"
     ds_iwv.attrs = {"standard name": "integrated water vapor", "units": "kg/m^2"}
-
     ds = xr.merge([ds, ds_iwv])
     return ds
 
