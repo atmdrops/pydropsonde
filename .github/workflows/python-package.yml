@@ -1,53 +1,43 @@
-## This workflow will install Python dependencies using mamba, run tests and check pre-commit
 
-name: Python package
-
-on: [push, pull_request]
+on:
+  release:
+    types: [created]
+  push:
+  pull_request:
 
 jobs:
-  test:
+  pypi-publish:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
+    permissions:
+      id-token: write
 
     steps:
-    - uses: actions/checkout@v3
-    - name: Set Swap Space
-      uses: pierotofy/set-swap-space@master
-      with:
-        swap-size-gb: 10
-    - uses: mamba-org/setup-micromamba@v1
-      with:
-        micromamba-version: 'latest'
-        init-shell: bash
-        generate-run-shell: true
-        environment-name: testenv
-        environment-file: environment.yaml
-    - name: pre-commit
-      uses: pre-commit/action@v3.0.0
-    - name: Run pytest in micromamba environment
-      run: |
-        micromamba install -n testenv pytest
-        export PYTHONPATH=$PYTHONPATH:$(pwd)
-        micromamba run -n testenv pytest --import-mode=importlib .
-      working-directory: .
-  pipeline:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        shell: bash -l {0}
-    steps:
-    - uses: actions/checkout@v4
-    - name: initialize conda
-      uses: conda-incubator/setup-miniconda@v3
-      with:
-        activate-environment: dropsonde_test
-        auto-activate-base: false
-        use-mamba: true
-        miniforge-variant: Mambaforge
-        miniforge-version: latest
-    - name: install conda environment
-      run:
-        mamba env update -n dropsonde_test -f environment.yaml
-    - name: run pydropsonde
-      run: pydropsonde -c ./dropsonde.cfg
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.x"
+      - name: Install poetry
+        uses: abatilo/actions-poetry@v2
+      - name: Setup a local virtual environment (if no poetry.toml file)
+        run: |
+          poetry config virtualenvs.create true --local
+          poetry config virtualenvs.in-project true --local
+      - uses: actions/cache@v3
+        name: Define a cache for the virtual environment based on the dependencies lock file
+        with:
+          path: ./.venv
+          key: venv-${{ hashFiles('poetry.lock') }}
+      - name: Install the project dependencies
+        run: |
+          poetry self add "poetry-dynamic-versioning[plugin]"
+          poetry install
+      - name: run tests
+        run: poetry run pytest
+      - name: build release distributions
+        run: poetry build
+      - name: Run pipeline
+        run: poetry run pydropsonde -c ./dropsonde.cfg
+
+ #     - name: Publish release distributions to PyPI
+ #       if: "${{ github.event_name == 'release' }}"
+ #       uses: pypa/gh-action-pypi-publish@release/v1
