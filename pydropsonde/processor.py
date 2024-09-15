@@ -197,7 +197,7 @@ class Sonde:
 
         if hasattr(self, "postaspenfile"):
             try:
-                ds = xr.open_dataset(self.postaspenfile)
+                ds = xr.open_dataset(self.postaspenfile, engine="netcdf4")
             except ValueError:
                 warnings.warn(f"No valid l1 file for sonde {self.serial_id}")
                 return None

@@ -13,16 +13,23 @@ classifiers = [
 packages = [{include = "pydropsonde"}]
 
 [tool.poetry.dependencies]
-python = "=3.12"
-metpy = "*"
-numpy = "*"
-xarray = "*"
-scipy = "*"
+python = ">=3.10"
 
-matplotlib = "*"
-cartopy = "*"
+numpy = "*"
+llvmlite = ">=0.40"
+numba = ">=0.50"
+xarray = "*"
+metpy = "*"
+scipy = "*"
 pyproj = "*"
+typhon = "*"
 pandas = "*"
+bottleneck = "*"
+matplotlib = "*"
+netcdf4 = "*"
+seaborn = "*"
+cmocean = "*"
+tqdm = "*"
 
 [tool.poetry.group.test.dependencies]
 pytest = "*"
@@ -37,7 +44,7 @@ pydropsonde = 'pydropsonde:main'
 
 [tool.poetry-dynamic-versioning.files."pydropsonde/_version.py"]
 persistent-substitution = true
-initial-content = """
+initial-content ="""
   TYPE_CHECKING = False
   if TYPE_CHECKING:
       from typing import Tuple, Union
