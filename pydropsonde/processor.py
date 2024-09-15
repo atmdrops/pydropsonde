@@ -809,7 +809,7 @@ class Sonde:
             "launch_time_(UTC)": (
                 str(self.aspen_ds.launch_time.values)
                 if hasattr(self.aspen_ds, "launch_time")
-                else str(self.aspen_ds.base_time.values)
+                else np.datetime64(self.aspen_ds.base_time.values)
             ),
             "is_floater": self.is_floater.__str__(),
             "sonde_serial_ID": self.serial_id,
@@ -1166,11 +1166,41 @@ class Sonde:
         (and not lose information)
         """
         _prep_l3_ds = self._prep_l3_ds
+        attr_list = []
         for attr, value in self._prep_l3_ds.attrs.items():
             _prep_l3_ds[attr] = value
+            attr_list.append(attr)
 
         _prep_l3_ds.attrs.clear()
+
+        object.__setattr__(self, "attrs", attr_list)
         object.__setattr__(self, "_prep_l3_ds", _prep_l3_ds)
+        return self
+
+    def rename_attr_vars(self):
+        attrs = self.attrs
+        ds = self._prep_l3_ds
+        for attr in self.attrs:
+            splt = attr.split("(")
+            var_name = splt[0][:-1]
+            try:
+                unit = splt[1][:-1]
+                attrs.append(var_name)
+                ds = ds.rename({attr: var_name})
+                ds[var_name] = ds[var_name].assign_attrs(units=unit)
+            except IndexError:
+                pass
+        ds = ds.assign(
+            dict(
+                launch_time=(
+                    "sonde_id",
+                    [ds.launch_time.astype(np.datetime64).values],
+                    {"time_zone": ds.launch_time.attrs["units"]},
+                )
+            )
+        )
+        object.__setattr__(self, "attrs", attrs)
+        object.__setattr__(self, "_prep_l3_ds", ds)
         return self
 
     def make_prep_interim(self):
@@ -1208,6 +1238,13 @@ class Gridded:
         self._interim_l3_ds = combined
         return self
 
+    def get_all_attrs(self):
+        attrs = set()
+        for sonde in list(self.sondes.values()):
+            attrs = set(sonde.attrs) | attrs
+        self.attrs = list(attrs)
+        return self
+
     def get_l3_dir(self, l3_dir: str = None):
         if l3_dir:
             self.l3_dir = l3_dir
@@ -1238,7 +1275,11 @@ class Gridded:
 
         if not os.path.exists(l3_dir):
             os.makedirs(l3_dir)
-
-        self._interim_l3_ds.to_netcdf(os.path.join(l3_dir, self.l3_filename))
+        encoding = hh.get_encoding(self._interim_l3_ds)
+        (
+            self._interim_l3_ds.to_netcdf(
+                os.path.join(l3_dir, self.l3_filename), encoding=encoding
+            )
+        )
 
         return self

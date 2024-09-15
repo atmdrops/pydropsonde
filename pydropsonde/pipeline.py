@@ -454,6 +454,7 @@ pipeline = {
             "recalc_rh_and_ta",
             "add_wind",
             "add_attributes_as_var",
+            "rename_attr_vars",
             "make_prep_interim",
             "save_interim_l3",
         ],
