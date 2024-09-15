@@ -288,7 +288,7 @@ def calc_rh_from_q(ds):
 
 
 def calc_iwv(ds, sonde_dim="sonde_id", alt_dim="alt"):
-    ds = ds.copy().sortby("alt")
+    ds = ds.isel(alt=slice(None, None, -1))
     pressure = ds.p.values
     temperature = ds.ta.values
     alt = ds[alt_dim].values
