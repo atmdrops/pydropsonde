@@ -329,7 +329,7 @@ def calc_theta_from_T(ds):
     )
     ds = ds.assign(theta=(ds.ta.dims, theta.magnitude))
     ds["theta"].attrs = dict(
-        standard_name="potential temperature",
+        standard_name="air_potential_temperature",
         long_name="potential temperature",
         units=str(theta.units),
     )
@@ -355,7 +355,7 @@ def calc_T_from_theta(ds):
     )
     ds = ds.assign(ta=(ds.ta.dims, ta.magnitude))
     ds["ta"].attrs = dict(
-        standard_name="air temperature",
+        standard_name="air_temperature",
         long_name="air temperature",
         units=str(ta.units),
     )
@@ -426,7 +426,7 @@ def calc_theta_v(ds):
             ds.ta.dims,
             theta_v.magnitude,
             dict(
-                standard_name="",
+                # standard_name="", to be added when official
                 long_name="virtual potential temperature",
                 units=str(theta_v.units),
             ),
