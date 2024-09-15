@@ -18,8 +18,8 @@ def test_func(a, b=2):
 def config_and_function():
     # Create a ConfigParser object and add a section for the test function
     config = configparser.ConfigParser()
-    config.add_section("tests.test_inspect_function.test_func")
-    config.set("tests.test_inspect_function.test_func", "b", "3")
+    config.add_section("test_inspect_function.test_func")
+    config.set("test_inspect_function.test_func", "b", "3")
     config.add_section("MANDATORY")
     config.set("MANDATORY", "a", "1")
 

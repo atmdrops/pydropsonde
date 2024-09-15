@@ -28,7 +28,9 @@ jobs:
     - name: Run pytest in micromamba environment
       run: |
         micromamba install -n testenv pytest
+        export PYTHONPATH=$PYTHONPATH:$(pwd)
         micromamba run -n testenv pytest --import-mode=importlib .
+      working-directory: .
   pipeline:
     runs-on: ubuntu-latest
     defaults:
