@@ -1,13 +1,15 @@
 import ast
 from dataclasses import dataclass, field, KW_ONLY
+
 from datetime import datetime
 from typing import Any, Optional, List
 import os
 import subprocess
 import warnings
-
+import yaml
 import numpy as np
 import xarray as xr
+import glob
 
 import pydropsonde.helper as hh
 from ._version import __version__
@@ -1274,5 +1276,100 @@ class Gridded:
                 os.path.join(l3_dir, self.l3_filename), encoding=encoding
             )
         )
+
+        return self
+
+    def add_l3_ds(self, l3_dir: str = None):
+        if l3_dir is None:
+            self.l3_ds = self._interim_l3_ds.copy()
+        else:
+            self.l3_ds = xr.open_dataset(l3_dir)
+        return self
+
+    def get_simple_circle_times_from_yaml(self, yaml_file: str = None):
+        with open(yaml_file) as source:
+            flightinfo = yaml.load(source, Loader=yaml.SafeLoader)
+
+        circle_times = []
+        sonde_ids = []
+        segment_ids = []
+        platform_ids = []
+        flight_ids = []
+        for c in flightinfo["segments"]:
+            circle_times.append([(np.datetime64(c["start"]), np.datetime64(c["end"]))])
+            segment_ids.append(c["segment_id"])
+            platform_ids.append(flightinfo["platform"])
+            flight_ids.append(flightinfo["flight_id"])
+
+            try:
+                ds_c = self.l3_ds.where(
+                    self.l3_ds["launch_time"] > np.datetime64(c["start"]),
+                    drop=True,
+                ).where(
+                    self.l3_ds["launch_time"] < np.datetime64(c["end"]),
+                    drop=True,
+                )
+            except ValueError:
+                c_id = c["segment_id"]
+                print(f"No sondes for circle {c_id}. It is omitted")
+                sonde_ids.append([])
+            else:
+                print(ds_c.sonde_id.values)
+                sonde_ids.append(list(ds_c.sonde_id.values))
+        self.circle_times = circle_times
+        self.sonde_ids = sonde_ids
+        self.segment_ids = segment_ids
+        self.platform_ids = platform_ids
+        self.flight_ids = flight_ids
+
+        return self
+
+    def get_circle_info_from_yaml(self, yaml_dir: str = None):
+        allyamlfiles = sorted(glob.glob(yaml_dir + "*.yaml"))
+
+        circle_times = []
+        sonde_ids = []
+        flight_ids = []
+        platform_ids = []
+        segment_ids = []
+        segment_ids = []
+
+        for i in allyamlfiles:
+            with open(i) as source:
+                flightinfo = yaml.load(source, Loader=yaml.SafeLoader)
+            platform_ids.append(flightinfo.platform)
+            flight_ids.append(flightinfo["flight_id"])
+            circle_times.append(
+                [
+                    (c["start"], c["end"])
+                    for c in flightinfo["segments"]
+                    if "circle" in c["kinds"]
+                    if len(c["dropsondes"]["GOOD"]) >= 6
+                ]
+            )
+
+            sonde_ids.append(
+                [
+                    c["dropsondes"]["GOOD"]
+                    for c in flightinfo["segments"]
+                    if "circle" in c["kinds"]
+                    if len(c["dropsondes"]["GOOD"]) >= 6
+                ]
+            )
+
+            segment_ids.append(
+                [
+                    (c["segment_id"])
+                    for c in flightinfo["segments"]
+                    if "circle" in c["kinds"]
+                    if len(c["dropsondes"]["GOOD"]) >= 6
+                ]
+            )
+
+        self.circle_times = circle_times
+        self.sonde_ids = sonde_ids
+        self.segment_ids = segment_ids
+        self.platform_ids = platform_ids
+        self.flight_ids = flight_ids
 
         return self

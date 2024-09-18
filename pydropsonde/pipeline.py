@@ -1,6 +1,7 @@
 from .helper.paths import Platform, Flight
 from .helper.__init__ import path_to_flight_ids, path_to_l0_files
 from .processor import Sonde, Gridded
+from .circles import Circle
 import configparser
 import inspect
 from tqdm import tqdm
@@ -241,6 +242,31 @@ def create_and_populate_flight_object(
     return output["platforms"], output["sondes"]
 
 
+def create_and_populate_circle_object(
+    gridded: Gridded, config: configparser.ConfigParser
+) -> dict[Circle]:
+    """
+    create circle objects for further analysis
+    """
+
+    circles = {}
+
+    for flight_id, platform_id, segment_id, sonde_ids in zip(
+        gridded.flight_ids, gridded.platform_ids, gridded.segment_ids, gridded.sonde_ids
+    ):
+        circle_ds = gridded.l3_ds.sel(sonde_id=sonde_ids)
+        circle = Circle(
+            circle_ds=circle_ds,
+            flight_id=flight_id,
+            platform_id=platform_id,
+            segment_id=segment_id,
+        )
+        circle_id = f"{flight_id}_{segment_id}"
+        circles[circle_id] = circle
+
+    return circles
+
+
 def iterate_Sonde_method_over_dict_of_Sondes_objects(
     obj: dict, functions: list, config: configparser.ConfigParser
 ) -> dict:
@@ -286,13 +312,58 @@ def iterate_Sonde_method_over_dict_of_Sondes_objects(
     return my_dict
 
 
+def iterate_Circle_method_over_dict_of_Circle_objects(
+    obj: dict, functions: list, config: configparser.ConfigParser
+) -> dict:
+    """
+    Iterates over a dictionary of Circle objects and applies a list of methods to each Circle.
+
+    For each Circle object in the dictionary, this function
+    applies each method listed in the 'functions' key of the substep dictionary.
+    If the method returns a value, it stores the value in a new dictionary.
+    If the method returns None, it does not store the value in the new dictionary.
+
+    The arguments for each method are determined by the `get_args_for_function` function,
+    which uses the nondefaults dictionary and the config object.
+
+    Parameters
+    ----------
+    obj : dict
+        A dictionary of Circle objects.
+    functions : list
+        a list of method names.
+    nondefaults : dict
+        A dictionary mapping function qualified names to dictionaries of arguments.
+    config : configparser.ConfigParser
+        A ConfigParser object containing configuration settings.
+
+    Returns
+    -------
+    dict
+        A dictionary of Circle objects with the results of the methods applied to them (keys where results are None are not included).
+    """
+    my_dict = obj
+
+    for function_name in functions:
+        new_dict = {}
+        for key, value in my_dict.items():
+            function = getattr(Circle, function_name)
+            result = function(value, **get_args_for_function(config, function))
+            if result is not None:
+                new_dict[key] = result
+
+            my_dict = new_dict
+
+    return my_dict
+
+
 def sondes_to_gridded(sondes: dict, config: configparser.ConfigParser):
     gridded = Gridded(sondes)
     gridded.concat_sondes()
     return gridded
 
 
-def iterate_method_over_dataset(
+def apply_method_to_dataset(
     obj: Gridded,
     functions: list,
     config: configparser.ConfigParser,
@@ -468,33 +539,29 @@ pipeline = {
     },
     "create_L3": {
         "intake": "gridded",
-        "apply": iterate_method_over_dataset,
+        "apply": apply_method_to_dataset,
         "functions": ["get_l3_dir", "get_l3_filename", "write_l3"],
         "output": "gridded",
         "comment": "This step creates the L3 dataset after adding additional products.",
     },
-    # "create_patterns": {
-    #     "intake": "gridded",
-    #     "apply": gridded_to_pattern,
-    #     "output": "pattern",
-    #     "comment": "This step creates a dataset with the pattern-wide variables by creating the pattern with the flight-phase segmentation file.",
-    # },
-    # "create_L4": {
-    #     "intake": "pattern",
-    #     "apply": iterate_method_over_dataset,
-    #     "functions": [],
-    #     "output": "pattern",
-    #     "comment": "This step creates the L4 dataset after adding additional products and saves the L4 dataset.",
-    # },
-    # "quicklooks": {
-    #     "intake": ["sondes", "gridded", "pattern"],
-    #     "apply": [
-    #         iterate_Sonde_method_over_dict_of_Sondes_objects,
-    #         iterate_method_over_dataset,
-    #         iterate_method_over_dataset,
-    #     ],
-    #     "functions": [[], [], []],
-    #     "output": "plots",
-    #     "comment": "This step creates quicklooks from the L3 & L4 dataset.",
-    # },
+    "get_circles": {
+        "intake": "gridded",
+        "apply": apply_method_to_dataset,
+        "functions": ["add_l3_ds", "get_simple_circle_times_from_yaml"],
+        "output": "gridded",
+        "comment": "get circle times and add to gridded",
+    },
+    "create_circles": {
+        "intake": "gridded",
+        "apply": create_and_populate_circle_object,
+        "output": "circles",
+        "comment": "This step creates a dictionary of patterns by creating the pattern with the flight-phase segmentation file.",
+    },
+    "calculate_circle_data": {
+        "intake": "circles",
+        "apply": iterate_Circle_method_over_dict_of_Circle_objects,
+        "functions": ["dummy_circle_function"],
+        "output": "circles",
+        "comment": "calculate circle products",
+    },
 }
