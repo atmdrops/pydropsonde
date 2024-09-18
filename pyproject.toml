@@ -14,6 +14,7 @@ packages = [{include = "pydropsonde"}]
 
 [tool.poetry.dependencies]
 python = ">=3.10"
+PyYAML = "*"
 
 numpy = "*"
 llvmlite = ">=0.40"
