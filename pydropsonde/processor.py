@@ -1107,7 +1107,7 @@ class Sonde:
         method: str = "bin",
     ):
         """
-        Ineterpolate sonde data along comon altitude grid to prepare concatenation
+        Interpolate sonde data along comon altitude grid to prepare concatenation
         """
         interpolation_grid = np.arange(interp_start, interp_stop, interp_step)
 
@@ -1128,11 +1128,12 @@ class Sonde:
                 interp_step,
             )
             try:
-                interp_ds = ds.groupby_bins(
+                binned_ds = ds.groupby_bins(
                     alt_var,
                     interpolation_bins,
                     labels=interpolation_label,
-                ).mean(dim=alt_var)
+                )
+                interp_ds = binned_ds.mean(dim=alt_var)
             except ValueError:
                 warnings.warn(f"No level 2 data for sonde {self.serial_id}")
                 return None
@@ -1167,7 +1168,41 @@ class Sonde:
                 p=(interp_ds.p.dims, np.exp(interp_ds.p.values), interp_ds.p.attrs)
             )
 
+        object.__setattr__(self, "_binned_ds", binned_ds)
         object.__setattr__(self, "_prep_l3_ds", interp_ds)
+        return self
+
+    def get_N_values(self, alt_var="alt"):
+        binned_ds = self._binned_ds
+        prep_l3 = self._prep_l3_ds
+        N = binned_ds.count().fillna(0).transpose().rename({f"{alt_var}_bins": alt_var})
+        for variable in [var for var in N.variables if var not in N.coords]:
+            N_name = f"N{variable}"
+            N_attrs = dict(
+                long_name=f"Number of values per bin for {variable}",
+            )
+            prep_l3 = prep_l3.assign(
+                {
+                    N_name: (
+                        prep_l3[variable].dims,
+                        N[variable].values.astype(int),
+                        N_attrs,
+                    )
+                }
+            )
+            var_attrs = prep_l3[variable].attrs
+            var_attrs.update({"ancillary_variables": N_name})
+            prep_l3 = prep_l3.assign(
+                {
+                    f"{variable}": (
+                        prep_l3[variable].dims,
+                        prep_l3[variable].values,
+                        var_attrs,
+                    )
+                }
+            )
+        object.__setattr__(self, "_prep_l3_ds", prep_l3)
+
         return self
 
     def add_attributes_as_var(self):
