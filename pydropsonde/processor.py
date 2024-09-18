@@ -1,7 +1,7 @@
 import ast
 from dataclasses import dataclass, field, KW_ONLY
 
-from datetime import datetime, date
+from datetime import datetime
 from typing import Any, Optional, List
 import os
 import subprocess
