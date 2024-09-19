@@ -394,7 +394,7 @@ def calc_theta_from_T(ds):
     )
     ds = ds.assign(theta=(ds.ta.dims, theta.magnitude))
     ds["theta"].attrs = dict(
-        standard_name="potential temperature",
+        standard_name="air_potential_temperature",
         long_name="potential temperature",
         units=str(theta.units),
     )
@@ -420,9 +420,82 @@ def calc_T_from_theta(ds):
     )
     ds = ds.assign(ta=(ds.ta.dims, ta.magnitude))
     ds["ta"].attrs = dict(
-        standard_name="air temperature",
+        standard_name="air_temperature",
         long_name="air temperature",
         units=str(ta.units),
+    )
+    return ds
+
+
+def calc_theta_e(ds):
+    dewpoint = mpcalc.dewpoint_from_specific_humidity(
+        pressure=ds.p.values * units(ds.p.attrs["units"]),
+        temperature=ds.ta.values * units(ds.ta.attrs["units"]),
+        specific_humidity=ds.q.values * units(ds.q.attrs["units"]),
+    )
+    theta_e = mpcalc.equivalent_potential_temperature(
+        pressure=ds.p.values * units(ds.p.attrs["units"]),
+        temperature=ds.ta.values * units(ds.ta.attrs["units"]),
+        dewpoint=dewpoint,
+    )
+
+    ds = ds.assign(
+        theta_e=(
+            ds.ta.dims,
+            theta_e.magnitude,
+            dict(
+                standard_name="air_equivalent_potential_temperature",
+                long_name="equivalent potential temperature",
+                units=str(theta_e.units),
+            ),
+        )
+    )
+    return ds
+
+
+def calc_T_v(ds):
+    mr = mpcalc.mixing_ratio_from_specific_humidity(
+        ds.q.values * units(ds.q.attrs["units"])
+    )
+
+    tv = mpcalc.virtual_temperature(
+        temperature=ds.ta.values * units(ds.ta.attrs["units"]),
+        mixing_ratio=mr,
+    )
+    ds = ds.assign(
+        tv=(
+            ds.ta.dims,
+            tv.magnitude,
+            dict(
+                standard_name="virtual_temperature",
+                long_name="virtual temperature",
+                units=str(tv.units),
+            ),
+        )
+    )
+    return ds
+
+
+def calc_theta_v(ds):
+    mr = mpcalc.mixing_ratio_from_specific_humidity(
+        ds.q.values * units(ds.q.attrs["units"])
+    )
+
+    theta_v = mpcalc.virtual_potential_temperature(
+        pressure=ds.p.values * units(ds.p.attrs["units"]),
+        temperature=ds.ta.values * units(ds.ta.attrs["units"]),
+        mixing_ratio=mr,
+    )
+    ds = ds.assign(
+        theta_v=(
+            ds.ta.dims,
+            theta_v.magnitude,
+            dict(
+                # standard_name="", to be added when official
+                long_name="virtual potential temperature",
+                units=str(theta_v.units),
+            ),
+        )
     )
     return ds
 
