@@ -156,28 +156,32 @@ l3_vars = [
 
 
 def get_target_dtype(ds, var):
-    if "float" in ds[var].values.dtype:
-        return "float32"
+    if isinstance(ds[var].values.flat[0], np.floating):
+        return {"dtype": "float32"}
+    if np.issubdtype(type(ds[var].values.flat[0]), np.datetime64):
+        return {"units": "nanoseconds since 2000-01-01"}
     else:
-        return ds[var].values.dtype
+        return {"dtype": ds[var].values.dtype}
 
 
 def get_zarr_encoding(ds, var):
     numcodecs.blosc.set_nthreads(1)  # IMPORTANT FOR DETERMINISTIC CIDs
     codec = numcodecs.Blosc("zstd")
-    return {
+    enc = {
         "compressor": codec,
-        "dtype": get_target_dtype(ds, var),
         "chunks": get_chunks(ds, var),
     }
+    enc.update(get_target_dtype(ds, var))
+    return enc
 
 
 def get_nc_encoding(ds, var):
-    return {
+    enc = {
         "compression": "zlib",
-        "dtype": get_target_dtype(ds, var),
         "chunksizes": get_chunks(ds, var),
     }
+    enc.update(get_target_dtype(ds, var))
+    return enc
 
 
 enc_map = {
@@ -192,22 +196,10 @@ def get_encoding(ds, filetype, exclude_vars=None):
         exclude_vars = []
     enc_var = {
         var: enc_fct(ds, var)
-        for var in l3_vars
+        for var in ds.variables
         if var not in ds.dims
         if var not in exclude_vars
     }
-    enc_time = {var: enc_fct(ds, var) for var in ["interp_time", "launch_time"]}
-    enc_var.update(enc_time)
-
-    enc_attr = {
-        var: enc_fct(ds, var)
-        for var in ds.variables
-        if var not in ds.dims
-        if var not in l3_vars
-        if var not in ["interp_time", "launch_time"]
-        if ds[var].dtype == "float64"
-    }
-    enc_var.update(enc_attr)
     return enc_var
 
 
