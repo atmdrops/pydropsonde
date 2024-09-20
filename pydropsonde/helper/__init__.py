@@ -176,12 +176,15 @@ def get_zarr_encoding(ds, var):
 
 
 def get_nc_encoding(ds, var):
-    enc = {
-        "compression": "zlib",
-        "chunksizes": get_chunks(ds, var),
-    }
-    enc.update(get_target_dtype(ds, var))
-    return enc
+    if isinstance(ds[var].values.flat[0], str):
+        return {}
+    else:
+        enc = {
+            "compression": "zlib",
+            "chunksizes": get_chunks(ds, var),
+        }
+        enc.update(get_target_dtype(ds, var))
+        return enc
 
 
 enc_map = {
