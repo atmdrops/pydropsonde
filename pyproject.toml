@@ -3,6 +3,11 @@ name = "pydropsonde"
 version = "0"
 description = "Tools to process dropsonde data"
 authors = ["Geet George <geet.george@mpimet.mpg.de>"]
+maintainers = [
+    "Helene Gloeckner <helene.gloeckner@mpimet.mpg.de>",
+    "Theresa Mieslinger <theresa.mieslinger@mpimet.mpg.de>",
+    "Nina Robbins <nina.robbins@mpimet.mpg.de>",
+]
 readme = "README.md"
 license = "MIT"
 classifiers = [
