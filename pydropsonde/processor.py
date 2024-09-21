@@ -12,6 +12,7 @@ import xarray as xr
 import glob
 
 import pydropsonde.helper as hh
+import pydropsonde.helper.xarray_helper as hx
 from importlib.metadata import version
 
 __version__ = version("pydropsonde")
@@ -1172,10 +1173,12 @@ class Sonde:
         object.__setattr__(self, "_prep_l3_ds", interp_ds)
         return self
 
-    def get_N_values(self, alt_var="alt"):
+    def get_N_m_values(self, alt_var="alt"):
         binned_ds = self._binned_ds
         prep_l3 = self._prep_l3_ds
-        N = binned_ds.count().fillna(0).transpose().rename({f"{alt_var}_bins": alt_var})
+
+        N = binned_ds.count().transpose().rename({f"{alt_var}_bins": alt_var})
+
         for variable in [var for var in N.variables if var not in N.coords]:
             N_name = f"N{variable}"
             N_attrs = dict(
@@ -1190,17 +1193,34 @@ class Sonde:
                     )
                 }
             )
-            var_attrs = prep_l3[variable].attrs
-            var_attrs.update({"ancillary_variables": N_name})
+            prep_l3 = hx.add_ancillary_var(prep_l3, variable, N_name)
+            # get m
+            N2m = N[variable]
+            n_mask = N2m.where(~np.isnan(N2m), 0)
+            int_mask = prep_l3[variable].where(~np.isnan(prep_l3[variable]), 0)
+
+            m_mask = np.invert(n_mask.astype(bool)) & int_mask.astype(bool)
+            m = xr.where(N2m > 0, x=2, y=0)
+            m = xr.where(m_mask, x=1, y=m)
+
+            m_name = f"m{variable}"
+            m_attrs = {
+                "long_name": f"interp method for {variable}",
+                "0": "no data",
+                "1": "no raw data, interpolated",
+                "2": "average over raw data",
+            }
             prep_l3 = prep_l3.assign(
                 {
-                    f"{variable}": (
-                        prep_l3[variable].dims,
-                        prep_l3[variable].values,
-                        var_attrs,
+                    m_name: (
+                        N2m.dims,
+                        m.values.astype(int),
+                        m_attrs,
                     )
                 }
             )
+            prep_l3 = hx.add_ancillary_var(prep_l3, variable, m_name)
+
         object.__setattr__(self, "_prep_l3_ds", prep_l3)
 
         return self
