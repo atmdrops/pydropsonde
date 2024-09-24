@@ -1,6 +1,8 @@
 [tool.poetry]
 name = "pydropsonde"
 version = "0"
+repository = "https://github.com/atmdrops/pydropsonde"
+documentation = "https://atmdrops.github.io/pydropsonde/"
 description = "Tools to process dropsonde data"
 authors = ["Geet George <geet.george@mpimet.mpg.de>"]
 maintainers = [
