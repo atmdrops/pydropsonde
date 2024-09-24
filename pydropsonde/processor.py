@@ -12,7 +12,9 @@ import xarray as xr
 import glob
 
 import pydropsonde.helper as hh
-from ._version import __version__
+from importlib.metadata import version
+
+__version__ = version("pydropsonde")
 
 _no_default = object()
 
