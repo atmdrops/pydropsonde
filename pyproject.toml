@@ -39,6 +39,7 @@ seaborn = "*"
 tqdm = "*"
 xarray = "*"
 zarr = "*"
+circle-fit = "*"
 
 [tool.poetry.group.test.dependencies]
 pytest = "*"
