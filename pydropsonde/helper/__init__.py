@@ -120,6 +120,15 @@ l2_flight_attributes_map = {
     "MSL Altitude (m)": "aircraft_msl_altitude_(m)",
     "Geopotential Altitude (m)": "aircraft_geopotential_altitude_(m)",
 }
+
+l3_coords = [
+    "launch_time",
+    "aircraft_longitude",
+    "aircraft_latitude",
+    "aircraft_msl_altitude",
+]
+
+
 path_to_flight_ids = "{platform}/Level_0"
 path_to_l0_files = "{platform}/Level_0/{flight_id}"
 
