@@ -22,7 +22,6 @@ packages = [{include = "pydropsonde"}]
 [tool.poetry.dependencies]
 python = ">=3.10"
 PyYAML = "*"
-
 numpy = "*"
 llvmlite = ">=0.40"
 numba = ">=0.50"
@@ -37,6 +36,7 @@ netcdf4 = "*"
 seaborn = "*"
 cmocean = "*"
 tqdm = "*"
+circle-fit = "*"
 
 [tool.poetry.group.test.dependencies]
 pytest = "*"
