@@ -1,7 +1,7 @@
 import numpy as np
 from . import physics
 import xarray as xr
-
+from configparser import NoSectionError
 
 from moist_thermodynamics import functions as mtf
 from moist_thermodynamics import saturation_vapor_pressures as mtsvp
@@ -120,6 +120,23 @@ l2_filename_template = "{platform}_{launch_time}_{flight_id}_{serial_id}_Level_2
 l3_filename = "Level_3.nc"
 
 es_formular = mtsvp.liq_hardy
+
+
+def get_global_attrs_from_config(config):
+    """get global attributes that should be added to each dataset from config
+    Input:
+        config: configparser
+    Returns:
+    -------
+        global_attrs: dict with global attributes
+    """
+    try:
+        global_attrs = dict(config.items("GLOBAL_ATTRS"))
+    except NoSectionError:
+        print("No global attributes in config")
+        global_attrs = {}
+
+    return global_attrs
 
 
 l3_vars = [
