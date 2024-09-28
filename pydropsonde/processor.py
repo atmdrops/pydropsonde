@@ -962,8 +962,7 @@ class Sonde:
 
         if not os.path.exists(l2_dir):
             os.makedirs(l2_dir)
-
-        self._interim_l2_ds.to_netcdf(os.path.join(l2_dir, self.l2_filename))
+        hh.to_file(self._interim_l2_ds, os.path.join(l2_dir, self.l2_filename))
 
         return self
 
@@ -986,7 +985,7 @@ class Sonde:
 
         try:
             object.__setattr__(
-                self, "l2_ds", xr.open_dataset(os.path.join(l2_dir, self.l2_filename))
+                self, "l2_ds", hh.open_dataset(os.path.join(l2_dir, self.l2_filename))
             )
 
             return self
@@ -1001,10 +1000,10 @@ class Sonde:
         return self
 
     def check_interim_l3(
-        self, interim_l3_path: str = None, interim_l3_filename: str = None
+        self, interim_l3_dir: str = None, interim_l3_filename: str = None
     ):
-        if interim_l3_path is None:
-            interim_l3_path = self.l2_dir.replace("Level_2", "Level_3_interim").replace(
+        if interim_l3_dir is None:
+            interim_l3_dir = self.l2_dir.replace("Level_2", "Level_3_interim").replace(
                 self.flight_id, ""
             )
         if interim_l3_filename is None:
@@ -1015,9 +1014,16 @@ class Sonde:
             interim_l3_filename = interim_l3_filename.format(
                 sonde_id=self.serial_id, version=__version__
             )
-        if os.path.exists(os.path.join(interim_l3_path, interim_l3_filename)):
-            ds = xr.open_dataset(os.path.join(interim_l3_path, interim_l3_filename))
-            object.__setattr__(self, "_interim_l3_ds", ds)
+        object.__setattr__(self, "interim_l3_dir", interim_l3_dir)
+        object.__setattr__(
+            self, "interim_l3_path", os.path.join(interim_l3_dir, interim_l3_filename)
+        )
+        if os.path.exists(os.path.join(interim_l3_dir, interim_l3_filename)):
+            object.__setattr__(
+                self,
+                "_interim_l3_ds",
+                hh.open_dataset(os.path.join(interim_l3_dir, interim_l3_filename)),
+            )
             object.__setattr__(self, "cont", False)
             return self
         else:
@@ -1218,17 +1224,10 @@ class Sonde:
         object.__setattr__(self, "_interim_l3_ds", self._prep_l3_ds)
         return self
 
-    def save_interim_l3(self, interim_l3_path: str = None, interim_l3_name: str = None):
-        if interim_l3_path is None:
-            interim_l3_path = self.l2_dir.replace("Level_2", "Level_3_interim").replace(
-                self.flight_id, ""
-            )
-        if interim_l3_name is None:
-            interim_l3_name = "interim_l3_{sonde_id}_{version}.nc".format(
-                sonde_id=self.serial_id, version=__version__
-            )
-        os.makedirs(interim_l3_path, exist_ok=True)
-        self._interim_l3_ds.to_netcdf(os.path.join(interim_l3_path, interim_l3_name))
+    def save_interim_l3(self):
+        os.makedirs(self.interim_l3_dir, exist_ok=True)
+        hh.to_file(self._interim_l3_ds, self.interim_l3_path)
+
         return self
 
 
@@ -1282,20 +1281,25 @@ class Gridded:
 
         if not os.path.exists(l3_dir):
             os.makedirs(l3_dir)
-        encoding = hh.get_encoding(self._interim_l3_ds)
-        (
-            self._interim_l3_ds.to_netcdf(
-                os.path.join(l3_dir, self.l3_filename), encoding=encoding
-            )
+        if ".nc" in self.l3_filename:
+            filetype = "nc"
+        elif ".zarr" in self.l3_filename:
+            filetype = "zarr"
+        else:
+            raise ValueError("filetype unknown")
+        encoding = hh.get_encoding(self._interim_l3_ds, filetype=filetype)
+        hh.to_file(
+            ds=self._interim_l3_ds,
+            path=os.path.join(l3_dir, self.l3_filename),
+            encoding=encoding,
         )
-
         return self
 
     def add_l3_ds(self, l3_dir: str = None):
         if l3_dir is None:
             self.l3_ds = self._interim_l3_ds.copy()
         else:
-            self.l3_ds = xr.open_dataset(l3_dir)
+            self.l3_ds = hh.open_dataset(l3_dir)
         return self
 
     def get_simple_circle_times_from_yaml(self, yaml_file: str = None):

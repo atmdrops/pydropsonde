@@ -1,8 +1,11 @@
+import warnings
 import numpy as np
 import metpy.calc as mpcalc
 from metpy.units import units
 from . import physics
 import xarray as xr
+import numcodecs
+from zarr.errors import ContainsGroupError
 
 # Keys in l2_variables should be variable names in aspen_ds attribute of Sonde object
 l2_variables = {
@@ -129,66 +132,103 @@ l4_filename = "Level_4.nc"
 def get_chunks(ds, var):
     chunks = {
         "sonde_id": min(256, ds.sonde_id.size),
-        "alt": min(350, ds.alt.size),
+        "alt": min(400, ds.alt.size),
     }
 
     return tuple((chunks[d] for d in ds[var].dims))
 
 
-def get_encoding(ds, exclude_vars=None):
-    variables = [
-        "u",
-        "v",
-        "ta",
-        "p",
-        "rh",
-        "lat",
-        "lon",
-        "gpsalt",
-        "alt",
-        "sonde_id",
-        "q",
-        "iwv",
-        "w_dir",
-        "w_spd",
-    ]
-    if exclude_vars is None:
-        exclude_vars = []
+l3_vars = [
+    "u",
+    "v",
+    "ta",
+    "p",
+    "rh",
+    "lat",
+    "lon",
+    "gpsalt",
+    "alt",
+    "sonde_id",
+    "q",
+    "iwv",
+    "w_dir",
+    "w_spd",
+]
 
-    enc_var = {
-        var: {
+
+def get_target_dtype(ds, var):
+    if isinstance(ds[var].values.flat[0], np.floating):
+        return {"dtype": "float32"}
+    if np.issubdtype(type(ds[var].values.flat[0]), np.datetime64):
+        return {"units": "nanoseconds since 2000-01-01"}
+    else:
+        return {"dtype": ds[var].values.dtype}
+
+
+def get_zarr_encoding(ds, var):
+    numcodecs.blosc.set_nthreads(1)  # IMPORTANT FOR DETERMINISTIC CIDs
+    codec = numcodecs.Blosc("zstd")
+    enc = {
+        "compressor": codec,
+        "chunks": get_chunks(ds, var),
+    }
+    enc.update(get_target_dtype(ds, var))
+    return enc
+
+
+def get_nc_encoding(ds, var):
+    if isinstance(ds[var].values.flat[0], str):
+        return {}
+    else:
+        enc = {
             "compression": "zlib",
-            "dtype": "float32",
             "chunksizes": get_chunks(ds, var),
         }
-        for var in variables
+        enc.update(get_target_dtype(ds, var))
+        return enc
+
+
+enc_map = {
+    "zarr": get_zarr_encoding,
+    "nc": get_nc_encoding,
+}
+
+
+def get_encoding(ds, filetype, exclude_vars=None):
+    enc_fct = enc_map[filetype]
+    if exclude_vars is None:
+        exclude_vars = []
+    enc_var = {
+        var: enc_fct(ds, var)
+        for var in ds.variables
         if var not in ds.dims
         if var not in exclude_vars
     }
-    enc_time = {
-        var: {
-            "compression": "zlib",
-            "chunksizes": get_chunks(ds, var),
-            "_FillValue": np.datetime64("NaT"),
-        }
-        for var in ["interp_time", "launch_time"]
-    }
-    enc_var.update(enc_time)
-
-    enc_attr = {
-        var: {
-            "compression": "zlib",
-            "chunksizes": get_chunks(ds, var),
-            "dtype": "float32",
-        }
-        for var in ds.variables
-        if var not in ds.dims
-        if var not in variables
-        if var not in ["interp_time", "launch_time"]
-        if ds[var].dtype == "float64"
-    }
-    enc_var.update(enc_attr)
     return enc_var
+
+
+def open_dataset(path):
+    if ".nc" in path:
+        return xr.open_dataset(path)
+    elif ".zarr" in path:
+        return xr.open_dataset(path, engine="zarr")
+    else:
+        raise ValueError(f"Could not open: unrecognized filetype for {path}")
+
+
+def to_file(ds, path, overwrite=False, **kwargs):
+    if ".nc" in path:
+        ds.to_netcdf(path, **kwargs)
+    elif ".zarr" in path:
+        try:
+            ds.to_zarr(path, **kwargs)
+        except ContainsGroupError:
+            if overwrite:
+                ds.to_zarr(path, mode="w", **kwargs)
+            else:
+                warnings.warn(f"file {path} already exists. no new file written")
+    else:
+        raise ValueError(f"Could not write: unrecognized filetype for {path}")
 
 
 def get_bool(s):
