@@ -1,5 +1,9 @@
 from .helper.paths import Platform, Flight
-from .helper.__init__ import path_to_flight_ids, path_to_l0_files
+from .helper.__init__ import (
+    path_to_flight_ids,
+    path_to_l0_files,
+    get_global_attrs_from_config,
+)
 from .processor import Sonde, Gridded
 from .circles import Circle
 import configparser
@@ -358,8 +362,8 @@ def iterate_Circle_method_over_dict_of_Circle_objects(
 
 
 def sondes_to_gridded(sondes: dict, config: configparser.ConfigParser):
-    gridded = Gridded(sondes)
-    gridded.concat_sondes()
+    global_attrs = get_global_attrs_from_config(config)
+    gridded = Gridded(sondes, global_attrs=global_attrs)
     return gridded
 
 
@@ -477,6 +481,7 @@ pipeline = {
             "filter_no_launch_detect",
             "run_aspen",
             "add_aspen_ds",
+            "add_aspen_history",
         ],
         "output": "sondes",
     },
@@ -500,8 +505,8 @@ pipeline = {
             "convert_to_si",
             "get_l2_variables",
             "get_flight_attributes",
-            "get_other_global_attributes",
-            "add_global_attributes_to_interim_l2_ds",
+            "get_sonde_attributes",
+            "add_l2_attributes_to_interim_l2_ds",
             "add_sonde_id_variable",
             "get_l2_filename",
             "write_l2",
@@ -541,7 +546,15 @@ pipeline = {
     "create_L3": {
         "intake": "gridded",
         "apply": apply_method_to_dataset,
-        "functions": ["get_l3_dir", "get_l3_filename", "write_l3"],
+        "functions": [
+            "check_aspen_version",
+            "check_pydropsonde_version",
+            "add_history_to_ds",
+            "concat_sondes",
+            "get_l3_dir",
+            "get_l3_filename",
+            "write_l3",
+        ],
         "output": "gridded",
         "comment": "This step creates the L3 dataset after adding additional products.",
     },

@@ -1,7 +1,7 @@
 import ast
 from dataclasses import dataclass, field, KW_ONLY
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Optional, List
 import os
 import subprocess
@@ -221,6 +221,26 @@ class Sonde:
             raise ValueError(
                 f"I didn't find the `postaspenfile` attribute for Sonde {self.serial_id}, therefore I can't store the xarray dataset as an attribute"
             )
+        return self
+
+    def add_aspen_history(self):
+        history = getattr(self, "history", "")
+        if hasattr(self.aspen_ds, "AspenVersion"):
+            aspen_version = self.aspen_ds.AspenVersion
+        else:
+            aspen_version = self.aspen_ds.AvapsEditorVersion
+        assert self.aspen_ds.ProcessingTime[-3:] == "UTC"
+
+        aspen_time = datetime.strptime(
+            self.aspen_ds.ProcessingTime, "%d %b %Y %H:%M %Z"
+        ).replace(tzinfo=timezone.utc)
+
+        history = (
+            history
+            + aspen_time.isoformat()
+            + f" ASPEN processing with {aspen_version} \n"
+        )
+        object.__setattr__(self, "history", history)
         return self
 
     def filter_no_launch_detect(self) -> None:
@@ -822,7 +842,7 @@ class Sonde:
         if attributes is None:
             attributes = {}
         object.__setattr__(self, "global_attrs", attributes)
-            
+
         return self
 
     def get_sonde_attributes(self):
@@ -837,12 +857,6 @@ class Sonde:
         """
         sonde_attrs = {
             "platform_id": self.platform_id,
-            "ASPEN_version": (
-                self.aspen_ds.AspenVersion
-                if hasattr(self.aspen_ds, "AspenVersion")
-                else self.aspen_ds.AvapsEditorVersion
-            ),
-            "ASPEN_processing_time": self.aspen_ds.ProcessingTime,
             "launch_time_(UTC)": (
                 str(self.aspen_ds.launch_time.values)
                 if hasattr(self.aspen_ds, "launch_time")
@@ -850,7 +864,6 @@ class Sonde:
             ),
             "is_floater": self.is_floater.__str__(),
             "sonde_serial_ID": self.serial_id,
-            "creation_time": str(datetime.utcnow()) + " UTC",
         }
 
         for attr in dir(self):
@@ -869,7 +882,7 @@ class Sonde:
 
     def add_l2_attributes_to_interim_l2_ds(self):
         """
-        Adds global attributes to _interim_l2_ds.
+        Adds flight, sonde and global attributes to _interim_l2_ds.
 
         Parameters
         ----------
@@ -878,7 +891,7 @@ class Sonde:
         Returns
         -------
         self : object
-            Returns the sonde object with global attributes added to _interim_l2_ds.
+            Returns the sonde object with flight, sonde and global attributes added to _interim_l2_ds.
         """
         ds = self._interim_l2_ds
 
@@ -890,11 +903,20 @@ class Sonde:
             del ds.attrs[attr]
 
         if hasattr(self, "flight_attrs"):
-            for attr, value in self.flight_attrs.items():
-                ds.attrs[attr] = value
+            ds = ds.assign_attrs(self.flight_attrs)
         if hasattr(self, "sonde_attrs"):
-            for attr, value in self.sonde_attrs.items():
-                ds.attrs[attr] = value
+            ds = ds.assign_attrs(self.sonde_attrs)
+        if hasattr(self, "global_attrs"):
+            ds = ds.assign_attrs(self.global_attrs)
+
+        history = getattr(self, "history", "")
+        history = (
+            history
+            + datetime.now(timezone.utc).isoformat()
+            + f" quality control with pydropsonde {__version__} \n"
+        )
+        object.__setattr__(self, "history", history)
+        ds = ds.assign_attrs({"history": history})
 
         object.__setattr__(self, "_interim_l2_ds", ds)
 
@@ -1289,7 +1311,18 @@ class Sonde:
         return self
 
     def make_prep_interim(self):
-        object.__setattr__(self, "_interim_l3_ds", self._prep_l3_ds)
+        ds = self._prep_l3_ds
+        if hasattr(self, "global_attrs"):
+            ds = ds.assign_attrs(self.global_attrs)
+        history = getattr(self, "history", "")
+        history = (
+            history
+            + datetime.now(timezone.utc).isoformat()
+            + f" Level 3 processing with pydropsonde {__version__} \n"
+        )
+        object.__setattr__(self, "history", history)
+        ds = ds.assign_attrs({"history": history})
+        object.__setattr__(self, "_interim_l3_ds", ds)
         return self
 
     def save_interim_l3(self):
@@ -1305,6 +1338,53 @@ class Sonde:
 @dataclass(order=True)
 class Gridded:
     sondes: dict
+    global_attrs: dict
+
+    def __post_init__(self):
+        if self.global_attrs is None:
+            self.global_attrs = {}
+
+    def check_aspen_version(self):
+        list_of_l2_hist = [
+            sonde._interim_l3_ds.attrs["history"].splitlines()[0]
+            for sonde in self.sondes.values()
+        ]
+        aspen_versions = [asp.split("Aspen ")[1] for asp in list_of_l2_hist]
+        if not aspen_versions.count(aspen_versions[0]) == len(aspen_versions):
+            raise ValueError(
+                "Not all sondes have been processed with the same Aspen version"
+            )
+        return self
+
+    def check_pydropsonde_version(self):
+        list_of_l2_hist = [
+            sonde._interim_l3_ds.attrs["history"].splitlines()[1]
+            for sonde in self.sondes.values()
+        ]
+        pydrop_versions = [pydr.split("pydropsonde ")[-1] for pydr in list_of_l2_hist]
+        if not pydrop_versions.count(pydrop_versions[0]) == len(pydrop_versions):
+            raise ValueError(
+                "Not all sondes have been processed with the same pydropsonde version to get level 3"
+            )
+        return self
+
+    def add_history_to_ds(self):
+        first_sonde_history = list(self.sondes.values())[0]._interim_l3_ds.attrs[
+            "history"
+        ]
+        new_hist = ""
+        for line_nb, line in enumerate(first_sonde_history.splitlines()):
+            split_line = line.split(" ", 1)
+            print(split_line[0])
+            try:
+                datetime.fromisoformat(split_line[0])
+            except ValueError:
+                warnings.warn(
+                    f"The first part of line {line_nb} in the history is not a date. It was removed from the attribute"
+                )
+            new_hist += split_line[1] + "\n"
+        self.history = new_hist
+        return self
 
     def concat_sondes(self, sortby=None):
         """
@@ -1313,9 +1393,12 @@ class Gridded:
         if sortby is None:
             sortby = list(hh.l3_coords.keys())[0]
         list_of_l2_ds = [sonde._interim_l3_ds for sonde in self.sondes.values()]
-        self._interim_l3_ds = xr.concat(
-            list_of_l2_ds, dim="sonde_id", join="exact"
-        ).sortby(sortby)
+        ds = xr.concat(list_of_l2_ds, dim="sonde_id", join="exact").sortby(sortby)
+
+        if hasattr(self, "global_attrs"):
+            ds = ds.assign_attrs(self.global_attrs)
+
+        self._interim_l3_ds = ds
         return self
 
     def get_all_attrs(self):
@@ -1366,6 +1449,15 @@ class Gridded:
 
         if l3_dir is None:
             l3_dir = self.l3_dir
+        ds = self._interim_l3_ds
+        history = getattr(self, "history", "")
+        history = (
+            history
+            + datetime.now(timezone.utc).isoformat()
+            + f" level3 concatenation with pydropsonde {__version__} \n"
+        )
+        object.__setattr__(self, "history", history)
+        ds.attrs.update({"history": history})
 
         hx.write_ds(
             ds=self._interim_l3_ds,
