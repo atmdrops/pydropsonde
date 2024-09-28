@@ -523,7 +523,6 @@ pipeline = {
             "get_N_m_values",
             "add_iwv",
             "recalc_rh_and_ta",
-            "add_thetas",
             "add_wind",
             "add_attributes_as_var",
             "make_attr_coordinates",
