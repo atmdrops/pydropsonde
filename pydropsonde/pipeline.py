@@ -526,6 +526,7 @@ pipeline = {
             "add_wind",
             "add_attributes_as_var",
             "rename_attr_vars",
+            "make_attr_coordinates",
             "make_prep_interim",
             "save_interim_l3",
         ],

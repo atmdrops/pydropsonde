@@ -1144,7 +1144,7 @@ class Sonde:
                 return None
             # somehow coordinates are lost and need to be added again
             for coord in ["lat", "lon", "time", "gpsalt"]:
-                interp_ds = interp_ds.assign_coords(
+                interp_ds = interp_ds.assign(
                     {
                         coord: (
                             alt_var,
@@ -1220,6 +1220,16 @@ class Sonde:
         object.__setattr__(self, "_prep_l3_ds", ds)
         return self
 
+    def make_attr_coordinates(self):
+        ds = self._prep_l3_ds
+        new_coords = {
+            coord: ("sonde_id", np.reshape(ds[coord].values, (1,)), ds[coord].attrs)
+            for coord in hh.l3_coords
+        }
+        ds = ds.assign_coords(new_coords)
+        object.__setattr__(self, "_prep_l3_ds", ds)
+        return self
+
     def make_prep_interim(self):
         object.__setattr__(self, "_interim_l3_ds", self._prep_l3_ds)
         return self
@@ -1235,12 +1245,16 @@ class Sonde:
 class Gridded:
     sondes: dict
 
-    def concat_sondes(self):
+    def concat_sondes(self, sortby=None):
         """
         function to concatenate all sondes using the combination of all measurement times and launch times
         """
+        if sortby is None:
+            sortby = hh.l3_coords[0]
         list_of_l2_ds = [sonde._interim_l3_ds for sonde in self.sondes.values()]
-        self._interim_l3_ds = xr.concat(list_of_l2_ds, dim="sonde_id", join="exact")
+        self._interim_l3_ds = xr.concat(
+            list_of_l2_ds, dim="sonde_id", join="exact"
+        ).sortby(sortby)
         return self
 
     def get_all_attrs(self):
