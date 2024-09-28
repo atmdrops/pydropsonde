@@ -810,6 +810,15 @@ class Sonde:
         return self
 
     def add_global_attrs(self, attributes=None):
+        """
+        function to add global attributes to sonde object. Whenever a dataset is written, those are added as global attributes
+        Input:
+        attributes : dictionary containing global attributes or None
+        Returns:
+        -------
+        self: object
+            Returns the sonde with a new attribute "global_attrs"
+        """
         if attributes is None:
             attributes = {}
         object.__setattr__(self, "global_attrs", attributes)
@@ -817,7 +826,16 @@ class Sonde:
         return self
 
     def get_sonde_attributes(self):
-        nc_global_attrs = {
+        """
+        function to get sonde specific attributes from ASPEN software and quality control
+        Parameters:
+        None
+        Returns:
+        -------
+        self: object
+            Returns the sonde with a new attribute "sonde_attrs"
+        """
+        sonde_attrs = {
             "platform_id": self.platform_id,
             "ASPEN_version": (
                 self.aspen_ds.AspenVersion
@@ -837,15 +855,15 @@ class Sonde:
 
         for attr in dir(self):
             if attr.startswith("near_surface_count_"):
-                nc_global_attrs[attr] = getattr(self, attr)
+                sonde_attrs[attr] = getattr(self, attr)
             if attr.startswith("profile_fullness_fraction_"):
-                nc_global_attrs[attr] = getattr(self, attr)
+                sonde_attrs[attr] = getattr(self, attr)
 
         for attr in dir(self.qc):
             if not attr.startswith("__"):
-                nc_global_attrs[f"qc_{attr}"] = int(getattr(self.qc, attr))
+                sonde_attrs[f"qc_{attr}"] = int(getattr(self.qc, attr))
 
-        object.__setattr__(self, "nc_global_attrs", nc_global_attrs)
+        object.__setattr__(self, "sonde_attrs", sonde_attrs)
 
         return self
 
@@ -874,8 +892,8 @@ class Sonde:
         if hasattr(self, "flight_attrs"):
             for attr, value in self.flight_attrs.items():
                 ds.attrs[attr] = value
-        if hasattr(self, "nc_global_attrs"):
-            for attr, value in self.nc_global_attrs.items():
+        if hasattr(self, "sonde_attrs"):
+            for attr, value in self.sonde_attrs.items():
                 ds.attrs[attr] = value
 
         object.__setattr__(self, "_interim_l2_ds", ds)
@@ -1290,7 +1308,7 @@ class Gridded:
 
     def concat_sondes(self, sortby=None):
         """
-        function to concatenate all sondes using the combination of all measurement times and launch times
+        function to concatenate all sondes using the combination of all measurement times and launch times and add global attributes to resulting dataset
         """
         if sortby is None:
             sortby = list(hh.l3_coords.keys())[0]
