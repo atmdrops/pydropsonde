@@ -78,7 +78,7 @@ Development Workflow
     It is always good coding practice to work on a different branch every time you start working on a new feature / bug-fix (yes, despite having your own fork).
 
     Create a branch and checkout to start working on it.
-    
+
     .. code-block:: bash
 
         git branch my-new-feature
@@ -160,6 +160,6 @@ Steps to make documentation changes
     sphinx-build -n docs/source docs/_build
 
 
-The `-n` flag is to enable `nitpicky mode <https://www.sphinx-doc.org/en/master/usage/configuration.html#confval-nitpicky>`, so that we catch all warnings with missing references.
+The `-n` flag is to enable `nitpicky mode <https://www.sphinx-doc.org/en/master/usage/configuration.html#confval-nitpicky>`_, so that we catch all warnings with missing references.
 
 When you open a pull request and merge into the main, the documentation will be build automatically and deployed to https://atmdrops.github.io/pydropsonde/.
