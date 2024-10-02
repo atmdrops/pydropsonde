@@ -114,7 +114,7 @@ Adding dependencies
 Currently, pyDropsonde is build with `poetry <https://python-poetry.org/>`_. If you need a new package for your contribution, please remember to
  - add it to the ``pyproject.toml``
  - create a new ``poetry.lock`` (see the `poetry descriptions <https://python-poetry.org/docs/basic-usage/#installing-with-poetrylock>`_)
- - (not essential but nice for conda users) add it to the ``environment.yaml``
+ - add it to the ``environment.yaml``
 
 
 
