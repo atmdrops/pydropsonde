@@ -33,7 +33,7 @@ Development Workflow
     .. code-block:: bash
 
         git clone git@github.com:<your-github-username>/pydropsonde.git
-        cd halodrops
+        cd pydropsonde
         git remote add upstream git@github.com:atmdrops/pydropsonde.git
 
 2. **Create the development environment**
