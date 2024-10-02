@@ -1,7 +1,9 @@
 Contributing
 ============
 
-Firstly, thanks for thinking of contributing to ``pydropsonde``; we are hoping that you didn't land here by mistake. But even if you did, now that you are here why not help us out a bit with this package? There are different ways](#how-can-you-help-us) in which you can contribute to HALO-DROPS. To know how to get started, jump to :ref:`dev_workflow`.
+Firstly, thanks for thinking of contributing to ``pydropsonde``; we are hoping that you didn't land here by mistake. But even if you did, now that you are here why not help us out a bit with this package? There are `different ways <how-help-us_>`_ in which you can contribute to HALO-DROPS. To know how to get started, jump to :ref:`dev_workflow`.
+
+.. _how-help-us:
 
 How can you help us?
 --------------------
