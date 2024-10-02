@@ -132,15 +132,16 @@ Steps to make documentation changes
 
 2. Make the change. Here are some referencing tips for both Markdown files and for docstrings.
 
-   - For cross-referencing within the document, use 
+   - For cross-referencing within the document, use
       .. code-block::
 
           :ref:`section_label`
 
       for example, ``:ref:`dokudev``` in the source code will give you the following link: :ref:`dokudev`. This works because the section :ref:`dokudev` is tagged with the label ``dokudev`` in the source code, which is done by adding the line ``.. _dokudev:`` at the beginning of the section.
+      If you want to add some custom text to your reference, you can do so by adding the text in the following way: ```New Fancy Text <dokudev_>`_``. This will give you the following link: `New Fancy Text <dokudev_>`_, i.e. the text ``New Fancy Text`` will be displayed, but the link will still point to the section with the label ``dokudev``.
 
 
-   - For cross-referencing a different document, use 
+   - For cross-referencing a different document, use
       .. code-block::
 
         :doc:`description <path/to/file>`
@@ -148,12 +149,12 @@ Steps to make documentation changes
       for example, ``:doc:`landing <index>``` will give you the following link: :doc:`landing <index>`. This works because the file ``index.rst`` is in the same directory as the file you are referencing from. If the file is in a different directory, you need to specify the path to the file relative to the current file.
 
 
-   - For URLs 
+   - For URLs
       .. code-block::
 
           `description <url>`_
 
-      for example, ```github <https://github.com/>`_`` will give you the following link: `github <https://github.com/>`_. Note that the URL will open in the same tab. 
+      for example, ```github <https://github.com/>`_`` will give you the following link: `github <https://github.com/>`_. Note that the URL will open in the same tab.
 
 
 
