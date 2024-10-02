@@ -137,7 +137,7 @@ Steps to make documentation changes
 
           :ref:`section_label`
 
-    for example, ``:ref:`dokudev``` in the source code will give you the following link: :ref:`dokudev`. This works because the section :ref:`dokudev` is tagged with the label ``dokudev`` in the source code, which is done by adding the line ``.. _dokudev:`` at the beginning of the section.
+      for example, ``:ref:`dokudev``` in the source code will give you the following link: :ref:`dokudev`. This works because the section :ref:`dokudev` is tagged with the label ``dokudev`` in the source code, which is done by adding the line ``.. _dokudev:`` at the beginning of the section.
 
 
    - For cross-referencing a different document, use 
