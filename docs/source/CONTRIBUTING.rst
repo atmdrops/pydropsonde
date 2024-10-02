@@ -162,4 +162,4 @@ Steps to make documentation changes
 
 The `-n` flag is to enable `nitpicky mode <https://www.sphinx-doc.org/en/master/usage/configuration.html#confval-nitpicky>`_, so that we catch all warnings with missing references.
 
-When you open a pull request and merge into the main, the documentation will be build automatically and deployed to https://atmdrops.github.io/pydropsonde/.
+When you open a pull request and merge into the `main` branch, the documentation will be built automatically and deployed to https://atmdrops.github.io/pydropsonde/.
