@@ -137,7 +137,7 @@ Steps to make documentation changes
 
           :ref:`section_label`
 
-     for example, ``:ref:`dokudev``` in the source code will give you the following link: :ref:`dokudev`. This works because the section :ref:`dokudev` is tagged with the label ``dokudev`` in the source code, which is done by adding the line ``.. _dokudev:`` at the beginning of the section.
+    for example, ``:ref:`dokudev``` in the source code will give you the following link: :ref:`dokudev`. This works because the section :ref:`dokudev` is tagged with the label ``dokudev`` in the source code, which is done by adding the line ``.. _dokudev:`` at the beginning of the section.
 
 
    - For cross-referencing a different document, use 
@@ -148,10 +148,12 @@ Steps to make documentation changes
       for example, ``:doc:`landing <index>``` will give you the following link: :doc:`landing <index>`. This works because the file ``index.rst`` is in the same directory as the file you are referencing from. If the file is in a different directory, you need to specify the path to the file relative to the current file.
 
 
-   - For URLs  e.g. `github <https://github.com/>`_
+   - For URLs 
       .. code-block::
 
           `description <url>`_
+
+      for example, ```github <https://github.com/>`_`` will give you the following link: `github <https://github.com/>`_. Note that the URL will open in the same tab. 
 
 
 
