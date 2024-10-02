@@ -132,10 +132,12 @@ Steps to make documentation changes
 
 2. Make the change. Here are some referencing tips for both Markdown files and for docstrings.
 
-   - For cross-referencing within the document, use e.g. :ref:`dokudev`.
+   - For cross-referencing within the document, use 
       .. code-block::
 
           :ref:`section_label`
+
+     for example, ``:ref:`dokudev``` in the source code will give you the following link: :ref:`dokudev`. This works because the section :ref:`dokudev` is tagged with the label ``dokudev`` in the source code, which is done by adding the line ``.. _dokudev:`` at the beginning of the section.
 
 
    - For cross-referencing a different document, use e.g. :doc:`landing <index>`
