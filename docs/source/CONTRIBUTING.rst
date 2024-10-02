@@ -1,7 +1,7 @@
 Contributing
 ============
 
-Firstly, thanks for thinking of contributing to ``pydropsonde``; we are hoping that you didn't land here by mistake. But even if you did, now that you are here why not help us out a bit with this package? There are different ways](#how-can-you-help-us) in which you can contribute to HALO-DROPS. To know how to get started, jump to [Development Workflow](#development-workflow).
+Firstly, thanks for thinking of contributing to ``pydropsonde``; we are hoping that you didn't land here by mistake. But even if you did, now that you are here why not help us out a bit with this package? There are different ways](#how-can-you-help-us) in which you can contribute to HALO-DROPS. To know how to get started, jump to :ref:`dev_workflow`.
 
 How can you help us?
 --------------------
@@ -16,6 +16,8 @@ You can help us by:
   - Scripts, classes, methods, tests... A lot remains to be done in the package.
 
 Have a look at the `Issues <https://github.com/atmdrops/pydropsonde/issues>`_ and you will find where ``pydropsonde`` needs help. Pick an issue and assign it to yourself, so others know that you are working on that. If you are not sure how to proceed, you can express your interest by commenting on the issue, and someone should help you out.
+
+.. _dev_workflow:
 
 Development Workflow
 --------------------
