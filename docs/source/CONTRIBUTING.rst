@@ -46,7 +46,7 @@ Development Workflow
     Activate the environment with:
     .. code-block:: bash
 
-       conda activate halodrops
+       conda activate pydropsonde_env
 
 
     **_Get pre-commit working for you_**
