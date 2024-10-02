@@ -51,7 +51,7 @@ Development Workflow
 
     **_Get pre-commit working for you_**
 
-    If you created the environment with the ``environmnet.yaml`` file, then ``pre-commit`` should already be present in your environment. ``pre-commit`` is used to employ hooks for checking (and in some cases, fixing) the code before commits are made. To get pre-commit to check automatically every time you commit, use the following command:
+    If you created the environment with the ``environment.yaml`` file, then ``pre-commit`` should already be present in your environment. ``pre-commit`` is used to employ hooks for checking (and in some cases, fixing) the code before commits are made. To get pre-commit to check automatically every time you commit, use the following command:
 
     .. code-block:: bash
 
