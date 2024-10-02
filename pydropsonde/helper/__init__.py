@@ -299,12 +299,15 @@ def calc_q_from_rh_sondes(ds):
     w_s = mpcalc.mixing_ratio(e_s * units.Pa, ds.p.values * units.Pa).magnitude
     w = ds.rh.values * w_s
     q = w / (1 + w)
-    ds = ds.assign(q=(ds.rh.dims, q))
-    ds["q"].attrs = dict(
-        standard_name="specific humidity",
-        long_name="specific humidity",
-        units="kg/kg ",
-    )
+    try:
+        q_attrs = ds.q.attrs
+    except AttributeError:
+        q_attrs = dict(
+            standard_name="specific_humidity",
+            long_name="specific humidity",
+            units="1",
+        )
+    ds = ds.assign(q=(ds.rh.dims, q, q_attrs))
     return ds
 
 
@@ -328,12 +331,15 @@ def calc_q_from_rh(ds):
     )
 
     q = physics.vmr2specific_humidity(vmr)
-    ds = ds.assign(q=(ds.ta.dims, q))
-    ds["q"].attrs = dict(
-        standard_name="specific humidity",
-        long_name="specific humidity",
-        units="kg/kg ",
-    )
+    try:
+        q_attrs = ds.q.attrs
+    except AttributeError:
+        q_attrs = dict(
+            standard_name="specific_humidity",
+            long_name="specific humidity",
+            units="1",
+        )
+    ds = ds.assign(q=(ds.ta.dims, q, q_attrs))
     return ds
 
 
@@ -342,13 +348,21 @@ def calc_rh_from_q(ds):
     rh = physics.vmr2relative_humidity(
         vmr=vmr, p=ds.p.values, T=ds.ta.values, e_eq=physics.e_eq_mixed_mk
     )
-    ds = ds.assign(rh=(ds.q.dims, rh))
-    ds["rh"].attrs = dict(
-        standard_name="relative humidity",
-        long_name="relative humidity",
-        units="",
-        method="water until 0degC, ice below -23degC, mixed between",
-    )
+    try:
+        rh_attrs = ds.rh.attrs.update(
+            dict(
+                method="water until 0degC, ice below -23degC, mixed between",
+            )
+        )
+    except AttributeError:
+        rh_attrs = dict(
+            standard_name="relative_humidity",
+            long_name="relative humidity",
+            units="1",
+            method="water until 0degC, ice below -23degC, mixed between",
+        )
+    ds = ds.assign(rh=(ds.q.dims, rh, rh_attrs))
+
     return ds
 
 
@@ -390,12 +404,15 @@ def calc_theta_from_T(ds):
         ds.p.values * units(ds.p.attrs["units"]),
         ds.ta.values * units(ds.ta.attrs["units"]),
     )
-    ds = ds.assign(theta=(ds.ta.dims, theta.magnitude))
-    ds["theta"].attrs = dict(
-        standard_name="air_potential_temperature",
-        long_name="potential temperature",
-        units=str(theta.units),
-    )
+    try:
+        theta_attrs = ds.theta.attrs
+    except AttributeError:
+        theta_attrs = dict(
+            standard_name="air_potential_temperature",
+            long_name="potential temperature",
+            units=str(theta.units),
+        )
+    ds = ds.assign(theta=(ds.ta.dims, theta.magnitude, theta_attrs))
 
     return ds
 
@@ -416,12 +433,15 @@ def calc_T_from_theta(ds):
         ds.p.values * units(ds.p.attrs["units"]),
         ds.theta.values * units(ds.theta.attrs["units"]),
     )
-    ds = ds.assign(ta=(ds.ta.dims, ta.magnitude))
-    ds["ta"].attrs = dict(
-        standard_name="air_temperature",
-        long_name="air temperature",
-        units=str(ta.units),
-    )
+    try:
+        t_attrs = ds.ta.attrs
+    except AttributeError:
+        t_attrs = dict(
+            standard_name="air_temperature",
+            long_name="air temperature",
+            units=str(ta.units),
+        )
+    ds = ds.assign(ta=(ds.ta.dims, ta.magnitude, t_attrs))
     return ds
 
 
