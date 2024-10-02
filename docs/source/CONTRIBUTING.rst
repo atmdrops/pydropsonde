@@ -140,10 +140,12 @@ Steps to make documentation changes
      for example, ``:ref:`dokudev``` in the source code will give you the following link: :ref:`dokudev`. This works because the section :ref:`dokudev` is tagged with the label ``dokudev`` in the source code, which is done by adding the line ``.. _dokudev:`` at the beginning of the section.
 
 
-   - For cross-referencing a different document, use e.g. :doc:`landing <index>`
+   - For cross-referencing a different document, use 
       .. code-block::
 
         :doc:`description <path/to/file>`
+
+      for example, ``:doc:`landing <index>``` will give you the following link: :doc:`landing <index>`. This works because the file ``index.rst`` is in the same directory as the file you are referencing from. If the file is in a different directory, you need to specify the path to the file relative to the current file.
 
 
    - For URLs  e.g. `github <https://github.com/>`_
