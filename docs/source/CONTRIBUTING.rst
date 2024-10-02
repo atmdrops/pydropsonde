@@ -78,6 +78,7 @@ Development Workflow
     It is always good coding practice to work on a different branch every time you start working on a new feature / bug-fix (yes, despite having your own fork).
 
     Create a branch and checkout to start working on it.
+    
     .. code-block:: bash
 
         git branch my-new-feature
