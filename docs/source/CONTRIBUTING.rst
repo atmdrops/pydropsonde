@@ -1,7 +1,9 @@
 Contributing
 ============
 
-Firstly, thanks for thinking of contributing to ``pydropsonde``; we are hoping that you didn't land here by mistake. But even if you did, now that you are here why not help us out a bit with this package? There are different ways](#how-can-you-help-us) in which you can contribute to HALO-DROPS. To know how to get started, jump to [Development Workflow](#development-workflow).
+Firstly, thanks for thinking of contributing to ``pydropsonde``; we are hoping that you didn't land here by mistake. But even if you did, now that you are here why not help us out a bit with this package? There are `different ways <how-help-us_>`_ in which you can contribute to pydropsonde. To know how to get started, jump to :ref:`dev_workflow`.
+
+.. _how-help-us:
 
 How can you help us?
 --------------------
@@ -17,10 +19,12 @@ You can help us by:
 
 Have a look at the `Issues <https://github.com/atmdrops/pydropsonde/issues>`_ and you will find where ``pydropsonde`` needs help. Pick an issue and assign it to yourself, so others know that you are working on that. If you are not sure how to proceed, you can express your interest by commenting on the issue, and someone should help you out.
 
+.. _dev_workflow:
+
 Development Workflow
 --------------------
 
-1. **Fork & clone HALO-DROPS**
+1. **Fork & clone pydropsonde**
 
     Fork the `pydropsonde <https://github.com/atmdrops/pydropsonde.git>`_ repository.
 
@@ -28,9 +32,9 @@ Development Workflow
 
     .. code-block:: bash
 
-        git clone git@github.com:<your-github-username>/halodrops.git
-        cd halodrops
-        git remote add upstream git@github.com:Geet-George/halodrops.git
+        git clone git@github.com:<your-github-username>/pydropsonde.git
+        cd pydropsonde
+        git remote add upstream git@github.com:atmdrops/pydropsonde.git
 
 2. **Create the development environment**
 
@@ -46,12 +50,12 @@ Development Workflow
     Activate the environment with:
     .. code-block:: bash
 
-       conda activate halodrops
+       conda activate pydropsonde_env
 
 
     **_Get pre-commit working for you_**
 
-    If you created the environment with the ``environmnet.yaml`` file, then ``pre-commit`` should already be present in your environment. ``pre-commit`` is used to employ hooks for checking (and in some cases, fixing) the code before commits are made. To get pre-commit to check automatically every time you commit, use the following command:
+    If you created the environment with the ``environment.yaml`` file, then ``pre-commit`` should already be present in your environment. ``pre-commit`` is used to employ hooks for checking (and in some cases, fixing) the code before commits are made. To get pre-commit to check automatically every time you commit, use the following command:
 
     .. code-block:: bash
 
@@ -74,6 +78,7 @@ Development Workflow
     It is always good coding practice to work on a different branch every time you start working on a new feature / bug-fix (yes, despite having your own fork).
 
     Create a branch and checkout to start working on it.
+
     .. code-block:: bash
 
         git branch my-new-feature
@@ -109,7 +114,7 @@ Adding dependencies
 Currently, pyDropsonde is build with `poetry <https://python-poetry.org/>`_. If you need a new package for your contribution, please remember to
  - add it to the ``pyproject.toml``
  - create a new ``poetry.lock`` (see the `poetry descriptions <https://python-poetry.org/docs/basic-usage/#installing-with-poetrylock>`_)
- - (not essential but nice for conda users) add it to the ``environment.yaml``
+ - add it to the ``environment.yaml``
 
 
 
@@ -127,22 +132,29 @@ Steps to make documentation changes
 
 2. Make the change. Here are some referencing tips for both Markdown files and for docstrings.
 
-   - For cross-referencing within the document, use e.g. :ref:`dokudev`.
+   - For cross-referencing within the document, use
       .. code-block::
 
           :ref:`section_label`
 
+      for example, ``:ref:`dokudev``` in the source code will give you the following link: :ref:`dokudev`. This works because the section :ref:`dokudev` is tagged with the label ``dokudev`` in the source code, which is done by adding the line ``.. _dokudev:`` at the beginning of the section.
+      If you want to add some custom text to your reference, you can do so by adding the text in the following way: ```New Fancy Text <dokudev_>`_``. This will give you the following link: `New Fancy Text <dokudev_>`_, i.e. the text ``New Fancy Text`` will be displayed, but the link will still point to the section with the label ``dokudev``.
 
-   - For cross-referencing a different document, use e.g. :doc:`landing <index>`
+
+   - For cross-referencing a different document, use
       .. code-block::
 
         :doc:`description <path/to/file>`
 
+      for example, ``:doc:`landing <index>``` will give you the following link: :doc:`landing <index>`. This works because the file ``index.rst`` is in the same directory as the file you are referencing from. If the file is in a different directory, you need to specify the path to the file relative to the current file.
 
-   - For URLs  e.g. `github <https://github.com/>`_
+
+   - For URLs
       .. code-block::
 
           `description <url>`_
+
+      for example, ```github <https://github.com/>`_`` will give you the following link: `github <https://github.com/>`_. Note that the URL will open in the same tab.
 
 
 
@@ -155,6 +167,6 @@ Steps to make documentation changes
     sphinx-build -n docs/source docs/_build
 
 
-The `-n` flag is to enable `nitpicky mode <https://www.sphinx-doc.org/en/master/usage/configuration.html#confval-nitpicky>`, so that we catch all warnings with missing references.
+The `-n` flag is to enable `nitpicky mode <https://www.sphinx-doc.org/en/master/usage/configuration.html#confval-nitpicky>`_, so that we catch all warnings with missing references.
 
-When you open a pull request and merge into the main, the documentation will be build automatically and deployed to https://atmdrops.github.io/pydropsonde/.
+When you open a pull request and merge into the `main` branch, the documentation will be built automatically and deployed to https://atmdrops.github.io/pydropsonde/.
