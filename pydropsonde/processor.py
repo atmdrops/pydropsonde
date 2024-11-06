@@ -1275,7 +1275,7 @@ class Sonde:
         object.__setattr__(self, "_prep_l3_ds", ds)
         return self
 
-    def add_ancillary_vars(self):
+    def add_Nm_to_vars(self):
         self.remove_N_m_duplicates()
         ds = self._prep_l3_ds
         essential_vars = ["u", "v", "rh", "p", "ta"]
