@@ -760,13 +760,16 @@ class Sonde:
             ds = self._interim_l2_ds
         else:
             ds = self.aspen_ds
-
-        ds = ds.assign({variable_name: self.serial_id})
-        ds[variable_name].attrs = {
+        attrs = {
             "descripion": "unique sonde ID",
             "long_name": "sonde identifier",
             "cf_role": "trajectory_id",
         }
+        ds = ds.assign_coords({variable_name: self.serial_id})
+        ds[variable_name] = ds[variable_name].assign_attrs(attrs)
+        object.__setattr__(self, "_interim_l2_ds", ds)
+
+        return self
 
         object.__setattr__(self, "_interim_l2_ds", ds)
 
