@@ -771,7 +771,33 @@ class Sonde:
 
         return self
 
+    def add_platform_id_variable(self, variable_name="platform_id"):
+        """
+        Adds a variable and related attributes to the sonde object with the Sonde object (self)'s platform_id attribute.
+
+        Parameters
+        ----------
+        variable_name : str, optional
+            The name of the variable to be added. Default is 'platform_id'.
+
+        Returns
+        -------
+        self : object
+            Returns the sonde object with a variable containing platform_id. Name of the variable provided by 'variable_name'.
+        """
+        if hasattr(self, "_interim_l2_ds"):
+            ds = self._interim_l2_ds
+        else:
+            ds = self.aspen_ds
+
+        attrs = dict(
+            description="unique platform ID",
+            long_name="platform identifier",
+        )
+        ds = ds.assign_coords({variable_name: self.platform_id})
+        ds[variable_name] = ds[variable_name].assign_attrs(attrs)
         object.__setattr__(self, "_interim_l2_ds", ds)
+        return self
 
         return self
 
