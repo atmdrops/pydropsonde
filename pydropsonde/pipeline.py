@@ -505,6 +505,7 @@ pipeline = {
             "add_global_attributes_to_interim_l2_ds",
             "add_sonde_id_variable",
             "add_platform_id_variable",
+            "add_flight_id_variable",
             "get_l2_filename",
             "write_l2",
         ],

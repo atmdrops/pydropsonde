@@ -799,6 +799,33 @@ class Sonde:
         object.__setattr__(self, "_interim_l2_ds", ds)
         return self
 
+    def add_flight_id_variable(self, variable_name="flight_id"):
+        """
+        Adds a variable and related attributes to the sonde object with the Sonde object (self)'s flight_id attribute.
+
+        Parameters
+        ----------
+        variable_name : str, optional
+            The name of the variable to be added. Default is 'flight_id'.
+
+        Returns
+        -------
+        self : object
+            Returns the sonde object with a variable containing flight_id. Name of the variable provided by 'variable_name'.
+        """
+        if hasattr(self, "_interim_l2_ds"):
+            ds = self._interim_l2_ds
+        else:
+            ds = self.aspen_ds
+
+        attrs = dict(
+            description="unique flight ID",
+            long_name="flight identifier",
+        )
+
+        ds = ds.assign_coords({variable_name: self.flight_id})
+        ds[variable_name] = ds[variable_name].assign_attrs(attrs)
+        object.__setattr__(self, "_interim_l2_ds", ds)
         return self
 
     def get_flight_attributes(
