@@ -28,7 +28,6 @@ cmocean = "*"
 flox = "*"
 llvmlite = ">=0.40"
 matplotlib = "*"
-metpy = "*"
 netcdf4 = "*"
 numpy = "*"
 numba = ">=0.50"
@@ -40,6 +39,8 @@ seaborn = "*"
 tqdm = "*"
 xarray = "*"
 zarr = "*"
+circle-fit = "^0.2.1"
+moist-thermodynamics = {git = "https://gitlab.dkrz.de/m219063/moist_thermodynamics.git"}
 
 [tool.poetry.group.test.dependencies]
 pytest = "*"

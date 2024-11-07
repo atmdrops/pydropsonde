@@ -1,7 +1,7 @@
-# this is used from typhon because poetry does not like typhon
+# this adds functionality that is not (yet) in the moist_thermodynamics repo, but should be replaced if added there
 import numpy as np
 from numbers import Number
-import metpy.constants as mpconst
+from moist_thermodynamics import constants
 
 
 triple_point_water = 273.16  # Triple point temperature in K
