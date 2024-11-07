@@ -1,7 +1,5 @@
 import warnings
 import numpy as np
-import metpy.calc as mpcalc
-from metpy.units import units
 from . import physics
 import xarray as xr
 import numcodecs
