@@ -288,14 +288,6 @@ def get_si_converter_function_based_on_var(var_name):
     return func
 
 
-def q2mr(q):
-    return q / (1 - q)
-
-
-def mr2q(mr):
-    return mr / (1 + mr)
-
-
 def calc_q_from_rh(ds):
     """
     Input :
@@ -311,7 +303,7 @@ def calc_q_from_rh(ds):
     e_s = es_formular(ds.ta.values)
     w_s = mtf.partial_pressure_to_mixing_ratio(e_s, ds.p.values)
     w = ds.rh.values * w_s
-    q = mr2q(w)
+    q = physics.mr2q(w)
     try:
         q_attrs = ds.q.attrs
     except AttributeError:
@@ -339,7 +331,7 @@ def calc_rh_from_q(ds):
     assert ds.p.attrs["units"] == "Pa"
     e_s = es_formular(ds.ta.values)
     w_s = mtf.partial_pressure_to_mixing_ratio(e_s, ds.p.values)
-    w = q2mr(ds.q.values)
+    w = physics.q2mr(ds.q.values)
     rh = w / w_s
 
     try:
@@ -477,6 +469,14 @@ def calc_theta_e(ds):
 
 def calc_wind_dir_and_speed(ds):
     """
+    Input :
+
+        dataset : Dataset
+
+    Output :
+
+        dataset: Dataset wind direction and wind speed
+
     Calculates wind direction between 0 and 360 according to https://confluence.ecmwf.int/pages/viewpage.action?pageId=133262398
 
     """

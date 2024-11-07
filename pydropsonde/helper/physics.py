@@ -21,6 +21,20 @@ def vmr2q(vmr):
     return vmr / ((1 - vmr) * constants.md / constants.molar_mass_h2o + x)
 
 
+def q2mr(q):
+    """
+    returns specific humidity from mixing ratio
+    """
+    return q / (1 - q)
+
+
+def mr2q(mr):
+    """
+    returns mixing ratio from specific humidity
+    """
+    return mr / (1 + mr)
+
+
 def density(p, T, R):
     """
     returns density for given pressure, temperature and R
@@ -29,7 +43,7 @@ def density(p, T, R):
 
 
 def theta2ta(theta, P, qv=0.0, ql=0.0, qi=0.0):
-    """Returns the temperature for an unsaturated moist fluid, given the temperature
+    """Returns the temperature for an unsaturated moist fluid, given the potential temperature
     (reverse of Bjorn stevens moist thermodynamicts theta())
 
     Args:
