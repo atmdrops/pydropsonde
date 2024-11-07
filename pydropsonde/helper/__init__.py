@@ -477,6 +477,14 @@ def calc_theta_e(ds):
 
 def calc_wind_dir_and_speed(ds):
     """
+    Input :
+
+        dataset : Dataset
+
+    Output :
+
+        dataset: Dataset wind direction and wind speed
+
     Calculates wind direction between 0 and 360 according to https://confluence.ecmwf.int/pages/viewpage.action?pageId=133262398
 
     """
