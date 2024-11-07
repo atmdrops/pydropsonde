@@ -21,9 +21,9 @@ dependencies:
   - zarr
   - pip
   - pip:
+    - moist-thermodynamics
     - tqdm
     - sphinx-autodoc2
     - sphinx-book-theme
     - sphinx-last-updated-by-git
-    - git+https://gitlab.dkrz.de/m219063/moist_thermodynamics.git
     - -e .
