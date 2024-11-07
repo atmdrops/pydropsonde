@@ -135,13 +135,21 @@ path_to_l0_files = "{platform}/Level_0/{flight_id}"
 l2_filename_template = "{platform}_{launch_time}_{flight_id}_{serial_id}_Level_2.nc"
 
 l3_filename = "Level_3.nc"
+l4_filename = "Level_4.nc"
 
 
 def get_chunks(ds, var):
-    chunks = {
-        "sonde_id": min(256, ds.sonde_id.size),
-        "alt": min(400, ds.alt.size),
-    }
+
+    try:
+        chunks = {
+            "sonde_id": min(256, ds.sonde_id.size),
+            "alt": min(400, ds.alt.size),
+        }
+    except AttributeError:
+        chunks = {
+            "circle": min(256, ds.circle.size),
+            "alt": min(400, ds.alt.size),
+        }
 
     return tuple((chunks[d] for d in ds[var].dims))
 

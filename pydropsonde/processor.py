@@ -1316,6 +1316,7 @@ class Sonde:
 @dataclass(order=True)
 class Gridded:
     sondes: dict
+    circles: dict = None
 
     def concat_sondes(self, sortby=None):
         """
@@ -1473,4 +1474,63 @@ class Gridded:
         self.platform_ids = platform_ids
         self.flight_ids = flight_ids
 
+        return self
+
+    def get_l4_dir(self, l4_dir: str = None):
+        if l4_dir:
+            self.l4_dir = l4_dir
+        elif self.circles is not None:
+            self.l4_dir = (
+                list(self.circles.values())[0]
+                .l2_dir.replace("Level_2", "Level_4")
+                .replace(list(self.circles.values())[0].flight_id, "")
+                .replace(list(self.circles.values())[0].platform_id, "")
+            )
+        else:
+            raise ValueError("No circles and no l4 directory given, cannot continue")
+        return self
+
+    def get_l4_filename(self, l4_filename: str = None):
+        if l4_filename is None:
+            l4_filename = hh.l4_filename
+        else:
+            l4_filename = l4_filename
+
+        self.l4_filename = l4_filename
+        return self
+    
+
+    def write_l4(self, l4_dir: str = None, _interim_l4_ds: xr.Dataset = None):
+        if l4_dir is None:
+            l4_dir = self.l4_dir
+
+        if not os.path.exists(l4_dir):
+            os.makedirs(l4_dir)
+        if ".nc" in self.l4_filename:
+            filetype = "nc"
+        elif ".zarr" in self.l4_filename:
+            filetype = "zarr"
+        else:
+            raise ValueError("filetype unknown")
+        
+         # if no l4 dataset then create a dummy dataset
+        if _interim_l4_ds is None:
+            _interim_l4_ds = xr.Dataset(
+                {
+                    "dummy_var": (("circle", "alt"), np.empty((10, 10)) * np.nan)
+                },
+                coords={
+                    "circle": np.arange(10),
+                    "alt": np.arange(10)
+                }
+            )
+
+        encoding = hh.get_encoding(_interim_l4_ds, filetype=filetype)
+
+        
+        hh.to_file(
+            ds=_interim_l4_ds,
+            path=os.path.join(l4_dir, self.l4_filename),
+            encoding=encoding,
+        )
         return self
