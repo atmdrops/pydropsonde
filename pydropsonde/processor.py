@@ -1136,12 +1136,12 @@ class Sonde:
 
         if not (self._prep_l3_ds[alt_var].diff(dim="time") < 0).any():
             warnings.warn(
-                f"your altitude for sonde {self._prep_l3_ds.sonde_id.values} is not sorted."
+                f"your altitude for sonde {self.serial_id.values} is not sorted."
             )
         ds = (self._prep_l3_ds.swap_dims({"time": alt_var})).load()
-        if p_log:
-            ds = ds.assign(p=(ds.p.dims, np.log(ds.p.values), ds.p.attrs))
         if method == "linear_interpolate":
+            if p_log:
+                ds = ds.assign(p=(ds.p.dims, np.log(ds.p.values), ds.p.attrs))
             interp_ds = ds.interp({alt_var: interpolation_grid})
         elif method == "bin":
             interpolation_bins = interpolation_grid.astype("int")
@@ -1150,42 +1150,52 @@ class Sonde:
                 interp_stop - interp_step / 2,
                 interp_step,
             )
-            try:
-                binned_ds = ds.groupby_bins(
-                    alt_var,
-                    interpolation_bins,
-                    labels=interpolation_label,
-                )
-                interp_ds = binned_ds.mean(dim=alt_var)
-            except ValueError:
-                warnings.warn(f"No level 2 data for sonde {self.serial_id}")
-                return None
-            # somehow coordinates are lost and need to be added again
-            for coord in ["lat", "lon", "time", "gpsalt"]:
-                interp_ds = interp_ds.assign(
-                    {
-                        coord: (
-                            alt_var,
-                            ds[coord]
-                            .groupby_bins(
-                                alt_var, interpolation_bins, labels=interpolation_label
-                            )
-                            .mean(alt_var)
-                            .values,
-                            ds[coord].attrs,
-                        )
-                    }
-                )
+            interp_ds = ds.reset_coords().drop_vars("time")
+            binned_ds = interp_ds.groupby_bins(
+                alt_var,
+                interpolation_bins,
+                labels=interpolation_label,
+            )
+            interp_ds = binned_ds.mean(dim=alt_var, skipna=True)
 
+            if p_log:
+                interp_ds = interp_ds.assign(
+                    p=(interp_ds.p.dims, np.log(interp_ds.p.values), interp_ds.p.attrs)
+                )
             interp_ds = (
                 interp_ds.transpose()
                 .interpolate_na(
                     dim=f"{alt_var}_bins", max_gap=max_gap_fill, use_coordinate=True
                 )
-                .rename({f"{alt_var}_bins": alt_var, "time": "interp_time"})
-                .reset_coords(["interp_time", "lat", "lon", "gpsalt"])
+                .rename({f"{alt_var}_bins": alt_var})
             )
 
+            time_type = ds["time"].values.dtype
+
+            binned_time = (
+                ds["time"]
+                .astype(float)
+                .groupby_bins(alt_var, interpolation_bins, labels=interpolation_label)
+                .map(lambda x: x.mean(skipna=True))
+            )
+            interp_ds = interp_ds.assign(
+                {
+                    "interp_time": (
+                        alt_var,
+                        binned_time.where(
+                            binned_time > -1
+                        )  # replace missing values with nan
+                        .interpolate_na(
+                            dim=f"{alt_var}_bins",
+                            max_gap=max_gap_fill,
+                            use_coordinate=True,
+                        )
+                        .astype(time_type)
+                        .values,
+                        ds["time"].attrs,
+                    )
+                }
+            )
         if p_log:
             interp_ds = interp_ds.assign(
                 p=(interp_ds.p.dims, np.exp(interp_ds.p.values), interp_ds.p.attrs)
@@ -1193,6 +1203,7 @@ class Sonde:
 
         object.__setattr__(self, "_binned_ds", binned_ds)
         object.__setattr__(self, "_prep_l3_ds", interp_ds)
+
         return self
 
     def get_N_m_values(self, alt_var="alt"):
@@ -1203,6 +1214,7 @@ class Sonde:
 
         for variable in [var for var in N.variables if var not in N.coords]:
             N_name = f"N{variable}"
+            Nvar = N[variable].where(N[variable] > 0, 0)
             N_attrs = dict(
                 long_name=f"Number of values per bin for {variable}",
             )
@@ -1210,14 +1222,14 @@ class Sonde:
                 {
                     N_name: (
                         prep_l3[variable].dims,
-                        N[variable].values.astype(int),
+                        Nvar.values.astype(int),
                         N_attrs,
                     )
                 }
             )
             prep_l3 = hx.add_ancillary_var(prep_l3, variable, N_name)
             # get m
-            N2m = N[variable]
+            N2m = Nvar
             n_mask = N2m.where(~np.isnan(N2m), 0)
             int_mask = prep_l3[variable].where(~np.isnan(prep_l3[variable]), 0)
 
