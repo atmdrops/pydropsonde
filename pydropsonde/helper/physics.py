@@ -20,16 +20,42 @@ def vmr2q(vmr):
     """
     return vmr / ((1 - vmr) * constants.md / constants.molar_mass_h2o + x)
 
+
 def density(p, T, R):
     """
     returns density for given pressure, temperature and R
     """
-    return p / (R * T) #water vapor density
+    return p / (R * T)  # water vapor density
 
 
-def integrate_water_vapor(p, q,  T=None, z=None, axis=0):
+def theta2ta(theta, P, qv=0.0, ql=0.0, qi=0.0):
+    """Returns the temperature for an unsaturated moist fluid, given the temperature
+    (reverse of Bjorn stevens moist thermodynamicts theta())
+
+    Args:
+        T: temperature in kelvin
+        P: pressure in pascal
+        qv: specific vapor mass
+        ql: specific liquid mass
+        qi: specific ice mass
+
+    """
+    Rd = constants.dry_air_gas_constant
+    Rv = constants.water_vapor_gas_constant
+    cpd = constants.isobaric_dry_air_specific_heat
+    cpv = constants.isobaric_water_vapor_specific_heat
+    cl = constants.liquid_water_specific_heat
+    ci = constants.frozen_water_specific_heat
+    P0 = constants.P0
+
+    qd = 1.0 - qv - ql - qi
+    kappa = (qd * Rd + qv * Rv) / (qd * cpd + qv * cpv + ql * cl + qi * ci)
+    return theta / (P0 / P) ** kappa
+
+
+def integrate_water_vapor(p, q, T=None, z=None, axis=0):
     """Returns the integrated water vapor for given specific humidity
-    Args: 
+    Args:
         p: pressure in Pa
         either: (hydrostatic)
             q: specific humidity
@@ -39,6 +65,7 @@ def integrate_water_vapor(p, q,  T=None, z=None, axis=0):
             z: height
 
     """
+
     def integrate_column(y, x, axis=0):
         if np.all(x[:-1] >= x[1:]):
             return -np.trapz(y, x, axis=axis)
@@ -47,8 +74,7 @@ def integrate_water_vapor(p, q,  T=None, z=None, axis=0):
 
     if T is None and z is None:
         # Calculate IWV assuming hydrostatic equilibrium.
-        q = vmr2specific_humidity(vmr)
-        g = mpconst.earth_gravity.magnitude
+        g = constants.gravity_earth
         return -integrate_column(q, p, axis=axis) / g
     elif T is None or z is None:
         raise ValueError(
@@ -56,6 +82,6 @@ def integrate_water_vapor(p, q,  T=None, z=None, axis=0):
         )
     else:
         # Integrate the water vapor mass density for non-hydrostatic cases.
-        R_v = mpconst.water_gas_constant.magnitude
-        rho = density(p, T, R=R_v)  # Water vapor density.
+        rho = density(p, T, constants.Rv)  # water vapor density
+        vmr = q2vmr(q)
         return integrate_column(vmr * rho, z, axis=axis)

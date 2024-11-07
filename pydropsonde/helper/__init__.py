@@ -361,19 +361,28 @@ def calc_rh_from_q(ds):
 
 
 def calc_iwv(ds, sonde_dim="sonde_id", alt_dim="alt"):
+    """
+    Input :
+
+        dataset : Dataset
+
+    Output :
+
+        dataset : Dataset with integrated water vapor
+
+    Function to estimate integrated water vapor in the given dataset.
+    """
     pressure = ds.p.values
     temperature = ds.ta.values
+    q = ds.q.values
     alt = ds[alt_dim].values
 
-    vmr = physics.specific_humidity2vmr(
-        q=ds.q.values,
-    )
     mask_p = ~np.isnan(pressure)
     mask_t = ~np.isnan(temperature)
-    mask_vmr = ~np.isnan(vmr)
-    mask = mask_p & mask_t & mask_vmr
+    mask_q = ~np.isnan(q)
+    mask = mask_p & mask_t & mask_q
     iwv = physics.integrate_water_vapor(
-        vmr[mask], pressure[mask], T=temperature[mask], z=alt[mask]
+        q=q[mask], p=pressure[mask], T=temperature[mask], z=alt[mask]
     )
     ds_iwv = xr.DataArray([iwv], dims=[sonde_dim], coords={})
     ds_iwv.name = "iwv"
@@ -390,23 +399,21 @@ def calc_theta_from_T(ds):
 
     Output :
 
-        theta : Potential temperature values
+        dataset : Dataset with Potential temperature values
 
     Function to estimate potential temperature from the temperature and pressure in the given dataset.
     """
-    theta = mpcalc.potential_temperature(
-        ds.p.values * units(ds.p.attrs["units"]),
-        ds.ta.values * units(ds.ta.attrs["units"]),
-    )
+    assert ds.p.attrs["units"] == "Pa"
+    theta = mtf.theta(ds.ta.values, ds.p.values)
     try:
         theta_attrs = ds.theta.attrs
     except AttributeError:
         theta_attrs = dict(
             standard_name="air_potential_temperature",
             long_name="potential temperature",
-            units=str(theta.units),
+            units="kelvin",
         )
-    ds = ds.assign(theta=(ds.ta.dims, theta.magnitude, theta_attrs))
+    ds = ds.assign(theta=(ds.ta.dims, theta, theta_attrs))
 
     return ds
 
@@ -419,93 +426,49 @@ def calc_T_from_theta(ds):
 
     Output :
 
-        theta : Potential temperature values
+        dataset: Dataset with temperature calculated from theta
 
     Function to estimate potential temperature from the temperature and pressure in the given dataset.
     """
-    ta = mpcalc.temperature_from_potential_temperature(
-        ds.p.values * units(ds.p.attrs["units"]),
-        ds.theta.values * units(ds.theta.attrs["units"]),
-    )
+    assert ds.p.attrs["units"] == "Pa"
+    ta = physics.theta2ta(ds.theta.values, ds.p.values)
+
     try:
         t_attrs = ds.ta.attrs
     except AttributeError:
         t_attrs = dict(
             standard_name="air_temperature",
             long_name="air temperature",
-            units=str(ta.units),
+            units="K",
         )
-    ds = ds.assign(ta=(ds.ta.dims, ta.magnitude, t_attrs))
+    ds = ds.assign(ta=(ds.ta.dims, ta, t_attrs))
     return ds
 
 
 def calc_theta_e(ds):
-    dewpoint = mpcalc.dewpoint_from_specific_humidity(
-        pressure=ds.p.values * units(ds.p.attrs["units"]),
-        temperature=ds.ta.values * units(ds.ta.attrs["units"]),
-        specific_humidity=ds.q.values * units(ds.q.attrs["units"]),
-    )
-    theta_e = mpcalc.equivalent_potential_temperature(
-        pressure=ds.p.values * units(ds.p.attrs["units"]),
-        temperature=ds.ta.values * units(ds.ta.attrs["units"]),
-        dewpoint=dewpoint,
-    )
+    """
+    Input :
+
+        dataset : Dataset
+
+    Output :
+
+        dataset: Dataset with theta_e added
+
+    Function to estimate theta_e from the temperature, pressure and q in the given dataset.
+    """
+
+    assert ds.p.attrs["units"] == "Pa"
+    theta_e = mtf.theta_e(T=ds.ta.values, P=ds.p.values, qt=ds.q.values, es=es_formular)
 
     ds = ds.assign(
         theta_e=(
             ds.ta.dims,
-            theta_e.magnitude,
+            theta_e,
             dict(
                 standard_name="air_equivalent_potential_temperature",
                 long_name="equivalent potential temperature",
-                units=str(theta_e.units),
-            ),
-        )
-    )
-    return ds
-
-
-def calc_T_v(ds):
-    mr = mpcalc.mixing_ratio_from_specific_humidity(
-        ds.q.values * units(ds.q.attrs["units"])
-    )
-
-    tv = mpcalc.virtual_temperature(
-        temperature=ds.ta.values * units(ds.ta.attrs["units"]),
-        mixing_ratio=mr,
-    )
-    ds = ds.assign(
-        tv=(
-            ds.ta.dims,
-            tv.magnitude,
-            dict(
-                standard_name="virtual_temperature",
-                long_name="virtual temperature",
-                units=str(tv.units),
-            ),
-        )
-    )
-    return ds
-
-
-def calc_theta_v(ds):
-    mr = mpcalc.mixing_ratio_from_specific_humidity(
-        ds.q.values * units(ds.q.attrs["units"])
-    )
-
-    theta_v = mpcalc.virtual_potential_temperature(
-        pressure=ds.p.values * units(ds.p.attrs["units"]),
-        temperature=ds.ta.values * units(ds.ta.attrs["units"]),
-        mixing_ratio=mr,
-    )
-    ds = ds.assign(
-        theta_v=(
-            ds.ta.dims,
-            theta_v.magnitude,
-            dict(
-                # standard_name="", to be added when official
-                long_name="virtual potential temperature",
-                units=str(theta_v.units),
+                units="kelvin",
             ),
         )
     )
