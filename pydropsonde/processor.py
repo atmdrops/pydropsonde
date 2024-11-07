@@ -1062,7 +1062,7 @@ class Sonde:
         """
         ds = self._prep_l3_ds
 
-        ds = hh.calc_q_from_rh_sondes(ds)
+        ds = hh.calc_q_from_rh(ds)
         ds = hh.calc_theta_from_T(ds)
 
         object.__setattr__(self, "_prep_l3_ds", ds)
@@ -1087,8 +1087,6 @@ class Sonde:
     def add_thetas(self):
         ds = self._prep_l3_ds
         ds = hh.calc_theta_e(ds)
-        ds = hh.calc_T_v(ds)
-        ds = hh.calc_theta_v(ds)
         object.__setattr__(self, "_prep_l3_ds", ds)
 
         return self
@@ -1153,39 +1151,50 @@ class Sonde:
                 interp_step,
             )
             try:
-                binned_ds = ds.groupby_bins(
+                interp_ds = ds.reset_coords(["lat", "lon", "gpsalt"])
+                binned_ds = interp_ds.groupby_bins(
                     alt_var,
                     interpolation_bins,
                     labels=interpolation_label,
                 )
-                interp_ds = binned_ds.mean(dim=alt_var)
+                interp_ds = binned_ds.mean(dim=alt_var, skipna=True)
+
             except ValueError:
                 warnings.warn(f"No level 2 data for sonde {self.serial_id}")
                 return None
-            # somehow coordinates are lost and need to be added again
-            for coord in ["lat", "lon", "time", "gpsalt"]:
-                interp_ds = interp_ds.assign(
-                    {
-                        coord: (
-                            alt_var,
-                            ds[coord]
-                            .groupby_bins(
-                                alt_var, interpolation_bins, labels=interpolation_label
-                            )
-                            .mean(alt_var)
-                            .values,
-                            ds[coord].attrs,
-                        )
-                    }
-                )
+            # somehow time is lost and has to be added manually
 
             interp_ds = (
                 interp_ds.transpose()
                 .interpolate_na(
                     dim=f"{alt_var}_bins", max_gap=max_gap_fill, use_coordinate=True
                 )
-                .rename({f"{alt_var}_bins": alt_var, "time": "interp_time"})
-                .reset_coords(["interp_time", "lat", "lon", "gpsalt"])
+                .rename({f"{alt_var}_bins": alt_var})
+            )
+
+            time_type = ds["time"].values.dtype
+
+            interp_ds = interp_ds.assign(
+                {
+                    "interp_time": (
+                        alt_var,
+                        ds["time"]
+                        .astype(float)
+                        .groupby_bins(
+                            alt_var, interpolation_bins, labels=interpolation_label
+                        )
+                        # .mean(alt_var, skipna=True) # this line should be possible, but is not (yet) - see Issue #15675 for pandas
+                        .apply(lambda x: x.mean(skipna=True))
+                        .interpolate_na(
+                            dim=f"{alt_var}_bins",
+                            max_gap=max_gap_fill,
+                            use_coordinate=True,
+                        )
+                        .astype(time_type)
+                        .values,
+                        ds["time"].attrs,
+                    )
+                }
             )
 
         if p_log:

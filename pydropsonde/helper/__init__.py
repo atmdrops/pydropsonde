@@ -1,11 +1,13 @@
 import warnings
 import numpy as np
-import metpy.calc as mpcalc
-from metpy.units import units
 from . import physics
 import xarray as xr
 import numcodecs
 from zarr.errors import ContainsGroupError
+
+
+from moist_thermodynamics import functions as mtf
+from moist_thermodynamics import saturation_vapor_pressures as mtsvp
 
 # Keys in l2_variables should be variable names in aspen_ds attribute of Sonde object
 l2_variables = {
@@ -135,6 +137,8 @@ path_to_l0_files = "{platform}/Level_0/{flight_id}"
 l2_filename_template = "{platform}_{launch_time}_{flight_id}_{serial_id}_Level_2.nc"
 
 l3_filename = "Level_3.nc"
+
+es_formular = mtsvp.liq_hardy
 
 
 def get_chunks(ds, var):
@@ -282,57 +286,15 @@ def get_si_converter_function_based_on_var(var_name):
     return func
 
 
-def calc_saturation_pressure(temperature_K, method="hardy1998"):
-    """
-    Calculate saturation water vapor pressure
-
-    Input
-    -----
-    temperature_K : array
-        array of temperature in Kevlin or dew point temperature for actual vapor pressure
-    method : str
-        Formula used for calculating the saturation pressure
-            'hardy1998' : ITS-90 Formulations for Vapor Pressure, Frostpoint Temperature,
-                Dewpoint Temperature, and Enhancement Factors in the Range –100 to +100 C,
-                Bob Hardy, Proceedings of the Third International Symposium on Humidity and Moisture,
-                1998 (same as used in Aspen software after May 2018)
-
-    Return
-    ------
-    e_sw : array
-        saturation pressure (Pa)
-
-    Examples
-    --------
-    >>> calc_saturation_pressure([273.15])
-    array([ 611.2129107])
-
-    >>> calc_saturation_pressure([273.15, 293.15, 253.15])
-    array([  611.2129107 ,  2339.26239586,   125.58350529])
-    """
-
-    if method == "hardy1998":
-        g = np.empty(8)
-        g[0] = -2.8365744 * 10**3
-        g[1] = -6.028076559 * 10**3
-        g[2] = 1.954263612 * 10**1
-        g[3] = -2.737830188 * 10 ** (-2)
-        g[4] = 1.6261698 * 10 ** (-5)
-        g[5] = 7.0229056 * 10 ** (-10)
-        g[6] = -1.8680009 * 10 ** (-13)
-        g[7] = 2.7150305
-
-        e_sw = np.zeros_like(temperature_K)
-
-        for t, temp in enumerate(temperature_K):
-            ln_e_sw = np.sum([g[i] * temp ** (i - 2) for i in range(0, 7)]) + g[
-                7
-            ] * np.log(temp)
-            e_sw[t] = np.exp(ln_e_sw)
-        return e_sw
+def q2mr(q):
+    return q / (1 - q)
 
 
-def calc_q_from_rh_sondes(ds):
+def mr2q(mr):
+    return mr / (1 + mr)
+
+
+def calc_q_from_rh(ds):
     """
     Input :
 
@@ -340,14 +302,14 @@ def calc_q_from_rh_sondes(ds):
 
     Output :
 
-        q : Specific humidity values
+        ds : Dataset with rh added
 
     Function to estimate specific humidity from the relative humidity, temperature and pressure in the given dataset.
     """
-    e_s = calc_saturation_pressure(ds.ta.values)
-    w_s = mpcalc.mixing_ratio(e_s * units.Pa, ds.p.values * units.Pa).magnitude
+    e_s = es_formular(ds.ta.values)
+    w_s = mtf.partial_pressure_to_mixing_ratio(e_s, ds.p.values)
     w = ds.rh.values * w_s
-    q = w / (1 + w)
+    q = mr2q(w)
     try:
         q_attrs = ds.q.attrs
     except AttributeError:
@@ -360,7 +322,7 @@ def calc_q_from_rh_sondes(ds):
     return ds
 
 
-def calc_q_from_rh(ds):
+def calc_rh_from_q(ds):
     """
     Input :
 
@@ -368,39 +330,20 @@ def calc_q_from_rh(ds):
 
     Output :
 
-        ds : Dataset with q added
+        ds : Dataset with rh added
 
-    Function to estimate specific humidity from the relative humidity, temperature and pressure in the given dataset.
+    Function to estimate relative humidity from the specific humidity, temperature and pressure in the given dataset.
     """
-    vmr = physics.relative_humidity2vmr(
-        RH=ds.rh.values,
-        p=ds.p.values,
-        T=ds.ta.values,
-        e_eq=physics.e_eq_mixed_mk,
-    )
+    assert ds.p.attrs["units"] == "Pa"
+    e_s = es_formular(ds.ta.values)
+    w_s = mtf.partial_pressure_to_mixing_ratio(e_s, ds.p.values)
+    w = q2mr(ds.q.values)
+    rh = w / w_s
 
-    q = physics.vmr2specific_humidity(vmr)
-    try:
-        q_attrs = ds.q.attrs
-    except AttributeError:
-        q_attrs = dict(
-            standard_name="specific_humidity",
-            long_name="specific humidity",
-            units="1",
-        )
-    ds = ds.assign(q=(ds.ta.dims, q, q_attrs))
-    return ds
-
-
-def calc_rh_from_q(ds):
-    vmr = physics.specific_humidity2vmr(q=ds.q.values)
-    rh = physics.vmr2relative_humidity(
-        vmr=vmr, p=ds.p.values, T=ds.ta.values, e_eq=physics.e_eq_mixed_mk
-    )
     try:
         rh_attrs = ds.rh.attrs.update(
             dict(
-                method="water until 0degC, ice below -23degC, mixed between",
+                method="relative humidity after Hardy 1998",
             )
         )
     except AttributeError:
@@ -408,7 +351,7 @@ def calc_rh_from_q(ds):
             standard_name="relative_humidity",
             long_name="relative humidity",
             units="1",
-            method="water until 0degC, ice below -23degC, mixed between",
+            method="relative humidity after Hardy 1998",
         )
     ds = ds.assign(rh=(ds.q.dims, rh, rh_attrs))
 
@@ -416,19 +359,28 @@ def calc_rh_from_q(ds):
 
 
 def calc_iwv(ds, sonde_dim="sonde_id", alt_dim="alt"):
+    """
+    Input :
+
+        dataset : Dataset
+
+    Output :
+
+        dataset : Dataset with integrated water vapor
+
+    Function to estimate integrated water vapor in the given dataset.
+    """
     pressure = ds.p.values
     temperature = ds.ta.values
+    q = ds.q.values
     alt = ds[alt_dim].values
 
-    vmr = physics.specific_humidity2vmr(
-        q=ds.q.values,
-    )
     mask_p = ~np.isnan(pressure)
     mask_t = ~np.isnan(temperature)
-    mask_vmr = ~np.isnan(vmr)
-    mask = mask_p & mask_t & mask_vmr
+    mask_q = ~np.isnan(q)
+    mask = mask_p & mask_t & mask_q
     iwv = physics.integrate_water_vapor(
-        vmr[mask], pressure[mask], T=temperature[mask], z=alt[mask]
+        q=q[mask], p=pressure[mask], T=temperature[mask], z=alt[mask]
     )
     ds_iwv = xr.DataArray([iwv], dims=[sonde_dim], coords={})
     ds_iwv.name = "iwv"
@@ -445,23 +397,21 @@ def calc_theta_from_T(ds):
 
     Output :
 
-        theta : Potential temperature values
+        dataset : Dataset with Potential temperature values
 
     Function to estimate potential temperature from the temperature and pressure in the given dataset.
     """
-    theta = mpcalc.potential_temperature(
-        ds.p.values * units(ds.p.attrs["units"]),
-        ds.ta.values * units(ds.ta.attrs["units"]),
-    )
+    assert ds.p.attrs["units"] == "Pa"
+    theta = mtf.theta(ds.ta.values, ds.p.values)
     try:
         theta_attrs = ds.theta.attrs
     except AttributeError:
         theta_attrs = dict(
             standard_name="air_potential_temperature",
             long_name="potential temperature",
-            units=str(theta.units),
+            units="kelvin",
         )
-    ds = ds.assign(theta=(ds.ta.dims, theta.magnitude, theta_attrs))
+    ds = ds.assign(theta=(ds.ta.dims, theta, theta_attrs))
 
     return ds
 
@@ -474,93 +424,49 @@ def calc_T_from_theta(ds):
 
     Output :
 
-        theta : Potential temperature values
+        dataset: Dataset with temperature calculated from theta
 
     Function to estimate potential temperature from the temperature and pressure in the given dataset.
     """
-    ta = mpcalc.temperature_from_potential_temperature(
-        ds.p.values * units(ds.p.attrs["units"]),
-        ds.theta.values * units(ds.theta.attrs["units"]),
-    )
+    assert ds.p.attrs["units"] == "Pa"
+    ta = physics.theta2ta(ds.theta.values, ds.p.values)
+
     try:
         t_attrs = ds.ta.attrs
     except AttributeError:
         t_attrs = dict(
             standard_name="air_temperature",
             long_name="air temperature",
-            units=str(ta.units),
+            units="K",
         )
-    ds = ds.assign(ta=(ds.ta.dims, ta.magnitude, t_attrs))
+    ds = ds.assign(ta=(ds.ta.dims, ta, t_attrs))
     return ds
 
 
 def calc_theta_e(ds):
-    dewpoint = mpcalc.dewpoint_from_specific_humidity(
-        pressure=ds.p.values * units(ds.p.attrs["units"]),
-        temperature=ds.ta.values * units(ds.ta.attrs["units"]),
-        specific_humidity=ds.q.values * units(ds.q.attrs["units"]),
-    )
-    theta_e = mpcalc.equivalent_potential_temperature(
-        pressure=ds.p.values * units(ds.p.attrs["units"]),
-        temperature=ds.ta.values * units(ds.ta.attrs["units"]),
-        dewpoint=dewpoint,
-    )
+    """
+    Input :
+
+        dataset : Dataset
+
+    Output :
+
+        dataset: Dataset with theta_e added
+
+    Function to estimate theta_e from the temperature, pressure and q in the given dataset.
+    """
+
+    assert ds.p.attrs["units"] == "Pa"
+    theta_e = mtf.theta_e(T=ds.ta.values, P=ds.p.values, qt=ds.q.values, es=es_formular)
 
     ds = ds.assign(
         theta_e=(
             ds.ta.dims,
-            theta_e.magnitude,
+            theta_e,
             dict(
                 standard_name="air_equivalent_potential_temperature",
                 long_name="equivalent potential temperature",
-                units=str(theta_e.units),
-            ),
-        )
-    )
-    return ds
-
-
-def calc_T_v(ds):
-    mr = mpcalc.mixing_ratio_from_specific_humidity(
-        ds.q.values * units(ds.q.attrs["units"])
-    )
-
-    tv = mpcalc.virtual_temperature(
-        temperature=ds.ta.values * units(ds.ta.attrs["units"]),
-        mixing_ratio=mr,
-    )
-    ds = ds.assign(
-        tv=(
-            ds.ta.dims,
-            tv.magnitude,
-            dict(
-                standard_name="virtual_temperature",
-                long_name="virtual temperature",
-                units=str(tv.units),
-            ),
-        )
-    )
-    return ds
-
-
-def calc_theta_v(ds):
-    mr = mpcalc.mixing_ratio_from_specific_humidity(
-        ds.q.values * units(ds.q.attrs["units"])
-    )
-
-    theta_v = mpcalc.virtual_potential_temperature(
-        pressure=ds.p.values * units(ds.p.attrs["units"]),
-        temperature=ds.ta.values * units(ds.ta.attrs["units"]),
-        mixing_ratio=mr,
-    )
-    ds = ds.assign(
-        theta_v=(
-            ds.ta.dims,
-            theta_v.magnitude,
-            dict(
-                # standard_name="", to be added when official
-                long_name="virtual potential temperature",
-                units=str(theta_v.units),
+                units="kelvin",
             ),
         )
     )
@@ -569,6 +475,14 @@ def calc_theta_v(ds):
 
 def calc_wind_dir_and_speed(ds):
     """
+    Input :
+
+        dataset : Dataset
+
+    Output :
+
+        dataset: Dataset wind direction and wind speed
+
     Calculates wind direction between 0 and 360 according to https://confluence.ecmwf.int/pages/viewpage.action?pageId=133262398
 
     """
