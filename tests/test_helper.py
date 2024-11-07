@@ -2,10 +2,10 @@ import pydropsonde.helper as hh
 import numpy as np
 import xarray as xr
 
-p = np.linspace(10000, 200, 10)
-T = np.linspace(30, 20, 10)
+p = np.linspace(100000, 10000, 10)
+T = np.linspace(300, 200, 10)
 q = np.linspace(0.02, 0.002, 10)
-alt = np.linspace(0, 12000, 10)
+alt = np.linspace(0, 17000, 10)
 rh = np.repeat(0.8, 10)
 
 ds = xr.Dataset(
@@ -35,3 +35,10 @@ def test_t2theta2t():
     t2theta = hh.calc_theta_from_T(ds)
     theta2t = hh.calc_T_from_theta(t2theta)
     assert np.all(np.round(ds.ta.values, 2) == np.round(theta2t.ta.values, 2))
+
+
+def test_rh2q_range():
+    rh2q = hh.calc_q_from_rh(ds)
+    assert rh2q.q.isel(alt=0).values > 0.01
+    assert rh2q.q.isel(alt=0).values < 0.02
+    assert rh2q.q.isel(alt=-1).values < 1e-4
