@@ -499,7 +499,6 @@ pipeline = {
             "create_interim_l2_ds",
             "convert_to_si",
             "get_l2_variables",
-            "add_compression_and_encoding_properties",
             "get_flight_attributes",
             "get_other_global_attributes",
             "add_global_attributes_to_interim_l2_ds",

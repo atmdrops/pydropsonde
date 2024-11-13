@@ -1,9 +1,6 @@
-import warnings
 import numpy as np
 from . import physics
 import xarray as xr
-import numcodecs
-from zarr.errors import ContainsGroupError
 
 
 from moist_thermodynamics import functions as mtf
@@ -17,7 +14,6 @@ l2_variables = {
             "standard_name": "eastward_wind",
             "long_name": "u component of winds",
             "units": "m s-1",
-            "coordinates": "time lon lat alt",
         },
     },
     "v_wind": {
@@ -26,7 +22,6 @@ l2_variables = {
             "standard_name": "northward_wind",
             "long_name": "v component of winds",
             "units": "m s-1",
-            "coordinates": "time lon lat alt",
         },
     },
     "tdry": {
@@ -35,7 +30,6 @@ l2_variables = {
             "standard_name": "air_temperature",
             "long_name": "air temperature",
             "units": "K",
-            "coordinates": "time lon lat alt",
         },
     },
     "pres": {
@@ -44,7 +38,6 @@ l2_variables = {
             "standard_name": "air_pressure",
             "long_name": "atmospheric pressure",
             "units": "Pa",
-            "coordinates": "time lon lat alt",
         },
     },
     "rh": {
@@ -52,7 +45,6 @@ l2_variables = {
             "standard_name": "relative_humidity",
             "long_name": "relative humidity",
             "units": "",
-            "coordinates": "time lon lat alt",
         }
     },
     "lat": {
@@ -98,17 +90,6 @@ l2_variables = {
     },
 }
 
-encoding_variables = {
-    "time": {"units": "seconds since 1970-01-01", "dtype": "float"},
-}
-
-variable_compression_properties = dict(
-    zlib=True,
-    complevel=4,
-    fletcher32=True,
-    _FillValue=np.finfo("float32").max,
-)
-
 
 l2_flight_attributes_map = {
     "True Air Speed (m/s)": "true_air_speed_(ms-1)",
@@ -141,15 +122,6 @@ l3_filename = "Level_3.nc"
 es_formular = mtsvp.liq_hardy
 
 
-def get_chunks(ds, var):
-    chunks = {
-        "sonde_id": min(256, ds.sonde_id.size),
-        "alt": min(400, ds.alt.size),
-    }
-
-    return tuple((chunks[d] for d in ds[var].dims))
-
-
 l3_vars = [
     "u",
     "v",
@@ -166,81 +138,6 @@ l3_vars = [
     "w_dir",
     "w_spd",
 ]
-
-
-def get_target_dtype(ds, var):
-    if isinstance(ds[var].values.flat[0], np.floating):
-        return {"dtype": "float32"}
-    if np.issubdtype(type(ds[var].values.flat[0]), np.datetime64):
-        return {"units": "nanoseconds since 2000-01-01"}
-    else:
-        return {"dtype": ds[var].values.dtype}
-
-
-def get_zarr_encoding(ds, var):
-    numcodecs.blosc.set_nthreads(1)  # IMPORTANT FOR DETERMINISTIC CIDs
-    codec = numcodecs.Blosc("zstd")
-    enc = {
-        "compressor": codec,
-        "chunks": get_chunks(ds, var),
-    }
-    enc.update(get_target_dtype(ds, var))
-    return enc
-
-
-def get_nc_encoding(ds, var):
-    if isinstance(ds[var].values.flat[0], str):
-        return {}
-    else:
-        enc = {
-            "compression": "zlib",
-            "chunksizes": get_chunks(ds, var),
-        }
-        enc.update(get_target_dtype(ds, var))
-        return enc
-
-
-enc_map = {
-    "zarr": get_zarr_encoding,
-    "nc": get_nc_encoding,
-}
-
-
-def get_encoding(ds, filetype, exclude_vars=None):
-    enc_fct = enc_map[filetype]
-    if exclude_vars is None:
-        exclude_vars = []
-    enc_var = {
-        var: enc_fct(ds, var)
-        for var in ds.variables
-        if var not in ds.dims
-        if var not in exclude_vars
-    }
-    return enc_var
-
-
-def open_dataset(path):
-    if ".nc" in path:
-        return xr.open_dataset(path)
-    elif ".zarr" in path:
-        return xr.open_dataset(path, engine="zarr")
-    else:
-        raise ValueError(f"Could not open: unrecognized filetype for {path}")
-
-
-def to_file(ds, path, overwrite=False, **kwargs):
-    if ".nc" in path:
-        ds.to_netcdf(path, **kwargs)
-    elif ".zarr" in path:
-        try:
-            ds.to_zarr(path, **kwargs)
-        except ContainsGroupError:
-            if overwrite:
-                ds.to_zarr(path, mode="w", **kwargs)
-            else:
-                warnings.warn(f"file {path} already exists. no new file written")
-    else:
-        raise ValueError(f"Could not write: unrecognized filetype for {path}")
 
 
 def get_bool(s):
