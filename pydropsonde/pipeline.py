@@ -527,7 +527,6 @@ pipeline = {
             "add_Nm_to_vars",
             "add_iwv",
             "recalc_rh_and_ta",
-            "add_thetas",
             "add_wind",
             "add_attributes_as_var",
             "make_attr_coordinates",
