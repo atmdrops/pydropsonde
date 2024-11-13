@@ -1258,47 +1258,41 @@ class Sonde:
 
         return self
 
-    def add_attributes_as_var(self):
+    def add_attributes_as_var(self, essential_attrs=None):
         """
         Prepares l2 datasets to be concatenated to gridded.
         adds all attributes as variables to avoid conflicts when concatenating because attributes are different
         (and not lose information)
         """
-        _prep_l3_ds = self._prep_l3_ds
-        attr_list = []
-        for attr, value in self._prep_l3_ds.attrs.items():
-            _prep_l3_ds[attr] = value
-            attr_list.append(attr)
-
-        _prep_l3_ds.attrs.clear()
-
-        object.__setattr__(self, "attrs", attr_list)
-        object.__setattr__(self, "_prep_l3_ds", _prep_l3_ds)
-        return self
-
-    def rename_attr_vars(self):
-        attrs = self.attrs
         ds = self._prep_l3_ds
-        for attr in self.attrs:
+        if essential_attrs is None:
+            try:
+                essential_attrs = hh.l3_coords
+            except AttributeError:
+                essential_attrs = {
+                    "launch_time": {
+                        "time_zone": "UTC",
+                        "long_name": "dropsonde launch time",
+                    }
+                }
+
+        for attr, value in ds.attrs.items():
             splt = attr.split("(")
             var_name = splt[0][:-1]
-            try:
-                unit = splt[1][:-1]
-                attrs.append(var_name)
-                ds = ds.rename({attr: var_name})
-                ds[var_name] = ds[var_name].assign_attrs(units=unit)
-            except IndexError:
-                pass
+            if var_name in list(essential_attrs.keys()):
+                var_attrs = essential_attrs[var_name]
+                ds = ds.assign({var_name: ("sonde_id", [ds.attrs[attr]], var_attrs)})
+        ds.attrs.clear()
         ds = ds.assign(
             dict(
                 launch_time=(
                     "sonde_id",
-                    [ds.launch_time.astype(np.datetime64).values],
-                    {"time_zone": ds.launch_time.attrs["units"]},
+                    ds.launch_time.astype(np.datetime64).values,
+                    essential_attrs["launch_time"],
                 )
             )
         )
-        object.__setattr__(self, "attrs", attrs)
+        object.__setattr__(self, "attrs", ds.attrs.keys())
         object.__setattr__(self, "_prep_l3_ds", ds)
         return self
 
@@ -1332,7 +1326,7 @@ class Gridded:
         function to concatenate all sondes using the combination of all measurement times and launch times
         """
         if sortby is None:
-            sortby = hh.l3_coords[0]
+            sortby = list(hh.l3_coords.keys())[0]
         list_of_l2_ds = [sonde._interim_l3_ds for sonde in self.sondes.values()]
         self._interim_l3_ds = xr.concat(
             list_of_l2_ds, dim="sonde_id", join="exact"

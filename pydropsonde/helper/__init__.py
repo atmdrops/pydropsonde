@@ -123,12 +123,12 @@ l2_flight_attributes_map = {
     "Geopotential Altitude (m)": "aircraft_geopotential_altitude_(m)",
 }
 
-l3_coords = [
-    "launch_time",
-    "aircraft_longitude",
-    "aircraft_latitude",
-    "aircraft_msl_altitude",
-]
+l3_coords = dict(
+    launch_time={"long_name": "dropsonde launch time", "time_zone": "UTC"},
+    aircraft_longitude={"long_name": "aircraft longitude at launch", "units": "deg_E"},
+    aircraft_latitude={"long_name": "aircraft latitude at launch", "units": "deg_N"},
+    aircraft_msl_altitude={"long_name": "aircraft altitude at launch", "units": "m"},
+)
 
 
 path_to_flight_ids = "{platform}/Level_0"
