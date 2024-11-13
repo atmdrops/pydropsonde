@@ -888,37 +888,6 @@ class Sonde:
 
         return self
 
-    def add_compression_and_encoding_properties(
-        self,
-        encoding_variables: dict = hh.encoding_variables,
-        default_variable_compression_properties: dict = hh.variable_compression_properties,
-    ):
-        """
-        Adds compression and encoding properties to _interim_l2_ds.
-
-        Parameters
-        ----------
-        comp : dict or str, optional
-            A dictionary containing the compression properties to be used for the L2 file.
-            The default is the comp dictionary from the helper module.
-
-        Returns
-        -------
-        self : object
-            Returns the sonde object with compression and encoding properties added to _interim_l2_ds.
-        """
-
-        for var in encoding_variables:
-            self._interim_l2_ds[var].encoding = encoding_variables[var]
-
-        for var in self._interim_l2_ds.data_vars:
-            if not encoding_variables.get(var):
-                self._interim_l2_ds[
-                    var
-                ].encoding = default_variable_compression_properties
-
-        return self
-
     def get_l2_filename(
         self, l2_filename: str = None, l2_filename_template: str = None
     ):
@@ -978,10 +947,13 @@ class Sonde:
         if l2_dir is None:
             l2_dir = self.l2_dir
 
-        if not os.path.exists(l2_dir):
-            os.makedirs(l2_dir)
-        hh.to_file(self._interim_l2_ds, os.path.join(l2_dir, self.l2_filename))
-
+        hx.write_ds(
+            ds=self._interim_l2_ds,
+            dir=l2_dir,
+            filename=self.l2_filename,
+            object_dim="sonde_id",
+            alt_dim="time",
+        )
         return self
 
     def add_l2_ds(self, l2_dir: str = None):
@@ -1003,7 +975,7 @@ class Sonde:
 
         try:
             object.__setattr__(
-                self, "l2_ds", hh.open_dataset(os.path.join(l2_dir, self.l2_filename))
+                self, "l2_ds", hx.open_dataset(os.path.join(l2_dir, self.l2_filename))
             )
 
             return self
@@ -1033,14 +1005,12 @@ class Sonde:
                 sonde_id=self.serial_id, version=__version__
             )
         object.__setattr__(self, "interim_l3_dir", interim_l3_dir)
-        object.__setattr__(
-            self, "interim_l3_path", os.path.join(interim_l3_dir, interim_l3_filename)
-        )
+        object.__setattr__(self, "interim_l3_filename", interim_l3_filename)
         if os.path.exists(os.path.join(interim_l3_dir, interim_l3_filename)):
             object.__setattr__(
                 self,
                 "_interim_l3_ds",
-                hh.open_dataset(os.path.join(interim_l3_dir, interim_l3_filename)),
+                hx.open_dataset(os.path.join(interim_l3_dir, interim_l3_filename)),
             )
             object.__setattr__(self, "cont", False)
             return self
@@ -1311,8 +1281,11 @@ class Sonde:
         return self
 
     def save_interim_l3(self):
-        os.makedirs(self.interim_l3_dir, exist_ok=True)
-        hh.to_file(self._interim_l3_ds, self.interim_l3_path)
+        hx.write_ds(
+            ds=self._interim_l3_ds,
+            dir=self.interim_l3_dir,
+            filename=self.interim_l3_filename,
+        )
 
         return self
 
@@ -1365,22 +1338,29 @@ class Gridded:
         return self
 
     def write_l3(self, l3_dir: str = None):
+        """
+        Writes the L3 file to the specified directory.
+
+        Parameters
+        ----------
+        l3_dir : str, optional
+            The directory to write the L3 file to.
+
+        Returns
+        -------
+        self : object
+            Returns the sonde object with the L3 file written to the specified directory using the l3_filename attribute to set the name.
+        """
+
         if l3_dir is None:
             l3_dir = self.l3_dir
 
-        if not os.path.exists(l3_dir):
-            os.makedirs(l3_dir)
-        if ".nc" in self.l3_filename:
-            filetype = "nc"
-        elif ".zarr" in self.l3_filename:
-            filetype = "zarr"
-        else:
-            raise ValueError("filetype unknown")
-        encoding = hh.get_encoding(self._interim_l3_ds, filetype=filetype)
-        hh.to_file(
+        hx.write_ds(
             ds=self._interim_l3_ds,
-            path=os.path.join(l3_dir, self.l3_filename),
-            encoding=encoding,
+            dir=l3_dir,
+            filename=self.l3_filename,
+            object_dim="sonde_id",
+            alt_dim="alt",
         )
         return self
 
@@ -1388,7 +1368,7 @@ class Gridded:
         if l3_dir is None:
             self.l3_ds = self._interim_l3_ds.copy()
         else:
-            self.l3_ds = hh.open_dataset(l3_dir)
+            self.l3_ds = hx.open_dataset(l3_dir)
         return self
 
     def get_simple_circle_times_from_yaml(self, yaml_file: str = None):
