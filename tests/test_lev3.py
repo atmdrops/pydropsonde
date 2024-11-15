@@ -23,7 +23,7 @@ launch_time = "2020-02-02 20:22:02"
                         np.datetime64("2024-01-06", "ns"),
                     ]
                 ),
-                rh=np.array([0.8, 0.7, 0.8, 0.7]),
+                q=np.array([0.8, 0.7, 0.8, 0.7]),
                 alt=np.array([30.0, 20.0, 15.0, 10.0]),
                 p=np.array([1.0, 10.0, 100.0, 1000.0]),
             ),
@@ -31,16 +31,16 @@ launch_time = "2020-02-02 20:22:02"
                 time=np.array(
                     [
                         np.nan,
-                        np.datetime64("2024-01-05", "ns"),
-                        np.datetime64("2024-01-02", "ns"),
+                        np.datetime64("2024-01-06", "ns"),
+                        np.datetime64("2024-01-03", "ns"),
                         np.datetime64("2024-01-01", "ns"),
                     ]
                 ),
-                rh=np.array([np.nan, 0.75, 0.7, 0.8]),
+                q=np.array([np.nan, 0.7, 0.75, 0.8]),
                 alt=np.array([0.0, 10.0, 20.0, 30.0]),
-                p=np.array([np.nan, 550.0, 10.0, 1.0]),
-                Nrh=[0, 2, 1, 1],
-                mrh=[0, 2, 2, 2],
+                p=np.array([np.nan, 1000.0, 55.0, 1.0]),
+                Nq=[0, 1, 2, 1],
+                mq=[0, 2, 2, 2],
             ),
         ),
         # interpolation
@@ -54,7 +54,7 @@ launch_time = "2020-02-02 20:22:02"
                         np.datetime64("2024-01-06", "ns"),
                     ]
                 ),
-                rh=np.array([0.8, 0.7, np.nan, 0.8]),
+                q=np.array([0.8, 0.7, np.nan, 0.8]),
                 alt=np.array([30.0, 20.0, 10.0, 1.0]),
                 p=np.array([1.0, 1e1, np.nan, 1e3]),
             ),
@@ -67,11 +67,11 @@ launch_time = "2020-02-02 20:22:02"
                         np.datetime64("2024-01-01", "ns"),
                     ]
                 ),
-                rh=np.array([0.8, 0.75, 0.7, 0.8]),
+                q=np.array([0.8, 0.75, 0.7, 0.8]),
                 alt=np.array([0.0, 10.0, 20.0, 30.0]),
                 p=np.array([1e3, 1e2, 1e1, 1]),
-                Nrh=[1, 0, 1, 1],
-                mrh=[2, 1, 2, 2],
+                Nq=[1, 0, 1, 1],
+                mq=[2, 1, 2, 2],
             ),
         ),
         # gap to big to fill
@@ -85,7 +85,7 @@ launch_time = "2020-02-02 20:22:02"
                         np.datetime64("2024-01-06", "ns"),
                     ]
                 ),
-                rh=np.array([0.8, np.nan, np.nan, 0.8]),
+                q=np.array([0.8, np.nan, np.nan, 0.8]),
                 alt=np.array([30.0, 20.0, 10.0, 1.0]),
                 p=np.array([1.0, 10.0, 100.0, 1000.0]),
             ),
@@ -98,11 +98,11 @@ launch_time = "2020-02-02 20:22:02"
                         np.datetime64("2024-01-01", "ns"),
                     ]
                 ),
-                rh=np.array([0.8, np.nan, np.nan, 0.8]),
+                q=np.array([0.8, np.nan, np.nan, 0.8]),
                 alt=np.array([0.0, 10.0, 20.0, 30.0]),
                 p=np.array([1000, 100.0, 10.0, 1.0]),
-                Nrh=[1, 0, 0, 1],
-                mrh=[2, 0, 0, 2],
+                Nq=[1, 0, 0, 1],
+                mq=[2, 0, 0, 2],
             ),
         ),
     ],
@@ -120,7 +120,7 @@ class TestGroup:
         data_dict = {
             "coords": {"time": {"dims": ("time"), "data": test_input["time"]}},
             "data_vars": {
-                "rh": {"dims": ("time"), "data": test_input["rh"]},
+                "q": {"dims": ("time"), "data": test_input["q"]},
                 "p": {"dims": ("time"), "data": test_input["p"]},
                 "alt": {"dims": ("time"), "data": test_input["alt"]},
             },
@@ -143,7 +143,7 @@ class TestGroup:
         res_dict = {
             "coords": {"alt": {"dims": ("alt"), "data": expected["alt"]}},
             "data_vars": {
-                "rh": {"dims": ("alt"), "data": expected["rh"]},
+                "q": {"dims": ("alt"), "data": expected["q"]},
                 "p": {"dims": ("alt"), "data": expected["p"]},
                 "interp_time": {"dims": ("alt"), "data": expected["time"]},
             },
@@ -160,5 +160,5 @@ class TestGroup:
     def test_N_m(self, sonde_interp, test_input, expected):
         new_sonde = self.interp_sonde.get_N_m_values(alt_var="alt")
         print(new_sonde._prep_l3_ds)
-        assert np.all(new_sonde._prep_l3_ds["Nrh"].values == expected["Nrh"])
-        assert np.all(new_sonde._prep_l3_ds["mrh"].values == expected["mrh"])
+        assert np.all(new_sonde._prep_l3_ds["Nq"].values == expected["Nq"])
+        assert np.all(new_sonde._prep_l3_ds["mq"].values == expected["mq"])
