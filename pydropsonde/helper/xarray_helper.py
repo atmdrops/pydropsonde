@@ -30,6 +30,9 @@ def add_ancillary_var(ds, variable, anc_name):
 
 # encode and write files
 def get_chunks(ds, var, object_dim="sonde_id", alt_dim="alt"):
+    """
+    get standard chunks for one object_dim (like sonde_id or circle_id) and one height dimension
+    """
     chunks = {
         object_dim: min(256, ds.sonde_id.size),
         alt_dim: min(400, ds.alt.size),
@@ -39,6 +42,9 @@ def get_chunks(ds, var, object_dim="sonde_id", alt_dim="alt"):
 
 
 def get_target_dtype(ds, var):
+    """
+    reduce float dtypes to float32 and properly encode time
+    """
     if isinstance(ds[var].values.flat[0], np.floating):
         return {"dtype": "float32"}
     if np.issubdtype(type(ds[var].values.flat[0]), np.datetime64):
@@ -48,6 +54,9 @@ def get_target_dtype(ds, var):
 
 
 def get_zarr_encoding(ds, var, **kwargs):
+    """
+    get zarr encoding for dataset
+    """
     numcodecs.blosc.set_nthreads(1)  # IMPORTANT FOR DETERMINISTIC CIDs
     codec = numcodecs.Blosc("zstd")
     enc = {
@@ -59,6 +68,10 @@ def get_zarr_encoding(ds, var, **kwargs):
 
 
 def get_nc_encoding(ds, var, **kwargs):
+    """
+    get netcdf encoding for dataset
+    default compression is zlib for compatibility
+    """
     if isinstance(ds[var].values.flat[0], str):
         return {}
     else:
@@ -78,6 +91,9 @@ enc_map = {
 
 
 def get_encoding(ds, filetype, exclude_vars=None, **kwargs):
+    """
+    get encoding for a dataset depending on filetype
+    """
     enc_fct = enc_map[filetype]
     if exclude_vars is None:
         exclude_vars = []
@@ -91,6 +107,9 @@ def get_encoding(ds, filetype, exclude_vars=None, **kwargs):
 
 
 def open_dataset(path):
+    """
+    open an xr.dataset from path depending on filetype
+    """
     if ".nc" in path:
         return xr.open_dataset(path)
     elif ".zarr" in path:
@@ -100,6 +119,9 @@ def open_dataset(path):
 
 
 def to_file(ds, path, filetype, overwrite=False, **kwargs):
+    """
+    write dataset to file depending on filetype.
+    """
     if filetype == "nc":
         ds.to_netcdf(path, **kwargs)
     elif filetype == "zarr":
@@ -115,6 +137,10 @@ def to_file(ds, path, filetype, overwrite=False, **kwargs):
 
 
 def write_ds(ds, dir, filename, **kwargs):
+    """
+    standardized way to write level files;
+    includes determination of filetype and encoding
+    """
     Path(dir).mkdir(parents=True, exist_ok=True)
     if ".nc" in filename:
         filetype = "nc"
