@@ -9,6 +9,7 @@ import warnings
 import yaml
 import numpy as np
 import xarray as xr
+from xhistogram.xarray import histogram
 import glob
 
 import pydropsonde.helper as hh
@@ -1210,102 +1211,99 @@ class Sonde:
                 ds = ds.assign(p=(ds.p.dims, np.log(ds.p.values), ds.p.attrs))
             interp_ds = ds.interp({alt_var: interpolation_grid})
         elif method == "bin":
-            interpolation_bins = interpolation_grid.astype("int")
-            interpolation_label = np.arange(
-                interp_start + interp_step / 2,
-                interp_stop - interp_step / 2,
-                interp_step,
-            )
-            interp_ds = ds.reset_coords().drop_vars("time")
-            binned_ds = interp_ds.groupby_bins(
-                alt_var,
-                interpolation_bins,
-                labels=interpolation_label,
-            )
-            interp_ds = binned_ds.mean(dim=alt_var, skipna=True)
+            mean_ds = {}
+            count_dict = {}
+            # bin variables along height, bins are right-open intervals, except the last
+            for var in ["u", "v", "q", "p", "theta", "lat", "lon", "gpsalt", "time"]:
+                if var in ds.variables:
+                    count_dict[var] = histogram(
+                        ds[alt_var].where(~np.isnan(ds[var])),
+                        bins=interpolation_grid,
+                        dim=[alt_var],
+                    )
+
+                    new_ds = (
+                        histogram(
+                            ds[alt_var].where(~np.isnan(ds[var])),
+                            bins=interpolation_grid,
+                            dim=[alt_var],
+                            weights=ds[var]
+                            .astype(np.float64)
+                            .where(~np.isnan(ds[var])),
+                        )  # casting necessary for time
+                        / count_dict[var]
+                    )
+                    new_ds.name = var
+                    new_ds = new_ds.assign_attrs(ds[var].attrs)
+                    mean_ds[var] = new_ds.copy()
+            interp_ds = xr.Dataset(mean_ds)
 
             if p_log:
                 interp_ds = interp_ds.assign(
                     p=(interp_ds.p.dims, np.log(interp_ds.p.values), interp_ds.p.attrs)
                 )
+            # interpolate missing values up to max_gap_fill meters
             interp_ds = (
                 interp_ds.transpose()
                 .interpolate_na(
-                    dim=f"{alt_var}_bins", max_gap=max_gap_fill, use_coordinate=True
+                    dim=f"{alt_var}_bin", max_gap=max_gap_fill, use_coordinate=True
                 )
-                .rename({f"{alt_var}_bins": alt_var})
+                .rename({f"{alt_var}_bin": alt_var})
             )
             interp_ds[alt_var].attrs.update(ds[alt_var].attrs)
             time_type = ds["time"].values.dtype
-
-            binned_time = (
-                ds["time"]
-                .astype(float)
-                .groupby_bins(alt_var, interpolation_bins, labels=interpolation_label)
-                .map(lambda x: x.mean(skipna=True))
-            )
             interp_ds = interp_ds.assign(
-                {
-                    "interp_time": (
-                        alt_var,
-                        binned_time.where(
-                            binned_time > -1
-                        )  # replace missing values with nan
-                        .interpolate_na(
-                            dim=f"{alt_var}_bins",
-                            max_gap=max_gap_fill,
-                            use_coordinate=True,
-                        )
-                        .astype(time_type)
-                        .values,
-                        ds["time"].attrs,
-                    )
-                }
-            )
+                interp_time=(
+                    interp_ds.time.dims,
+                    interp_ds.time.astype(time_type).values,
+                    interp_ds.time.attrs,
+                )
+            ).drop_vars("time")
+            count_dict.pop("time")
+            object.__setattr__(self, "_count_dict", count_dict)
+
         if p_log:
             interp_ds = interp_ds.assign(
                 p=(interp_ds.p.dims, np.exp(interp_ds.p.values), interp_ds.p.attrs)
             )
 
-        object.__setattr__(self, "_binned_ds", binned_ds)
         object.__setattr__(self, "_prep_l3_ds", interp_ds)
-
         return self
 
     def get_N_m_values(self, alt_var="alt"):
-        binned_ds = self._binned_ds
+        count_dict = self._count_dict
         prep_l3 = self._prep_l3_ds
 
-        N = binned_ds.count().transpose().rename({f"{alt_var}_bins": alt_var})
-
-        for variable in [var for var in N.variables if var not in N.coords]:
+        for variable, Nvar in count_dict.items():
             N_name = f"N{variable}"
-            Nvar = N[variable].where(N[variable] > 0, 0)
             N_attrs = dict(
                 long_name=f"Number of values per bin for {variable}",
+                units="1",
             )
+            Nvar = Nvar.rename({alt_var + "_bin": alt_var})
+
             prep_l3 = prep_l3.assign(
                 {
                     N_name: (
-                        prep_l3[variable].dims,
-                        Nvar.values.astype(int),
+                        alt_var,
+                        Nvar.astype(int).values,
                         N_attrs,
                     )
                 }
             )
-            prep_l3 = hx.add_ancillary_var(prep_l3, variable, N_name)
-            # get m
-            N2m = Nvar
-            n_mask = N2m.where(~np.isnan(N2m), 0)
+
+            # cast to int
+            n_mask = Nvar.where(~np.isnan(Nvar), 0)
             int_mask = prep_l3[variable].where(~np.isnan(prep_l3[variable]), 0)
 
             m_mask = np.invert(n_mask.astype(bool)) & int_mask.astype(bool)
-            m = xr.where(N2m > 0, x=2, y=0)
+            m = xr.where(Nvar > 0, x=2, y=0)
             m = xr.where(m_mask, x=1, y=m)
 
             m_name = f"m{variable}"
             m_attrs = {
                 "long_name": f"interp method for {variable}",
+                "units": "1",
                 "0": "no data",
                 "1": "no raw data, interpolated",
                 "2": "average over raw data",
@@ -1313,15 +1311,69 @@ class Sonde:
             prep_l3 = prep_l3.assign(
                 {
                     m_name: (
-                        N2m.dims,
-                        m.values.astype(int),
+                        alt_var,
+                        m.astype(int).values,
                         m_attrs,
                     )
                 }
             )
-            prep_l3 = hx.add_ancillary_var(prep_l3, variable, m_name)
         object.__setattr__(self, "_prep_l3_ds", prep_l3)
 
+        return self
+
+    def remove_N_m_duplicates(self):
+        ds = self._prep_l3_ds
+        nm_vars = ["gpsalt", "u", "p", "q", "theta"]
+        gpsvars = [var for var in ["lat", "lon"] if var in ds.variables]
+
+        for var in gpsvars:
+            np.testing.assert_array_equal(
+                ds.mgpsalt.values,
+                ds[f"m{var}"].values,
+                err_msg=f"m{var} not identical to mgpsalt",
+            )
+            np.testing.assert_array_equal(
+                ds.Ngpsalt.values,
+                ds[f"N{var}"].values,
+                err_msg=f"N{var} not identical to mgpsalt",
+            )
+
+        np.testing.assert_array_equal(
+            ds.mu.values, ds.mv.values, err_msg="mv and mu not identical"
+        )
+        np.testing.assert_array_equal(
+            ds.Nu.values, ds.Nv.values, err_msg="Nv and Nu not identical"
+        )
+
+        ds = (
+            ds.drop_vars(
+                [f"N{var}" for var in ds.variables if var not in nm_vars],
+                errors="ignore",
+            )
+            .drop_vars(
+                [f"m{var}" for var in ds.variables if var not in nm_vars],
+                errors="ignore",
+            )
+            .rename(
+                {"Ngpsalt": "Ngpspos", "mgpsalt": "mgpspos", "Nu": "Ngps", "mu": "mgps"}
+            )
+        )
+
+        object.__setattr__(self, "_prep_l3_ds", ds)
+        return self
+
+    def add_Nm_to_vars(self):
+        self.remove_N_m_duplicates()
+        ds = self._prep_l3_ds
+
+        essential_vars = ["u", "v", "q", "p", "theta", "gpsalt", "lat", "lon"]
+        mN_vars = ["gps", "gps", "q", "p", "theta", "gpspos", "gpspos", "gpspos"]
+
+        for essential_var, mNvar in zip(essential_vars, mN_vars):
+            ds = hx.add_ancillary_var(ds, essential_var, "m" + mNvar)
+            ds = hx.add_ancillary_var(ds, essential_var, "N" + mNvar)
+
+        object.__setattr__(self, "_prep_l3_ds", ds)
         return self
 
     def add_ids(self):
@@ -1359,6 +1411,7 @@ class Sonde:
         (and not lose information)
         """
         ds = self._prep_l3_ds
+        l2_ds = self.l2_ds
         if essential_attrs is None:
             try:
                 essential_attrs = hh.l3_coords
@@ -1370,13 +1423,13 @@ class Sonde:
                     }
                 }
 
-        for attr, value in ds.attrs.items():
+        for attr, value in l2_ds.attrs.items():
             splt = attr.split("(")
             var_name = splt[0][:-1]
             if var_name in list(essential_attrs.keys()):
                 var_attrs = essential_attrs[var_name]
-                ds = ds.assign({var_name: ("sonde_id", [ds.attrs[attr]], var_attrs)})
-        ds.attrs.clear()
+                ds = ds.assign({var_name: ("sonde_id", [l2_ds.attrs[attr]], var_attrs)})
+
         ds = ds.assign(
             dict(
                 launch_time=(
