@@ -767,36 +767,6 @@ class Sonde:
 
         return self
 
-    def add_sonde_id_variable(self, variable_name="sonde_id"):
-        """
-        Adds a variable and related attributes to the sonde object with the Sonde object (self)'s serial_id attribute.
-
-        Parameters
-        ----------
-        variable_name : str, optional
-            The name of the variable to be added. Default is 'sonde_id'.
-
-        Returns
-        -------
-        self : object
-            Returns the sonde object with a variable containing serial_id. Name of the variable provided by 'variable_name'.
-        """
-        if hasattr(self, "_interim_l2_ds"):
-            ds = self._interim_l2_ds
-        else:
-            ds = self.aspen_ds
-
-        ds = ds.assign({variable_name: self.serial_id})
-        ds[variable_name].attrs = {
-            "descripion": "unique sonde ID",
-            "long_name": "sonde identifier",
-            "cf_role": "trajectory_id",
-        }
-
-        object.__setattr__(self, "_interim_l2_ds", ds)
-
-        return self
-
     def get_flight_attributes(
         self, l2_flight_attributes_map: dict = hh.l2_flight_attributes_map
     ) -> None:
@@ -883,6 +853,92 @@ class Sonde:
 
         object.__setattr__(self, "sonde_attrs", sonde_attrs)
 
+        return self
+
+    def add_sonde_id_variable(self, variable_name="sonde_id"):
+        """
+        Adds a variable and related attributes to the sonde object with the Sonde object (self)'s serial_id attribute.
+
+        Parameters
+        ----------
+        variable_name : str, optional
+            The name of the variable to be added. Default is 'sonde_id'.
+
+        Returns
+        -------
+        self : object
+            Returns the sonde object with a variable containing serial_id. Name of the variable provided by 'variable_name'.
+        """
+        if hasattr(self, "_interim_l2_ds"):
+            ds = self._interim_l2_ds
+        else:
+            ds = self.aspen_ds
+        attrs = {
+            "descripion": "unique sonde ID",
+            "long_name": "sonde identifier",
+            "cf_role": "trajectory_id",
+        }
+        ds = ds.assign_coords({variable_name: self.serial_id})
+        ds[variable_name] = ds[variable_name].assign_attrs(attrs)
+        object.__setattr__(self, "_interim_l2_ds", ds)
+
+        return self
+
+    def add_platform_id_variable(self, variable_name="platform_id"):
+        """
+        Adds a variable and related attributes to the sonde object with the Sonde object (self)'s platform_id attribute.
+
+        Parameters
+        ----------
+        variable_name : str, optional
+            The name of the variable to be added. Default is 'platform_id'.
+
+        Returns
+        -------
+        self : object
+            Returns the sonde object with a variable containing platform_id. Name of the variable provided by 'variable_name'.
+        """
+        if hasattr(self, "_interim_l2_ds"):
+            ds = self._interim_l2_ds
+        else:
+            ds = self.aspen_ds
+
+        attrs = dict(
+            description="unique platform ID",
+            long_name="platform identifier",
+        )
+        ds = ds.assign_coords({variable_name: self.platform_id})
+        ds[variable_name] = ds[variable_name].assign_attrs(attrs)
+        object.__setattr__(self, "_interim_l2_ds", ds)
+        return self
+
+    def add_flight_id_variable(self, variable_name="flight_id"):
+        """
+        Adds a variable and related attributes to the sonde object with the Sonde object (self)'s flight_id attribute.
+
+        Parameters
+        ----------
+        variable_name : str, optional
+            The name of the variable to be added. Default is 'flight_id'.
+
+        Returns
+        -------
+        self : object
+            Returns the sonde object with a variable containing flight_id. Name of the variable provided by 'variable_name'.
+        """
+        if hasattr(self, "_interim_l2_ds"):
+            ds = self._interim_l2_ds
+        else:
+            ds = self.aspen_ds
+
+        attrs = dict(
+            description="unique flight ID",
+            long_name="flight identifier",
+        )
+
+        ds = ds.assign_coords({variable_name: self.flight_id})
+        ds[variable_name] = ds[variable_name].assign_attrs(attrs)
+        object.__setattr__(self, "_interim_l2_ds", ds)
         return self
 
     def add_l2_attributes_to_interim_l2_ds(self):
@@ -1071,8 +1127,8 @@ class Sonde:
         """
         ds = self._prep_l3_ds
 
-        ds = hh.calc_q_from_rh(ds)
         ds = hh.calc_theta_from_T(ds)
+        ds = hh.calc_q_from_rh(ds)
 
         object.__setattr__(self, "_prep_l3_ds", ds)
 
@@ -1080,8 +1136,8 @@ class Sonde:
 
     def recalc_rh_and_ta(self):
         ds = self._prep_l3_ds
-        ds = hh.calc_rh_from_q(ds)
         ds = hh.calc_T_from_theta(ds)
+        ds = hh.calc_rh_from_q(ds)
         object.__setattr__(self, "_prep_l3_ds", ds)
         return self
 
@@ -1266,6 +1322,34 @@ class Sonde:
             prep_l3 = hx.add_ancillary_var(prep_l3, variable, m_name)
         object.__setattr__(self, "_prep_l3_ds", prep_l3)
 
+        return self
+
+    def add_ids(self):
+        """
+        add sonde_id, platform_id and flight_id to prep_l3_ds
+        """
+        ds = self._prep_l3_ds
+        source_ds = self.l2_ds
+        ds = ds.assign_coords(
+            {
+                "sonde_id": (
+                    "sonde_id",
+                    [source_ds.sonde_id.values],
+                    source_ds.sonde_id.attrs,
+                ),
+                "platform_id": (
+                    "sonde_id",
+                    [source_ds.platform_id.values],
+                    source_ds.platform_id.attrs,
+                ),
+                "flight_id": (
+                    "sonde_id",
+                    [source_ds.flight_id.values],
+                    source_ds.flight_id.attrs,
+                ),
+            }
+        )
+        object.__setattr__(self, "_prep_l3_ds", ds)
         return self
 
     def add_attributes_as_var(self, essential_attrs=None):

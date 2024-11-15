@@ -345,7 +345,7 @@ def calc_T_from_theta(ds):
             long_name="air temperature",
             units="K",
         )
-    ds = ds.assign(ta=(ds.ta.dims, ta, t_attrs))
+    ds = ds.assign(ta=(ds.theta.dims, ta, t_attrs))
     return ds
 
 
