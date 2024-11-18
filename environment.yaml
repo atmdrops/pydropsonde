@@ -18,6 +18,7 @@ dependencies:
   - sphinx
   - sphinx-autobuild
   - xarray
+  - xhistogram
   - zarr
   - pip
   - pip:
