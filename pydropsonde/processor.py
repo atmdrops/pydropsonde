@@ -204,6 +204,11 @@ class Sonde:
             except ValueError:
                 warnings.warn(f"No valid l1 file for sonde {self.serial_id}")
                 return None
+            except OSError:
+                warnings.warn(
+                    f"Empty l1 file for sonde {self.serial_id} on {self.launch_time}. This might be fixed using the ASPEN software manually. "
+                )
+                return None
             if "SondeId" not in ds.attrs:
                 if ds.attrs["SoundingDescription"].split(" ")[1] == self.serial_id:
                     object.__setattr__(self, "aspen_ds", ds)
