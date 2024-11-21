@@ -188,7 +188,7 @@ class Flight:
 
                 Sondes[sonde_id].add_global_attrs(global_attrs)
             except UnboundLocalError:
-                warnings.warn(f"No valid a-file for sonde {sonde_id}")
+                warnings.warn(f"No valid a-file for sonde {sonde_id}, {self.flight_id}")
                 pass
 
         object.__setattr__(self, "Sondes", Sondes)
