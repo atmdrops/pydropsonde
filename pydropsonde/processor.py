@@ -1145,7 +1145,8 @@ class Sonde:
 
         if not (self._prep_l3_ds[alt_var].diff(dim="time") < 0).any():
             warnings.warn(
-                f"your altitude for sonde {self.serial_id.values} is not sorted."
+                f"your altitude for sonde {self.serial_id
+                } on {self.launch_time} is not sorted."
             )
         ds = (self._prep_l3_ds.swap_dims({"time": alt_var})).load()
         if method == "linear_interpolate":
