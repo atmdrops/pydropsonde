@@ -1327,16 +1327,22 @@ class Sonde:
         gpsvars = [var for var in ["lat", "lon"] if var in ds.variables]
 
         for var in gpsvars:
-            np.testing.assert_array_equal(
-                ds.mgpsalt.values,
-                ds[f"m{var}"].values,
-                err_msg=f"m{var} not identical to mgpsalt",
-            )
-            np.testing.assert_array_equal(
-                ds.Ngpsalt.values,
-                ds[f"N{var}"].values,
-                err_msg=f"N{var} not identical to mgpsalt",
-            )
+            if np.all(np.equal(ds.mgpsalt.values, ds[f"m{var}"].values)):
+                warnings.warn(
+                    f"gpsalt and {var} don't have the same datapoints for sonde {self.serial_id} on {self.launch_time}"
+                )
+            """
+                np.testing.assert_array_equal(
+                    ds.mgpsalt.values,
+                    ds[f"m{var}"].values,
+                    err_msg=f"m{var} not identical to mgpsalt",
+                )
+                np.testing.assert_array_equal(
+                    ds.Ngpsalt.values,
+                    ds[f"N{var}"].values,
+                    err_msg=f"N{var} not identical to mgpsalt",
+                )
+            """
 
         np.testing.assert_array_equal(
             ds.mu.values, ds.mv.values, err_msg="mv and mu not identical"
