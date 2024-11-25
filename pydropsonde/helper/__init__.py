@@ -298,7 +298,12 @@ def calc_iwv(ds, sonde_dim="sonde_id", alt_dim="alt"):
     )
     ds_iwv = xr.DataArray([iwv], dims=[sonde_dim], coords={})
     ds_iwv.name = "iwv"
-    ds_iwv.attrs = {"standard name": "integrated water vapor", "units": "kg/m^2"}
+    ds_iwv.attrs = dict(
+        standard_name="atmosphere_mass_content_of_water_vapor",
+        units="kg m-2",
+        long_name="integrated water vapour",
+        description="vertically integrated water vapour up to aircraft altitude",
+    )
     ds = xr.merge([ds, ds_iwv])
     return ds
 
