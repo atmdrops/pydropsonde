@@ -21,7 +21,7 @@ Usually dropsonde data has a ``platform`` from which it was meassured and a ``fl
      - ASPEN-processed netCDF files per sonde. First QC applied.
    * - :doc:`Level_2 <level2>`
      - Sondes that passed additional QC tests. Still one file per sonde. All soundings with no usable data are excluded
-   * - Level_3
+   * - :doc:`Level_3 <level3>`
      - One dataset (file) containing all Level_2 soundings gridded on a uniform, vertical grid, with some derived variables
    * - Level_4
      - Circle products from all circles flown during flight or measurement campaign
@@ -29,3 +29,9 @@ Usually dropsonde data has a ``platform`` from which it was meassured and a ``fl
 
 
 You can define your exact folder structure as shown in :doc:`example configs <../tutorial/configs>`
+
+.. toctree::
+    :caption: Level Description
+
+    level2
+    level3
