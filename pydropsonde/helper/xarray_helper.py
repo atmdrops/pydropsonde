@@ -35,7 +35,7 @@ def get_chunks(ds, var, object_dim="sonde_id", alt_dim="alt"):
     """
     chunks = {
         object_dim: min(256, ds.sonde_id.size),
-        alt_dim: min(400, ds.alt.size),
+        alt_dim: min(400, ds[alt_dim].size),
     }
 
     return tuple((chunks[d] for d in ds[var].dims))

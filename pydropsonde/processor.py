@@ -1214,8 +1214,19 @@ class Sonde:
             mean_ds = {}
             count_dict = {}
             # bin variables along height, bins are right-open intervals, except the last
-            for var in ["u", "v", "q", "p", "theta", "lat", "lon", "gpsalt", "time"]:
-                if var in ds.variables:
+            for var in [
+                "u",
+                "v",
+                "q",
+                "p",
+                "theta",
+                "lat",
+                "lon",
+                "gpsalt",
+                "time",
+                "alt",
+            ]:
+                if (var in ds.variables) and (var not in ds.dims):
                     count_dict[var] = histogram(
                         ds[alt_var].where(~np.isnan(ds[var])),
                         bins=interpolation_grid,
@@ -1319,27 +1330,13 @@ class Sonde:
 
     def remove_N_m_duplicates(self):
         ds = self._prep_l3_ds
-        nm_vars = ["gpsalt", "u", "p", "q", "theta"]
-        gpsvars = [var for var in ["lat", "lon"] if var in ds.variables]
-
-        for var in gpsvars:
-            if np.all(np.equal(ds.mgpsalt.values, ds[f"m{var}"].values)):
-                warnings.warn(
-                    f"gpsalt and {var} don't have the same datapoints for sonde {self.serial_id} on {self.launch_time}"
-                )
-            """
-                np.testing.assert_array_equal(
-                    ds.mgpsalt.values,
-                    ds[f"m{var}"].values,
-                    err_msg=f"m{var} not identical to mgpsalt",
-                )
-                np.testing.assert_array_equal(
-                    ds.Ngpsalt.values,
-                    ds[f"N{var}"].values,
-                    err_msg=f"N{var} not identical to mgpsalt",
-                )
-            """
-
+        nm_vars = ["lat", "u", "p", "q", "theta"]
+        if "lat in ds.variables":
+            np.testing.assert_array_equal(
+                ds.mlat.values,
+                ds.mlon.values,
+                err_msg="mlat and mlon not identical",
+            )
         np.testing.assert_array_equal(
             ds.mu.values, ds.mv.values, err_msg="mv and mu not identical"
         )
@@ -1356,9 +1353,7 @@ class Sonde:
                 [f"m{var}" for var in ds.variables if var not in nm_vars],
                 errors="ignore",
             )
-            .rename(
-                {"Ngpsalt": "Ngpspos", "mgpsalt": "mgpspos", "Nu": "Ngps", "mu": "mgps"}
-            )
+            .rename({"Nlat": "Ngpspos", "mlat": "mgpspos", "Nu": "Ngps", "mu": "mgps"})
         )
 
         object.__setattr__(self, "_prep_l3_ds", ds)
@@ -1368,8 +1363,8 @@ class Sonde:
         self.remove_N_m_duplicates()
         ds = self._prep_l3_ds
 
-        essential_vars = ["u", "v", "q", "p", "theta", "gpsalt", "lat", "lon"]
-        mN_vars = ["gps", "gps", "q", "p", "theta", "gpspos", "gpspos", "gpspos"]
+        essential_vars = ["u", "v", "q", "p", "theta", "lat", "lon"]
+        mN_vars = ["gps", "gps", "q", "p", "theta", "gpspos", "gpspos"]
 
         for essential_var, mNvar in zip(essential_vars, mN_vars):
             ds = hx.add_ancillary_var(ds, essential_var, "m" + mNvar)
@@ -1470,11 +1465,13 @@ class Sonde:
         object.__setattr__(self, "_interim_l3_ds", ds)
         return self
 
-    def save_interim_l3(self):
+    def save_interim_l3(self, alt_dim="alt"):
         hx.write_ds(
             ds=self._interim_l3_ds,
             dir=self.interim_l3_dir,
             filename=self.interim_l3_filename,
+            object_dim="sonde_id",
+            alt_dim=alt_dim,
         )
 
         return self
@@ -1577,7 +1574,7 @@ class Gridded:
 
         return self
 
-    def write_l3(self, l3_dir: str = None):
+    def write_l3(self, l3_dir: str = None, alt_dim="alt"):
         """
         Writes the L3 file to the specified directory.
 
@@ -1609,7 +1606,7 @@ class Gridded:
             dir=l3_dir,
             filename=self.l3_filename,
             object_dim="sonde_id",
-            alt_dim="alt",
+            alt_dim=alt_dim,
         )
         return self
 
