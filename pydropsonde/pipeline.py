@@ -528,7 +528,7 @@ pipeline = {
             "remove_non_mono_incr_alt",
             "interpolate_alt",
             "get_N_m_values",
-            "remove_N_m_duplicates",
+            "add_Nm_to_vars",
             "recalc_rh_and_ta",
             "add_iwv",
             "add_ids",
