@@ -120,6 +120,7 @@ l2_filename_template = "{platform}_{launch_time}_{flight_id}_{serial_id}_Level_2
 l3_filename = "Level_3.nc"
 
 es_formular = mtsvp.liq_hardy
+es_name = "Hardy 1998"
 
 
 def get_global_attrs_from_config(config):
@@ -218,11 +219,17 @@ def calc_q_from_rh(ds):
     q = physics.mr2q(w)
     try:
         q_attrs = ds.q.attrs
+        q_attrs.update(
+            dict(
+                method=f"calculated from RH following {es_name}",
+            )
+        )
     except AttributeError:
         q_attrs = dict(
             standard_name="specific_humidity",
             long_name="specific humidity",
             units="1",
+            method=f"calculated from RH following {es_name}",
         )
     ds = ds.assign(q=(ds.rh.dims, q, q_attrs))
     return ds
@@ -247,9 +254,10 @@ def calc_rh_from_q(ds):
     rh = w / w_s
 
     try:
-        rh_attrs = ds.rh.attrs.update(
+        rh_attrs = ds.rh.attrs
+        rh_attrs.update(
             dict(
-                method="relative humidity after Hardy 1998",
+                method=f"recalculated from q following {es_name}",
             )
         )
     except AttributeError:
@@ -257,7 +265,7 @@ def calc_rh_from_q(ds):
             standard_name="relative_humidity",
             long_name="relative humidity",
             units="1",
-            method="relative humidity after Hardy 1998",
+            method=f"recalculated from q following {es_name}",
         )
     ds = ds.assign(rh=(ds.q.dims, rh, rh_attrs))
 
