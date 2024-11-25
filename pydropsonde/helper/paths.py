@@ -4,6 +4,7 @@ from pathlib import Path as pp
 from typing import Dict
 import os.path
 import warnings
+import ast
 
 from pydropsonde.helper import rawreader as rr
 from pydropsonde.processor import Sonde
@@ -187,6 +188,14 @@ class Flight:
                 global_attrs = get_global_attrs_from_config(config)
 
                 Sondes[sonde_id].add_global_attrs(global_attrs)
+                broken_file = config.get("OPTIONAL", "broken_sonde_file", fallback=None)
+                if broken_file is not None:
+                    with open(broken_file, "r") as file:
+                        file_content = file.read()
+
+                data_dict = ast.literal_eval(file_content)
+                Sondes[sonde_id].add_broken(data_dict)
+
             except UnboundLocalError:
                 warnings.warn(f"No valid a-file for sonde {sonde_id}, {self.flight_id}")
                 pass

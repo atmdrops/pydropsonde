@@ -136,6 +136,9 @@ class Sonde:
         object.__setattr__(self, "l1_dir", l1_dir)
         object.__setattr__(self, "l2_dir", l2_dir)
 
+    def add_broken(self, broken_sondes: dict):
+        object.__setattr__(self, "broken_sondes", broken_sondes)
+
     def run_aspen(self, path_to_postaspenfile: str = None) -> None:
         """Runs aspen and sets attribute with path to post-ASPEN file of the sonde
 
@@ -1043,8 +1046,15 @@ class Sonde:
         if l2_dir is None:
             l2_dir = self.l2_dir
 
+        ds = self._interim_l2_ds
+        if hasattr(self, "broken_sondes"):
+            if self.serial_id in self.broken_sondes:
+                ds.attrs.update(
+                    {"comment": self.broken_sondes[self.serial_id]["error"]}
+                )
+
         hx.write_ds(
-            ds=self._interim_l2_ds,
+            ds=ds,
             dir=l2_dir,
             filename=self.l2_filename,
             object_dim="sonde_id",
@@ -1466,8 +1476,14 @@ class Sonde:
         return self
 
     def save_interim_l3(self, alt_dim="alt"):
+        ds = self._interim_l3_ds
+        if hasattr(self, "broken_sondes"):
+            if self.serial_id in self.broken_sondes:
+                ds.attrs.update(
+                    {"comment": self.broken_sondes[self.serial_id]["error"]}
+                )
         hx.write_ds(
-            ds=self._interim_l3_ds,
+            ds=ds,
             dir=self.interim_l3_dir,
             filename=self.interim_l3_filename,
             object_dim="sonde_id",
@@ -1528,6 +1544,12 @@ class Gridded:
         self.history = new_hist
         return self
 
+    def check_broken(self):
+        sonde = list(self.sondes.values())[0]
+        if hasattr(sonde, "broken_sondes"):
+            self.broken_sondes = sonde.broken_sondes
+        return self
+
     def concat_sondes(self, sortby=None):
         """
         function to concatenate all sondes using the combination of all measurement times and launch times and add global attributes to resulting dataset
@@ -1536,7 +1558,6 @@ class Gridded:
             sortby = list(hh.l3_coords.keys())[0]
         list_of_l2_ds = [sonde._interim_l3_ds for sonde in self.sondes.values()]
         ds = xr.concat(list_of_l2_ds, dim="sonde_id", join="exact").sortby(sortby)
-
         if hasattr(self, "global_attrs"):
             ds = ds.assign_attrs(self.global_attrs)
 
@@ -1600,6 +1621,9 @@ class Gridded:
         )
         self.history = history
         ds.attrs.update({"history": history})
+
+        if hasattr(self, "broken_sondes"):
+            ds.attrs.update({"broken_sondes": list(self.broken_sondes.keys())})
 
         hx.write_ds(
             ds=self._interim_l3_ds,
