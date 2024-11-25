@@ -119,8 +119,8 @@ l2_filename_template = "{platform}_{launch_time}_{flight_id}_{serial_id}_Level_2
 
 l3_filename = "Level_3.nc"
 
-es_formular = mtsvp.liq_hardy
-es_name = "Hardy 1998"
+es_formular = mtsvp.liq_wagner_pruss
+es_name = "Wagner and Pruß 2002 (IAPWS Formulation 1995)"
 
 
 def get_global_attrs_from_config(config):
