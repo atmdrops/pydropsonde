@@ -19,7 +19,7 @@ Usually dropsonde data has a ``platform`` from which it was meassured and a ``fl
      - raw files from the AVAPS software (A-files, D-files, ...). Some files contain auxiliary data for a measurement sequence (usually a flight) and others are per sonde.
    * - Level_1
      - ASPEN-processed netCDF files per sonde. First QC applied.
-   * - Level_2
+   * - :doc:`Level_2 <level2>`
      - Sondes that passed additional QC tests. Still one file per sonde. All soundings with no usable data are excluded
    * - Level_3
      - One dataset (file) containing all Level_2 soundings gridded on a uniform, vertical grid, with some derived variables
