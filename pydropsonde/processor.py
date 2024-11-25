@@ -1206,9 +1206,9 @@ class Sonde:
                 } on {self.launch_time} is not sorted."
             )
         ds = (self._prep_l3_ds.swap_dims({"time": alt_var})).load()
+        if p_log:
+            ds = ds.assign(p=(ds.p.dims, np.log(ds.p.values), ds.p.attrs))
         if method == "linear_interpolate":
-            if p_log:
-                ds = ds.assign(p=(ds.p.dims, np.log(ds.p.values), ds.p.attrs))
             interp_ds = ds.interp({alt_var: interpolation_grid})
         elif method == "bin":
             mean_ds = {}
@@ -1238,10 +1238,6 @@ class Sonde:
                     mean_ds[var] = new_ds.copy()
             interp_ds = xr.Dataset(mean_ds)
 
-            if p_log:
-                interp_ds = interp_ds.assign(
-                    p=(interp_ds.p.dims, np.log(interp_ds.p.values), interp_ds.p.attrs)
-                )
             # interpolate missing values up to max_gap_fill meters
             interp_ds = (
                 interp_ds.transpose()

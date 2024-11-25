@@ -38,7 +38,9 @@ launch_time = "2020-02-02 20:22:02"
                 ),
                 q=np.array([np.nan, 0.7, 0.75, 0.8]),
                 alt=np.array([0.0, 10.0, 20.0, 30.0]),
-                p=np.array([np.nan, 1000.0, 55.0, 1.0]),
+                p=np.array(
+                    [np.nan, 1000.0, np.exp((np.log(10) + np.log(100)) / 2), 1.0]
+                ),
                 Nq=[0, 1, 2, 1],
                 mq=[0, 2, 2, 2],
             ),
