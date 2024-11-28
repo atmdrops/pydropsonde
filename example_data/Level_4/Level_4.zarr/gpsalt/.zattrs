@@ -1,0 +1,12 @@
+{
+    "_ARRAY_DIMENSIONS": [
+        "sonde",
+        "alt"
+    ],
+    "axis": "Z",
+    "coordinates": "aircraft_latitude aircraft_longitude aircraft_msl_altitude flight_id platform_id sonde_time",
+    "long_name": "gps reported altitude above MSL",
+    "positive": "up",
+    "standard_name": "altitude",
+    "units": "m"
+}

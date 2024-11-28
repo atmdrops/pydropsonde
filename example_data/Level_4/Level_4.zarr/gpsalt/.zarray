@@ -1,0 +1,22 @@
+{
+    "chunks": [
+        7,
+        400
+    ],
+    "compressor": {
+        "blocksize": 0,
+        "clevel": 5,
+        "cname": "zstd",
+        "id": "blosc",
+        "shuffle": 1
+    },
+    "dtype": "<f4",
+    "fill_value": "NaN",
+    "filters": null,
+    "order": "C",
+    "shape": [
+        7,
+        1460
+    ],
+    "zarr_format": 2
+}

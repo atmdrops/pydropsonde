@@ -1,0 +1,10 @@
+{
+    "_ARRAY_DIMENSIONS": [
+        "circle",
+        "alt"
+    ],
+    "coordinates": "circle_time count",
+    "long_name": "meridional gradient of air temperature",
+    "standard_name": "derivative_of_air_temperature_wrt_y",
+    "units": "K m-1"
+}

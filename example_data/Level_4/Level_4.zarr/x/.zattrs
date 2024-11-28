@@ -1,0 +1,10 @@
+{
+    "_ARRAY_DIMENSIONS": [
+        "sonde",
+        "alt"
+    ],
+    "coordinates": "aircraft_latitude aircraft_longitude aircraft_msl_altitude flight_id platform_id sonde_time",
+    "description": "Distance of sonde longitude to mean circle longitude",
+    "long_name": "x",
+    "units": "m"
+}

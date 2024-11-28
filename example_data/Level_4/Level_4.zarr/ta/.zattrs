@@ -1,0 +1,12 @@
+{
+    "_ARRAY_DIMENSIONS": [
+        "sonde",
+        "alt"
+    ],
+    "ancillary_variables": "ta_qc ta_profile_sparsity_fraction ta_profile_extent_max ta_near_surface_count ta_low_physics_min",
+    "coordinates": "aircraft_latitude aircraft_longitude aircraft_msl_altitude flight_id platform_id sonde_time",
+    "long_name": "air temperature",
+    "method": "recalculated from theta and p after binning",
+    "standard_name": "air_temperature",
+    "units": "K"
+}

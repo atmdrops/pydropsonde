@@ -1,0 +1,11 @@
+{
+    "_ARRAY_DIMENSIONS": [
+        "sonde"
+    ],
+    "coordinates": "aircraft_latitude aircraft_longitude aircraft_msl_altitude flight_id platform_id sonde_time",
+    "description": "if not 0 some quality control has not been passed. Handle with care.",
+    "flag_meaning": "GOOD BAD UGLY",
+    "flag_values": "0 1 2",
+    "long_name": "aggregated quality flag for sonde",
+    "standard_name": "aggregate_quality_flag"
+}

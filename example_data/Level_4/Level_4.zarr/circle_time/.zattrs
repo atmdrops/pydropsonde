@@ -1,0 +1,9 @@
+{
+    "_ARRAY_DIMENSIONS": [
+        "circle"
+    ],
+    "calendar": "proleptic_gregorian",
+    "description": "Mean launch time of all sondes in circle",
+    "long_name": "circle_time",
+    "units": "nanoseconds since 2000-01-01"
+}

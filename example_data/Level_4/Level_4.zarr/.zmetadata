@@ -1,0 +1,2443 @@
+{
+    "metadata": {
+        ".zattrs": {
+            "example_attr": "this is a test",
+            "featureType": "trajectoryProfile",
+            "history": "ASPEN processing with Aspen V4.0.2 \nquality control with pydropsonde 0.0.0.post526.dev0+07a296b \nLevel 3 processing with pydropsonde 0.0.0.post526.dev0+07a296b \n2025-02-10T10:33:52.738221+00:00 level3 concatenation with pydropsonde 0.0.0.post526.dev0+07a296b \n2025-02-10T10:33:53.277537+00:00 level4 concatenation with pydropsonde 0.0.0.post526.dev0+07a296b \n",
+            "sample_dimension": "sonde"
+        },
+        ".zgroup": {
+            "zarr_format": 2
+        },
+        "aircraft_latitude/.zarray": {
+            "chunks": [
+                7
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                7
+            ],
+            "zarr_format": 2
+        },
+        "aircraft_latitude/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "sonde"
+            ],
+            "long_name": "aircraft latitude at launch",
+            "units": "deg_N"
+        },
+        "aircraft_longitude/.zarray": {
+            "chunks": [
+                7
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                7
+            ],
+            "zarr_format": 2
+        },
+        "aircraft_longitude/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "sonde"
+            ],
+            "long_name": "aircraft longitude at launch",
+            "units": "deg_E"
+        },
+        "aircraft_msl_altitude/.zarray": {
+            "chunks": [
+                7
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                7
+            ],
+            "zarr_format": 2
+        },
+        "aircraft_msl_altitude/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "sonde"
+            ],
+            "long_name": "aircraft altitude at launch",
+            "units": "m"
+        },
+        "alt/.zarray": {
+            "chunks": [
+                1460
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "lz4",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f8",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                1460
+            ],
+            "zarr_format": 2
+        },
+        "alt/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "alt"
+            ],
+            "axis": "Z",
+            "long_name": "altitude above MSL",
+            "positive": "up",
+            "standard_name": "altitude",
+            "units": "m"
+        },
+        "alt_near_gpsalt/.zarray": {
+            "chunks": [
+                7
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                7
+            ],
+            "zarr_format": 2
+        },
+        "alt_near_gpsalt/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "sonde"
+            ],
+            "coordinates": "aircraft_latitude aircraft_longitude aircraft_msl_altitude flight_id platform_id sonde_time",
+            "flag_meaning": "GOOD BAD",
+            "flag_values": "0 1 ",
+            "long_name": "maximal difference between alt and gpsalt"
+        },
+        "alt_near_gpsalt_max_diff/.zarray": {
+            "chunks": [
+                7
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                7
+            ],
+            "zarr_format": 2
+        },
+        "alt_near_gpsalt_max_diff/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "sonde"
+            ],
+            "coordinates": "aircraft_latitude aircraft_longitude aircraft_msl_altitude flight_id platform_id sonde_time",
+            "long_name": "maximal difference between alt and gpsalt",
+            "units": "m"
+        },
+        "circle/.zarray": {
+            "chunks": [
+                3
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "lz4",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<i8",
+            "fill_value": null,
+            "filters": null,
+            "order": "C",
+            "shape": [
+                3
+            ],
+            "zarr_format": 2
+        },
+        "circle/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "circle"
+            ]
+        },
+        "circle_altitude/.zarray": {
+            "chunks": [
+                3
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                3
+            ],
+            "zarr_format": 2
+        },
+        "circle_altitude/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "circle"
+            ],
+            "coordinates": "circle_time count",
+            "description": "Mean altitude of the aircraft during the circle",
+            "long_name": "circle_altitude",
+            "units": "m"
+        },
+        "circle_id/.zarray": {
+            "chunks": [
+                3
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<U19",
+            "fill_value": null,
+            "filters": null,
+            "order": "C",
+            "shape": [
+                3
+            ],
+            "zarr_format": 2
+        },
+        "circle_id/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "circle"
+            ],
+            "coordinates": "circle_time count"
+        },
+        "circle_lat/.zarray": {
+            "chunks": [
+                3
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                3
+            ],
+            "zarr_format": 2
+        },
+        "circle_lat/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "circle"
+            ],
+            "coordinates": "circle_time count",
+            "description": "Latitude of circle from flight segmentation",
+            "long_name": "circle_lat",
+            "units": "degree_north"
+        },
+        "circle_lon/.zarray": {
+            "chunks": [
+                3
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                3
+            ],
+            "zarr_format": 2
+        },
+        "circle_lon/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "circle"
+            ],
+            "coordinates": "circle_time count",
+            "description": "Longitude of circle from flight segmentation",
+            "long_name": "circle_lon",
+            "units": "degree_east"
+        },
+        "circle_radius/.zarray": {
+            "chunks": [
+                3
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                3
+            ],
+            "zarr_format": 2
+        },
+        "circle_radius/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "circle"
+            ],
+            "coordinates": "circle_time count",
+            "description": "Radius of circle from flight segmentation",
+            "long_name": "circle_radius",
+            "units": "m"
+        },
+        "circle_time/.zarray": {
+            "chunks": [
+                3
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                3
+            ],
+            "zarr_format": 2
+        },
+        "circle_time/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "circle"
+            ],
+            "calendar": "proleptic_gregorian",
+            "description": "Mean launch time of all sondes in circle",
+            "long_name": "circle_time",
+            "units": "nanoseconds since 2000-01-01"
+        },
+        "count/.zarray": {
+            "chunks": [
+                3
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<i8",
+            "fill_value": null,
+            "filters": null,
+            "order": "C",
+            "shape": [
+                3
+            ],
+            "zarr_format": 2
+        },
+        "count/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "circle"
+            ]
+        },
+        "ddensitydx/.zarray": {
+            "chunks": [
+                3,
+                400
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                3,
+                1460
+            ],
+            "zarr_format": 2
+        },
+        "ddensitydx/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "circle",
+                "alt"
+            ],
+            "coordinates": "circle_time count",
+            "long_name": "zonal gradient of Air density",
+            "standard_name": "derivative_of_air_density_wrt_x",
+            "units": "kg m-3 m-1"
+        },
+        "ddensitydy/.zarray": {
+            "chunks": [
+                3,
+                400
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                3,
+                1460
+            ],
+            "zarr_format": 2
+        },
+        "ddensitydy/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "circle",
+                "alt"
+            ],
+            "coordinates": "circle_time count",
+            "long_name": "meridional gradient of Air density",
+            "standard_name": "derivative_of_air_density_wrt_y",
+            "units": "kg m-3 m-1"
+        },
+        "density/.zarray": {
+            "chunks": [
+                7,
+                400
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                7,
+                1460
+            ],
+            "zarr_format": 2
+        },
+        "density/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "sonde",
+                "alt"
+            ],
+            "coordinates": "aircraft_latitude aircraft_longitude aircraft_msl_altitude flight_id platform_id sonde_time",
+            "long_name": "Air density",
+            "standard_name": "air_density",
+            "units": "kg m-3"
+        },
+        "div/.zarray": {
+            "chunks": [
+                3,
+                400
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                3,
+                1460
+            ],
+            "zarr_format": 2
+        },
+        "div/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "circle",
+                "alt"
+            ],
+            "coordinates": "circle_time count",
+            "long_name": "Area-averaged horizontal mass divergence",
+            "standard_name": "divergence_of_wind",
+            "units": "s-1"
+        },
+        "dpdx/.zarray": {
+            "chunks": [
+                3,
+                400
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                3,
+                1460
+            ],
+            "zarr_format": 2
+        },
+        "dpdx/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "circle",
+                "alt"
+            ],
+            "coordinates": "circle_time count",
+            "long_name": "zonal gradient of atmospheric pressure",
+            "standard_name": "derivative_of_air_pressure_wrt_x",
+            "units": "Pa m-1"
+        },
+        "dpdy/.zarray": {
+            "chunks": [
+                3,
+                400
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                3,
+                1460
+            ],
+            "zarr_format": 2
+        },
+        "dpdy/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "circle",
+                "alt"
+            ],
+            "coordinates": "circle_time count",
+            "long_name": "meridional gradient of atmospheric pressure",
+            "standard_name": "derivative_of_air_pressure_wrt_y",
+            "units": "Pa m-1"
+        },
+        "dqdx/.zarray": {
+            "chunks": [
+                3,
+                400
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                3,
+                1460
+            ],
+            "zarr_format": 2
+        },
+        "dqdx/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "circle",
+                "alt"
+            ],
+            "coordinates": "circle_time count",
+            "long_name": "zonal gradient of specific humidity",
+            "standard_name": "derivative_of_specific_humidity_wrt_x",
+            "units": "1 m-1"
+        },
+        "dqdy/.zarray": {
+            "chunks": [
+                3,
+                400
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                3,
+                1460
+            ],
+            "zarr_format": 2
+        },
+        "dqdy/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "circle",
+                "alt"
+            ],
+            "coordinates": "circle_time count",
+            "long_name": "meridional gradient of specific humidity",
+            "standard_name": "derivative_of_specific_humidity_wrt_y",
+            "units": "1 m-1"
+        },
+        "dtadx/.zarray": {
+            "chunks": [
+                3,
+                400
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                3,
+                1460
+            ],
+            "zarr_format": 2
+        },
+        "dtadx/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "circle",
+                "alt"
+            ],
+            "coordinates": "circle_time count",
+            "long_name": "zonal gradient of air temperature",
+            "standard_name": "derivative_of_air_temperature_wrt_x",
+            "units": "K m-1"
+        },
+        "dtady/.zarray": {
+            "chunks": [
+                3,
+                400
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                3,
+                1460
+            ],
+            "zarr_format": 2
+        },
+        "dtady/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "circle",
+                "alt"
+            ],
+            "coordinates": "circle_time count",
+            "long_name": "meridional gradient of air temperature",
+            "standard_name": "derivative_of_air_temperature_wrt_y",
+            "units": "K m-1"
+        },
+        "dudx/.zarray": {
+            "chunks": [
+                3,
+                400
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                3,
+                1460
+            ],
+            "zarr_format": 2
+        },
+        "dudx/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "circle",
+                "alt"
+            ],
+            "coordinates": "circle_time count",
+            "long_name": "zonal gradient of u component of winds",
+            "standard_name": "derivative_of_eastward_wind_wrt_x",
+            "units": "m s-1 m-1"
+        },
+        "dudy/.zarray": {
+            "chunks": [
+                3,
+                400
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                3,
+                1460
+            ],
+            "zarr_format": 2
+        },
+        "dudy/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "circle",
+                "alt"
+            ],
+            "coordinates": "circle_time count",
+            "long_name": "meridional gradient of u component of winds",
+            "standard_name": "derivative_of_eastward_wind_wrt_y",
+            "units": "m s-1 m-1"
+        },
+        "dvdx/.zarray": {
+            "chunks": [
+                3,
+                400
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                3,
+                1460
+            ],
+            "zarr_format": 2
+        },
+        "dvdx/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "circle",
+                "alt"
+            ],
+            "coordinates": "circle_time count",
+            "long_name": "zonal gradient of v component of winds",
+            "standard_name": "derivative_of_northward_wind_wrt_x",
+            "units": "m s-1 m-1"
+        },
+        "dvdy/.zarray": {
+            "chunks": [
+                3,
+                400
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                3,
+                1460
+            ],
+            "zarr_format": 2
+        },
+        "dvdy/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "circle",
+                "alt"
+            ],
+            "coordinates": "circle_time count",
+            "long_name": "meridional gradient of v component of winds",
+            "standard_name": "derivative_of_northward_wind_wrt_y",
+            "units": "m s-1 m-1"
+        },
+        "flight_id/.zarray": {
+            "chunks": [
+                7
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "|O",
+            "fill_value": null,
+            "filters": [
+                {
+                    "id": "vlen-utf8"
+                }
+            ],
+            "order": "C",
+            "shape": [
+                7
+            ],
+            "zarr_format": 2
+        },
+        "flight_id/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "sonde"
+            ],
+            "description": "unique flight ID",
+            "long_name": "flight identifier"
+        },
+        "gpsalt/.zarray": {
+            "chunks": [
+                7,
+                400
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                7,
+                1460
+            ],
+            "zarr_format": 2
+        },
+        "gpsalt/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "sonde",
+                "alt"
+            ],
+            "axis": "Z",
+            "coordinates": "aircraft_latitude aircraft_longitude aircraft_msl_altitude flight_id platform_id sonde_time",
+            "long_name": "gps reported altitude above MSL",
+            "positive": "up",
+            "standard_name": "altitude",
+            "units": "m"
+        },
+        "interp_time/.zarray": {
+            "chunks": [
+                7,
+                400
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                7,
+                1460
+            ],
+            "zarr_format": 2
+        },
+        "interp_time/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "sonde",
+                "alt"
+            ],
+            "axis": "T",
+            "calendar": "proleptic_gregorian",
+            "coordinates": "aircraft_latitude aircraft_longitude aircraft_msl_altitude flight_id platform_id sonde_time",
+            "long_name": "time of recorded measurement",
+            "standard_name": "time",
+            "units": "nanoseconds since 2000-01-01"
+        },
+        "iwv/.zarray": {
+            "chunks": [
+                7
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                7
+            ],
+            "zarr_format": 2
+        },
+        "iwv/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "sonde"
+            ],
+            "coordinates": "aircraft_latitude aircraft_longitude aircraft_msl_altitude flight_id platform_id sonde_time",
+            "description": "vertically integrated water vapour up to aircraft altitude",
+            "long_name": "integrated water vapour",
+            "standard_name": "atmosphere_mass_content_of_water_vapor",
+            "units": "kg m-2"
+        },
+        "lat/.zarray": {
+            "chunks": [
+                7,
+                400
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                7,
+                1460
+            ],
+            "zarr_format": 2
+        },
+        "lat/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "sonde",
+                "alt"
+            ],
+            "ancillary_variables": "gpspos_N_qc",
+            "axis": "Y",
+            "coordinates": "aircraft_latitude aircraft_longitude aircraft_msl_altitude flight_id platform_id sonde_time",
+            "long_name": "latitude",
+            "standard_name": "latitude",
+            "units": "degree_north"
+        },
+        "lon/.zarray": {
+            "chunks": [
+                7,
+                400
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                7,
+                1460
+            ],
+            "zarr_format": 2
+        },
+        "lon/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "sonde",
+                "alt"
+            ],
+            "ancillary_variables": "gpspos_N_qc",
+            "axis": "X",
+            "coordinates": "aircraft_latitude aircraft_longitude aircraft_msl_altitude flight_id platform_id sonde_time",
+            "long_name": "longitude",
+            "standard_name": "longitude",
+            "units": "degree_east"
+        },
+        "mean_density/.zarray": {
+            "chunks": [
+                3,
+                400
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                3,
+                1460
+            ],
+            "zarr_format": 2
+        },
+        "mean_density/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "circle",
+                "alt"
+            ],
+            "coordinates": "circle_time count",
+            "long_name": "circle mean of Air density",
+            "units": "kg m-3"
+        },
+        "mean_p/.zarray": {
+            "chunks": [
+                3,
+                400
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                3,
+                1460
+            ],
+            "zarr_format": 2
+        },
+        "mean_p/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "circle",
+                "alt"
+            ],
+            "coordinates": "circle_time count",
+            "long_name": "circle mean of atmospheric pressure",
+            "units": "Pa"
+        },
+        "mean_q/.zarray": {
+            "chunks": [
+                3,
+                400
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                3,
+                1460
+            ],
+            "zarr_format": 2
+        },
+        "mean_q/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "circle",
+                "alt"
+            ],
+            "coordinates": "circle_time count",
+            "long_name": "circle mean of specific humidity",
+            "units": "1"
+        },
+        "mean_ta/.zarray": {
+            "chunks": [
+                3,
+                400
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                3,
+                1460
+            ],
+            "zarr_format": 2
+        },
+        "mean_ta/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "circle",
+                "alt"
+            ],
+            "coordinates": "circle_time count",
+            "long_name": "circle mean of air temperature",
+            "units": "K"
+        },
+        "mean_u/.zarray": {
+            "chunks": [
+                3,
+                400
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                3,
+                1460
+            ],
+            "zarr_format": 2
+        },
+        "mean_u/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "circle",
+                "alt"
+            ],
+            "coordinates": "circle_time count",
+            "long_name": "circle mean of u component of winds",
+            "units": "m s-1"
+        },
+        "mean_v/.zarray": {
+            "chunks": [
+                3,
+                400
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                3,
+                1460
+            ],
+            "zarr_format": 2
+        },
+        "mean_v/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "circle",
+                "alt"
+            ],
+            "coordinates": "circle_time count",
+            "long_name": "circle mean of v component of winds",
+            "units": "m s-1"
+        },
+        "omega_p/.zarray": {
+            "chunks": [
+                3,
+                400
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                3,
+                1460
+            ],
+            "zarr_format": 2
+        },
+        "omega_p/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "circle",
+                "alt"
+            ],
+            "coordinates": "circle_time count",
+            "long_name": "Area-averaged atmospheric pressure velocity (omega)",
+            "standard_name": "vertical_air_velocity_expressed_as_tendency_of_pressure",
+            "units": "hPa hr-1"
+        },
+        "p/.zarray": {
+            "chunks": [
+                7,
+                400
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                7,
+                1460
+            ],
+            "zarr_format": 2
+        },
+        "p/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "sonde",
+                "alt"
+            ],
+            "ancillary_variables": "p_qc p_profile_sparsity_fraction p_profile_extent_max p_near_surface_count p_N_qc",
+            "coordinates": "aircraft_latitude aircraft_longitude aircraft_msl_altitude flight_id platform_id sonde_time",
+            "long_name": "atmospheric pressure",
+            "standard_name": "air_pressure",
+            "units": "Pa"
+        },
+        "p_near_surface_count/.zarray": {
+            "chunks": [
+                7
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                7
+            ],
+            "zarr_format": 2
+        },
+        "p_near_surface_count/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "sonde"
+            ],
+            "coordinates": "aircraft_latitude aircraft_longitude aircraft_msl_altitude flight_id platform_id sonde_time",
+            "long_name": "value for qc  p near surface count",
+            "units": "1"
+        },
+        "p_profile_extent_max/.zarray": {
+            "chunks": [
+                7
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                7
+            ],
+            "zarr_format": 2
+        },
+        "p_profile_extent_max/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "sonde"
+            ],
+            "coordinates": "aircraft_latitude aircraft_longitude aircraft_msl_altitude flight_id platform_id sonde_time",
+            "long_name": "value for qc  p profile extent max",
+            "units": "Pa"
+        },
+        "p_profile_sparsity_fraction/.zarray": {
+            "chunks": [
+                7
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                7
+            ],
+            "zarr_format": 2
+        },
+        "p_profile_sparsity_fraction/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "sonde"
+            ],
+            "coordinates": "aircraft_latitude aircraft_longitude aircraft_msl_altitude flight_id platform_id sonde_time",
+            "long_name": "value for qc  p profile sparsity fraction",
+            "units": "1"
+        },
+        "p_qc/.zarray": {
+            "chunks": [
+                7
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                7
+            ],
+            "zarr_format": 2
+        },
+        "p_qc/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "sonde"
+            ],
+            "coordinates": "aircraft_latitude aircraft_longitude aircraft_msl_altitude flight_id platform_id sonde_time",
+            "description": "if non-zero, this sonde should be used with care.",
+            "flag_masks": "1b, 2b, 4b",
+            "flag_meanings": "profile_sparsity, profile_extent, near_surface",
+            "long_name": "qc for p",
+            "qc_status": "UGLY",
+            "standard_name": "status_flag"
+        },
+        "platform_id/.zarray": {
+            "chunks": [
+                7
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "|O",
+            "fill_value": null,
+            "filters": [
+                {
+                    "id": "vlen-utf8"
+                }
+            ],
+            "order": "C",
+            "shape": [
+                7
+            ],
+            "zarr_format": 2
+        },
+        "platform_id/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "sonde"
+            ],
+            "description": "unique platform ID",
+            "long_name": "platform identifier"
+        },
+        "q/.zarray": {
+            "chunks": [
+                7,
+                400
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                7,
+                1460
+            ],
+            "zarr_format": 2
+        },
+        "q/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "sonde",
+                "alt"
+            ],
+            "ancillary_variables": "q_N_qc",
+            "coordinates": "aircraft_latitude aircraft_longitude aircraft_msl_altitude flight_id platform_id sonde_time",
+            "long_name": "specific humidity",
+            "method": "calculated from measured RH following Hardy 1998",
+            "standard_name": "specific_humidity",
+            "units": "1"
+        },
+        "rh/.zarray": {
+            "chunks": [
+                7,
+                400
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                7,
+                1460
+            ],
+            "zarr_format": 2
+        },
+        "rh/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "sonde",
+                "alt"
+            ],
+            "ancillary_variables": "rh_qc rh_profile_sparsity_fraction rh_profile_extent_max rh_near_surface_count rh_low_physics_min",
+            "coordinates": "aircraft_latitude aircraft_longitude aircraft_msl_altitude flight_id platform_id sonde_time",
+            "long_name": "relative humidity",
+            "method": "recalculated from q following Wagner and Pru\u00df 2002 (IAPWS Formulation 1995) after binning",
+            "standard_name": "relative_humidity",
+            "units": "1"
+        },
+        "rh_low_physics_min/.zarray": {
+            "chunks": [
+                7
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                7
+            ],
+            "zarr_format": 2
+        },
+        "rh_low_physics_min/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "sonde"
+            ],
+            "coordinates": "aircraft_latitude aircraft_longitude aircraft_msl_altitude flight_id platform_id sonde_time",
+            "long_name": "value for qc  rh low physics min",
+            "units": "1"
+        },
+        "rh_near_surface_count/.zarray": {
+            "chunks": [
+                7
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                7
+            ],
+            "zarr_format": 2
+        },
+        "rh_near_surface_count/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "sonde"
+            ],
+            "coordinates": "aircraft_latitude aircraft_longitude aircraft_msl_altitude flight_id platform_id sonde_time",
+            "long_name": "value for qc  rh near surface count",
+            "units": "1"
+        },
+        "rh_profile_extent_max/.zarray": {
+            "chunks": [
+                7
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                7
+            ],
+            "zarr_format": 2
+        },
+        "rh_profile_extent_max/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "sonde"
+            ],
+            "coordinates": "aircraft_latitude aircraft_longitude aircraft_msl_altitude flight_id platform_id sonde_time",
+            "long_name": "value for qc  rh profile extent max",
+            "units": "1"
+        },
+        "rh_profile_sparsity_fraction/.zarray": {
+            "chunks": [
+                7
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                7
+            ],
+            "zarr_format": 2
+        },
+        "rh_profile_sparsity_fraction/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "sonde"
+            ],
+            "coordinates": "aircraft_latitude aircraft_longitude aircraft_msl_altitude flight_id platform_id sonde_time",
+            "long_name": "value for qc  rh profile sparsity fraction",
+            "units": "1"
+        },
+        "rh_qc/.zarray": {
+            "chunks": [
+                7
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                7
+            ],
+            "zarr_format": 2
+        },
+        "rh_qc/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "sonde"
+            ],
+            "coordinates": "aircraft_latitude aircraft_longitude aircraft_msl_altitude flight_id platform_id sonde_time",
+            "description": "if non-zero, this sonde should be used with care.",
+            "flag_masks": "1b, 2b, 4b, 8b",
+            "flag_meanings": "profile_sparsity, profile_extent, near_surface, low_physics",
+            "long_name": "qc for rh",
+            "qc_status": "UGLY",
+            "standard_name": "status_flag"
+        },
+        "sonde/.zarray": {
+            "chunks": [
+                7
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "lz4",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<i8",
+            "fill_value": null,
+            "filters": null,
+            "order": "C",
+            "shape": [
+                7
+            ],
+            "zarr_format": 2
+        },
+        "sonde/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "sonde"
+            ]
+        },
+        "sonde_id/.zarray": {
+            "chunks": [
+                7
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "|O",
+            "fill_value": null,
+            "filters": [
+                {
+                    "id": "vlen-utf8"
+                }
+            ],
+            "order": "C",
+            "shape": [
+                7
+            ],
+            "zarr_format": 2
+        },
+        "sonde_id/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "sonde"
+            ],
+            "coordinates": "aircraft_latitude aircraft_longitude aircraft_msl_altitude flight_id platform_id sonde_time"
+        },
+        "sonde_qc/.zarray": {
+            "chunks": [
+                7
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                7
+            ],
+            "zarr_format": 2
+        },
+        "sonde_qc/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "sonde"
+            ],
+            "coordinates": "aircraft_latitude aircraft_longitude aircraft_msl_altitude flight_id platform_id sonde_time",
+            "description": "if not 0 some quality control has not been passed. Handle with care.",
+            "flag_meaning": "GOOD BAD UGLY",
+            "flag_values": "0 1 2",
+            "long_name": "aggregated quality flag for sonde",
+            "standard_name": "aggregate_quality_flag"
+        },
+        "sonde_time/.zarray": {
+            "chunks": [
+                7
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                7
+            ],
+            "zarr_format": 2
+        },
+        "sonde_time/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "sonde"
+            ],
+            "calendar": "proleptic_gregorian",
+            "long_name": "dropsonde launch time",
+            "time_zone": "UTC",
+            "units": "nanoseconds since 2000-01-01"
+        },
+        "ta/.zarray": {
+            "chunks": [
+                7,
+                400
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                7,
+                1460
+            ],
+            "zarr_format": 2
+        },
+        "ta/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "sonde",
+                "alt"
+            ],
+            "ancillary_variables": "ta_qc ta_profile_sparsity_fraction ta_profile_extent_max ta_near_surface_count ta_low_physics_min",
+            "coordinates": "aircraft_latitude aircraft_longitude aircraft_msl_altitude flight_id platform_id sonde_time",
+            "long_name": "air temperature",
+            "method": "recalculated from theta and p after binning",
+            "standard_name": "air_temperature",
+            "units": "K"
+        },
+        "ta_low_physics_min/.zarray": {
+            "chunks": [
+                7
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                7
+            ],
+            "zarr_format": 2
+        },
+        "ta_low_physics_min/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "sonde"
+            ],
+            "coordinates": "aircraft_latitude aircraft_longitude aircraft_msl_altitude flight_id platform_id sonde_time",
+            "long_name": "value for qc  ta low physics min",
+            "units": "K"
+        },
+        "ta_near_surface_count/.zarray": {
+            "chunks": [
+                7
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                7
+            ],
+            "zarr_format": 2
+        },
+        "ta_near_surface_count/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "sonde"
+            ],
+            "coordinates": "aircraft_latitude aircraft_longitude aircraft_msl_altitude flight_id platform_id sonde_time",
+            "long_name": "value for qc  ta near surface count",
+            "units": "1"
+        },
+        "ta_profile_extent_max/.zarray": {
+            "chunks": [
+                7
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                7
+            ],
+            "zarr_format": 2
+        },
+        "ta_profile_extent_max/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "sonde"
+            ],
+            "coordinates": "aircraft_latitude aircraft_longitude aircraft_msl_altitude flight_id platform_id sonde_time",
+            "long_name": "value for qc  ta profile extent max",
+            "units": "K"
+        },
+        "ta_profile_sparsity_fraction/.zarray": {
+            "chunks": [
+                7
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                7
+            ],
+            "zarr_format": 2
+        },
+        "ta_profile_sparsity_fraction/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "sonde"
+            ],
+            "coordinates": "aircraft_latitude aircraft_longitude aircraft_msl_altitude flight_id platform_id sonde_time",
+            "long_name": "value for qc  ta profile sparsity fraction",
+            "units": "1"
+        },
+        "ta_qc/.zarray": {
+            "chunks": [
+                7
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                7
+            ],
+            "zarr_format": 2
+        },
+        "ta_qc/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "sonde"
+            ],
+            "coordinates": "aircraft_latitude aircraft_longitude aircraft_msl_altitude flight_id platform_id sonde_time",
+            "description": "if non-zero, this sonde should be used with care.",
+            "flag_masks": "1b, 2b, 4b, 8b",
+            "flag_meanings": "profile_sparsity, profile_extent, near_surface, low_physics",
+            "long_name": "qc for ta",
+            "qc_status": "UGLY",
+            "standard_name": "status_flag"
+        },
+        "theta/.zarray": {
+            "chunks": [
+                7,
+                400
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                7,
+                1460
+            ],
+            "zarr_format": 2
+        },
+        "theta/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "sonde",
+                "alt"
+            ],
+            "ancillary_variables": "theta_N_qc",
+            "coordinates": "aircraft_latitude aircraft_longitude aircraft_msl_altitude flight_id platform_id sonde_time",
+            "long_name": "potential temperature",
+            "method": "calculated from measured ta and p",
+            "standard_name": "air_potential_temperature",
+            "units": "kelvin"
+        },
+        "u/.zarray": {
+            "chunks": [
+                7,
+                400
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                7,
+                1460
+            ],
+            "zarr_format": 2
+        },
+        "u/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "sonde",
+                "alt"
+            ],
+            "ancillary_variables": "u_qc u_profile_sparsity_fraction u_profile_extent_max u_near_surface_count gps_N_qc",
+            "coordinates": "aircraft_latitude aircraft_longitude aircraft_msl_altitude flight_id platform_id sonde_time",
+            "long_name": "u component of winds",
+            "standard_name": "eastward_wind",
+            "units": "m s-1"
+        },
+        "u_near_surface_count/.zarray": {
+            "chunks": [
+                7
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                7
+            ],
+            "zarr_format": 2
+        },
+        "u_near_surface_count/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "sonde"
+            ],
+            "coordinates": "aircraft_latitude aircraft_longitude aircraft_msl_altitude flight_id platform_id sonde_time",
+            "long_name": "value for qc  u near surface count",
+            "units": "1"
+        },
+        "u_profile_extent_max/.zarray": {
+            "chunks": [
+                7
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                7
+            ],
+            "zarr_format": 2
+        },
+        "u_profile_extent_max/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "sonde"
+            ],
+            "coordinates": "aircraft_latitude aircraft_longitude aircraft_msl_altitude flight_id platform_id sonde_time",
+            "long_name": "value for qc  u profile extent max",
+            "units": "m s-1"
+        },
+        "u_profile_sparsity_fraction/.zarray": {
+            "chunks": [
+                7
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                7
+            ],
+            "zarr_format": 2
+        },
+        "u_profile_sparsity_fraction/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "sonde"
+            ],
+            "coordinates": "aircraft_latitude aircraft_longitude aircraft_msl_altitude flight_id platform_id sonde_time",
+            "long_name": "value for qc  u profile sparsity fraction",
+            "units": "1"
+        },
+        "u_qc/.zarray": {
+            "chunks": [
+                7
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                7
+            ],
+            "zarr_format": 2
+        },
+        "u_qc/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "sonde"
+            ],
+            "coordinates": "aircraft_latitude aircraft_longitude aircraft_msl_altitude flight_id platform_id sonde_time",
+            "description": "if non-zero, this sonde should be used with care.",
+            "flag_masks": "1b, 2b, 4b",
+            "flag_meanings": "profile_sparsity, profile_extent, near_surface",
+            "long_name": "qc for u",
+            "qc_status": "UGLY",
+            "standard_name": "status_flag"
+        },
+        "v/.zarray": {
+            "chunks": [
+                7,
+                400
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                7,
+                1460
+            ],
+            "zarr_format": 2
+        },
+        "v/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "sonde",
+                "alt"
+            ],
+            "ancillary_variables": "v_qc v_profile_sparsity_fraction v_profile_extent_max v_near_surface_count gps_N_qc",
+            "coordinates": "aircraft_latitude aircraft_longitude aircraft_msl_altitude flight_id platform_id sonde_time",
+            "long_name": "v component of winds",
+            "standard_name": "northward_wind",
+            "units": "m s-1"
+        },
+        "v_near_surface_count/.zarray": {
+            "chunks": [
+                7
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                7
+            ],
+            "zarr_format": 2
+        },
+        "v_near_surface_count/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "sonde"
+            ],
+            "coordinates": "aircraft_latitude aircraft_longitude aircraft_msl_altitude flight_id platform_id sonde_time",
+            "long_name": "value for qc  v near surface count",
+            "units": "1"
+        },
+        "v_profile_extent_max/.zarray": {
+            "chunks": [
+                7
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                7
+            ],
+            "zarr_format": 2
+        },
+        "v_profile_extent_max/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "sonde"
+            ],
+            "coordinates": "aircraft_latitude aircraft_longitude aircraft_msl_altitude flight_id platform_id sonde_time",
+            "long_name": "value for qc  v profile extent max",
+            "units": "m s-1"
+        },
+        "v_profile_sparsity_fraction/.zarray": {
+            "chunks": [
+                7
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                7
+            ],
+            "zarr_format": 2
+        },
+        "v_profile_sparsity_fraction/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "sonde"
+            ],
+            "coordinates": "aircraft_latitude aircraft_longitude aircraft_msl_altitude flight_id platform_id sonde_time",
+            "long_name": "value for qc  v profile sparsity fraction",
+            "units": "1"
+        },
+        "v_qc/.zarray": {
+            "chunks": [
+                7
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                7
+            ],
+            "zarr_format": 2
+        },
+        "v_qc/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "sonde"
+            ],
+            "coordinates": "aircraft_latitude aircraft_longitude aircraft_msl_altitude flight_id platform_id sonde_time",
+            "description": "if non-zero, this sonde should be used with care.",
+            "flag_masks": "1b, 2b, 4b",
+            "flag_meanings": "profile_sparsity, profile_extent, near_surface",
+            "long_name": "qc for v",
+            "qc_status": "UGLY",
+            "standard_name": "status_flag"
+        },
+        "vor/.zarray": {
+            "chunks": [
+                3,
+                400
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                3,
+                1460
+            ],
+            "zarr_format": 2
+        },
+        "vor/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "circle",
+                "alt"
+            ],
+            "coordinates": "circle_time count",
+            "long_name": "Area-averaged horizontal relative vorticity",
+            "standard_name": "atmosphere_relative_vorticity",
+            "units": "s-1"
+        },
+        "w_dir/.zarray": {
+            "chunks": [
+                7,
+                400
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                7,
+                1460
+            ],
+            "zarr_format": 2
+        },
+        "w_dir/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "sonde",
+                "alt"
+            ],
+            "coordinates": "aircraft_latitude aircraft_longitude aircraft_msl_altitude flight_id platform_id sonde_time",
+            "long_name": "wind direction",
+            "standard_name": "wind_from_direction",
+            "units": "degree"
+        },
+        "w_spd/.zarray": {
+            "chunks": [
+                7,
+                400
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                7,
+                1460
+            ],
+            "zarr_format": 2
+        },
+        "w_spd/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "sonde",
+                "alt"
+            ],
+            "coordinates": "aircraft_latitude aircraft_longitude aircraft_msl_altitude flight_id platform_id sonde_time",
+            "long_name": "wind speed",
+            "standard_name": "wind_speed",
+            "units": "m s-1"
+        },
+        "x/.zarray": {
+            "chunks": [
+                7,
+                400
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                7,
+                1460
+            ],
+            "zarr_format": 2
+        },
+        "x/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "sonde",
+                "alt"
+            ],
+            "coordinates": "aircraft_latitude aircraft_longitude aircraft_msl_altitude flight_id platform_id sonde_time",
+            "description": "Distance of sonde longitude to mean circle longitude",
+            "long_name": "x",
+            "units": "m"
+        },
+        "y/.zarray": {
+            "chunks": [
+                7,
+                400
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                7,
+                1460
+            ],
+            "zarr_format": 2
+        },
+        "y/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "sonde",
+                "alt"
+            ],
+            "coordinates": "aircraft_latitude aircraft_longitude aircraft_msl_altitude flight_id platform_id sonde_time",
+            "description": "Distance of sonde latitude to mean circle latitude",
+            "long_name": "y",
+            "units": "m"
+        }
+    },
+    "zarr_consolidated_format": 1
+}

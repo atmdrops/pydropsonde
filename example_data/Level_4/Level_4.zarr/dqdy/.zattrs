@@ -1,0 +1,10 @@
+{
+    "_ARRAY_DIMENSIONS": [
+        "circle",
+        "alt"
+    ],
+    "coordinates": "circle_time count",
+    "long_name": "meridional gradient of specific humidity",
+    "standard_name": "derivative_of_specific_humidity_wrt_y",
+    "units": "1 m-1"
+}

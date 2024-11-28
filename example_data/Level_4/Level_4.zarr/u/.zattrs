@@ -1,0 +1,11 @@
+{
+    "_ARRAY_DIMENSIONS": [
+        "sonde",
+        "alt"
+    ],
+    "ancillary_variables": "u_qc u_profile_sparsity_fraction u_profile_extent_max u_near_surface_count gps_N_qc",
+    "coordinates": "aircraft_latitude aircraft_longitude aircraft_msl_altitude flight_id platform_id sonde_time",
+    "long_name": "u component of winds",
+    "standard_name": "eastward_wind",
+    "units": "m s-1"
+}

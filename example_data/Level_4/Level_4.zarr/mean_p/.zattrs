@@ -1,0 +1,9 @@
+{
+    "_ARRAY_DIMENSIONS": [
+        "circle",
+        "alt"
+    ],
+    "coordinates": "circle_time count",
+    "long_name": "circle mean of atmospheric pressure",
+    "units": "Pa"
+}

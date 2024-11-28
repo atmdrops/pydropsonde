@@ -1,0 +1,12 @@
+{
+    "_ARRAY_DIMENSIONS": [
+        "sonde",
+        "alt"
+    ],
+    "ancillary_variables": "rh_qc rh_profile_sparsity_fraction rh_profile_extent_max rh_near_surface_count rh_low_physics_min",
+    "coordinates": "aircraft_latitude aircraft_longitude aircraft_msl_altitude flight_id platform_id sonde_time",
+    "long_name": "relative humidity",
+    "method": "recalculated from q following Wagner and Pru\u00df 2002 (IAPWS Formulation 1995) after binning",
+    "standard_name": "relative_humidity",
+    "units": "1"
+}

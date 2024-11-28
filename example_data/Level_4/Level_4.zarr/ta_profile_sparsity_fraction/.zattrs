@@ -1,0 +1,8 @@
+{
+    "_ARRAY_DIMENSIONS": [
+        "sonde"
+    ],
+    "coordinates": "aircraft_latitude aircraft_longitude aircraft_msl_altitude flight_id platform_id sonde_time",
+    "long_name": "value for qc  ta profile sparsity fraction",
+    "units": "1"
+}

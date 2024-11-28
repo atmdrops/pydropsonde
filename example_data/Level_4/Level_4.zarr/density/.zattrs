@@ -1,0 +1,10 @@
+{
+    "_ARRAY_DIMENSIONS": [
+        "sonde",
+        "alt"
+    ],
+    "coordinates": "aircraft_latitude aircraft_longitude aircraft_msl_altitude flight_id platform_id sonde_time",
+    "long_name": "Air density",
+    "standard_name": "air_density",
+    "units": "kg m-3"
+}

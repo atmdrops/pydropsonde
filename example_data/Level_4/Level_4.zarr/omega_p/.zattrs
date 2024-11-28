@@ -1,0 +1,10 @@
+{
+    "_ARRAY_DIMENSIONS": [
+        "circle",
+        "alt"
+    ],
+    "coordinates": "circle_time count",
+    "long_name": "Area-averaged atmospheric pressure velocity (omega)",
+    "standard_name": "vertical_air_velocity_expressed_as_tendency_of_pressure",
+    "units": "hPa hr-1"
+}

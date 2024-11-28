@@ -1,0 +1,9 @@
+{
+    "_ARRAY_DIMENSIONS": [
+        "circle"
+    ],
+    "coordinates": "circle_time count",
+    "description": "Latitude of circle from flight segmentation",
+    "long_name": "circle_lat",
+    "units": "degree_north"
+}
