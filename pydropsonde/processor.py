@@ -1598,7 +1598,7 @@ class Gridded:
             + datetime.now(timezone.utc).isoformat()
             + f" level3 concatenation with pydropsonde {__version__} \n"
         )
-        object.__setattr__(self, "history", history)
+        self.history = history
         ds.attrs.update({"history": history})
 
         hx.write_ds(
