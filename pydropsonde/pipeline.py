@@ -541,7 +541,7 @@ pipeline = {
         "output": "sondes",
         "comment": "This step reads from the saved L2 files and prepares individual sonde datasets before they can be concatenated to create L3.",
     },
-    "concatenate_L2": {
+    "create_gridded": {
         "intake": "sondes",
         "apply": sondes_to_gridded,
         "output": "gridded",
