@@ -217,7 +217,7 @@ class Sonde:
                 return None
             except OSError:
                 warnings.warn(
-                    f"Empty l1 file for sonde {self.serial_id} on {self.launch_time}. This might be fixed using the ASPEN software manually. "
+                    f"Empty l1 file for sonde {self.serial_id} on {self.flight_id}. This might be fixed using the ASPEN software manually. "
                 )
                 return None
             if "SondeId" not in ds.attrs:
@@ -540,9 +540,14 @@ class Sonde:
                     break
 
             attr = l2_flight_attributes_map.get(attr, attr)
-
-            value = lines[line_id].split("= ")[1]
-            flight_attrs[attr] = float(value) if "AVAPS" not in attr else value
+            try:
+                value = lines[line_id].split("= ")[1]
+                flight_attrs[attr] = float(value) if "AVAPS" not in attr else value
+            except UnboundLocalError:
+                print(
+                    f"No flight attributes for sonde {self.serial_id} on {self.flight_id}"
+                )
+                break
 
         object.__setattr__(self, "flight_attrs", flight_attrs)
 
@@ -772,18 +777,12 @@ class Sonde:
                     platform=self.platform_id,
                     serial_id=self.serial_id,
                     flight_id=self.flight_id,
-                    launch_time=self.launch_time.astype(datetime).strftime(
-                        "%Y-%m-%d_%H-%M"
-                    ),
                 )
             else:
                 l2_filename = hh.l2_filename_template.format(
                     platform=self.platform_id,
                     serial_id=self.serial_id,
                     flight_id=self.flight_id,
-                    launch_time=self.launch_time.astype(datetime).strftime(
-                        "%Y-%m-%d_%H-%M"
-                    ),
                 )
 
         object.__setattr__(self, "l2_filename", l2_filename)

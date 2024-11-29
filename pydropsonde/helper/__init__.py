@@ -121,7 +121,7 @@ l3_coords = dict(
 path_to_flight_ids = "{platform}/Level_0"
 path_to_l0_files = "{platform}/Level_0/{flight_id}"
 
-l2_filename_template = "{platform}_{launch_time}_{flight_id}_{serial_id}_Level_2.nc"
+l2_filename_template = "{platform}_{flight_id}_{serial_id}_Level_2.nc"
 
 l3_filename = "Level_3.nc"
 
