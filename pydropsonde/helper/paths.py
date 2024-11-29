@@ -161,44 +161,46 @@ class Flight:
             try:
                 launch_detect = rr.check_launch_detect_in_afile(a_file)
                 launch_time = rr.get_launch_time(a_file)
-                Sondes[sonde_id] = Sonde(sonde_id, launch_time=launch_time)
-                Sondes[sonde_id].add_launch_detect(launch_detect)
-                Sondes[sonde_id].add_flight_id(
-                    self.flight_id,
-                    config.get(
-                        "processor.Sonde.add_flight_id",
-                        "flight_template",
-                        fallback=None,
-                    ),
+            except UnboundLocalError:
+                warnings.warn(
+                    f"No valid a-file for sonde {sonde_id}, {self.flight_id} - there is now launch detect or time information"
                 )
-                Sondes[sonde_id].add_platform_id(self.platform_id)
-                Sondes[sonde_id].add_afile(a_file)
-                Sondes[sonde_id].add_level_dir(
-                    l0_dir=config.get(
-                        "processor.Sonde.add_level_dir", "l0_dir", fallback=None
-                    ),
-                    l1_dir=config.get(
-                        "processor.Sonde.add_level_dir", "l1_dir", fallback=None
-                    ),
-                    l2_dir=config.get(
-                        "processor.Sonde.add_level_dir", "l2_dir", fallback=None
-                    ),
-                )
+                launch_detect = "UGLY"
+                launch_time = "UNKNOWN"
+            Sondes[sonde_id] = Sonde(sonde_id, launch_time=launch_time)
+            Sondes[sonde_id].add_launch_detect(launch_detect)
+            Sondes[sonde_id].add_flight_id(
+                self.flight_id,
+                config.get(
+                    "processor.Sonde.add_flight_id",
+                    "flight_template",
+                    fallback=None,
+                ),
+            )
+            Sondes[sonde_id].add_platform_id(self.platform_id)
+            Sondes[sonde_id].add_afile(a_file)
+            Sondes[sonde_id].add_level_dir(
+                l0_dir=config.get(
+                    "processor.Sonde.add_level_dir", "l0_dir", fallback=None
+                ),
+                l1_dir=config.get(
+                    "processor.Sonde.add_level_dir", "l1_dir", fallback=None
+                ),
+                l2_dir=config.get(
+                    "processor.Sonde.add_level_dir", "l2_dir", fallback=None
+                ),
+            )
 
-                global_attrs = get_global_attrs_from_config(config)
+            global_attrs = get_global_attrs_from_config(config)
 
-                Sondes[sonde_id].add_global_attrs(global_attrs)
-                broken_file = config.get("OPTIONAL", "broken_sonde_file", fallback=None)
-                if broken_file is not None:
-                    with open(broken_file, "r") as file:
-                        file_content = file.read()
+            Sondes[sonde_id].add_global_attrs(global_attrs)
+            broken_file = config.get("OPTIONAL", "broken_sonde_file", fallback=None)
+            if broken_file is not None:
+                with open(broken_file, "r") as file:
+                    file_content = file.read()
 
                 data_dict = ast.literal_eval(file_content)
                 Sondes[sonde_id].add_broken(data_dict)
-
-            except UnboundLocalError:
-                warnings.warn(f"No valid a-file for sonde {sonde_id}, {self.flight_id}")
-                pass
 
         object.__setattr__(self, "Sondes", Sondes)
 
