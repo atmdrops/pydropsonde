@@ -171,24 +171,30 @@ class Sonde:
             path_to_postaspenfile = os.path.join(l1_dir, l1_name)
 
         if not os.path.exists(path_to_postaspenfile):
-            os.makedirs(l1_dir, exist_ok=True)
-            subprocess.run(
-                [
-                    "docker",
-                    "run",
-                    "--rm",
-                    "--mount",
-                    f"type=bind,source={l0_dir},target=/input",
-                    "--mount",
-                    f"type=bind,source={l1_dir},target=/output",
-                    "ghcr.io/atmdrops/aspenqc:4.0.2",
-                    "-i",
-                    f"/input/{dname}",
-                    "-n",
-                    f"/output/{l1_name}",
-                ],
-                check=True,
-            )
+            if os.path.getsize(os.path.join(l0_dir, dname)) > 0:
+                os.makedirs(l1_dir, exist_ok=True)
+
+                subprocess.run(
+                    [
+                        "docker",
+                        "run",
+                        "--rm",
+                        "--mount",
+                        f"type=bind,source={l0_dir},target=/input",
+                        "--mount",
+                        f"type=bind,source={l1_dir},target=/output",
+                        "ghcr.io/atmdrops/aspenqc:4.0.2",
+                        "-i",
+                        f"/input/{dname}",
+                        "-n",
+                        f"/output/{l1_name}",
+                    ],
+                    check=True,
+                )
+            else:
+                warnings.warn(
+                    f"L0 file for sonde {self.serial_id} on {self.flight_id} is empty. No processing done"
+                )
 
         object.__setattr__(self, "postaspenfile", path_to_postaspenfile)
         return self
