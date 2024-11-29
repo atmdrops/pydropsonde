@@ -1139,7 +1139,7 @@ class Sonde:
         ds = self._prep_l3_ds
 
         ds = hh.calc_theta_from_T(ds)
-        ds = hh.calc_q_from_rh(ds)
+        ds = hh.calc_q_from_rh_sonde(ds)
 
         object.__setattr__(self, "_prep_l3_ds", ds)
 
