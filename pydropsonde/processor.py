@@ -1226,6 +1226,7 @@ class Sonde:
         new_coords = {
             coord: ("sonde_id", np.reshape(ds[coord].values, (1,)), ds[coord].attrs)
             for coord in hh.l3_coords
+            if coord in ds.variables
         }
         ds = ds.assign_coords(new_coords)
         object.__setattr__(self, "_prep_l3_ds", ds)
@@ -1274,6 +1275,23 @@ class Sonde:
             alt_dim=alt_dim,
         )
 
+        return self
+
+    def add_expected_coords(self):
+        ds = self._interim_l3_ds
+        missing_coords = set(hh.l3_coords.keys()) - set(ds.coords)
+        for coord in missing_coords:
+            ds = ds.assign_coords(
+                {
+                    coord: (
+                        ("sonde_id",),
+                        np.full(ds.sizes["sonde_id"], np.nan),
+                        hh.l3_coords[coord],
+                    )
+                }
+            )
+
+        object.__setattr__(self, "_interim_l3_ds", ds)
         return self
 
 
