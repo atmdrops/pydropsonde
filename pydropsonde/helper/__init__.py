@@ -41,52 +41,58 @@ l2_variables = {
         },
     },
     "rh": {
+        "rename_to": "rh",
         "attributes": {
             "standard_name": "relative_humidity",
             "long_name": "relative humidity",
             "units": "",
-        }
+        },
     },
     "lat": {
+        "rename_to": "lat",
         "attributes": {
             "standard_name": "latitude",
             "long_name": "latitude",
             "units": "degree_north",
             "axis": "Y",
-        }
+        },
     },
     "lon": {
+        "rename_to": "lon",
         "attributes": {
             "standard_name": "longitude",
             "long_name": "longitude",
             "units": "degree_east",
             "axis": "X",
-        }
+        },
     },
     "time": {
+        "rename_to": "time",
         "attributes": {
             "standard_name": "time",
             "long_name": "time of recorded measurement",
             "axis": "T",
-        }
+        },
     },
     "gpsalt": {
+        "rename_to": "gpsalt",
         "attributes": {
             "standard_name": "altitude",
             "long_name": "gps reported altitude above MSL",
             "units": "m",
             "axis": "Z",
             "positive": "up",
-        }
+        },
     },
     "alt": {
+        "rename_to": "alt",
         "attributes": {
             "standard_name": "altitude",
             "long_name": "altitude above MSL",
             "units": "m",
             "axis": "Z",
             "positive": "up",
-        }
+        },
     },
 }
 
@@ -182,12 +188,12 @@ def convert_rh_to_si(value):
     return value / 100
 
 
-def convert_pres_to_si(value):
+def convert_p_to_si(value):
     """convert pressure from hPa to Pa"""
     return value * 100
 
 
-def convert_tdry_to_si(value):
+def convert_ta_to_si(value):
     """convert temperature from C to K"""
     return value + 273.15
 
