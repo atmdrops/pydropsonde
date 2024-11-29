@@ -1216,6 +1216,19 @@ class Sonde:
         object.__setattr__(self, "_prep_l3_ds", ds)
         return self
 
+    def add_qc_to_interim_l3(self, keep=["sonde_qc"]):
+        if keep is None:
+            keep = []
+        elif keep == "all":
+            keep = list(self.qc.qc_flags.keys()) + list(self.qc.qc_details.keys())
+        elif isinstance(keep, str):
+            keep = keep.split(",")
+        keep = keep + ["sonde_id"]
+        ds_qc = self._interim_l2_ds[keep].expand_dims("sonde_id")
+        ds = xr.merge([self._prep_l3_ds, ds_qc])
+        object.__setattr__(self, "_prep_l3_ds", ds)
+        return self
+
     def make_prep_interim(self):
         ds = self._prep_l3_ds
         if hasattr(self, "global_attrs"):
