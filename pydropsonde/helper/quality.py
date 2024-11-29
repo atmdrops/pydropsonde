@@ -417,3 +417,24 @@ class QualityControl:
         ds_out = self.add_alt_near_gpsalt_to_ds(ds)
 
         return ds_out
+
+    def add_sonde_flag_to_ds(self, ds, qc_name):
+        if all(self.qc_flags.values()):
+            qc_val = 1
+        elif any(self.qc_flags.values()):
+            qc_val = 2
+        else:
+            qc_val = 0
+
+        ds = ds.assign({qc_name: qc_val})
+        ds[qc_name].attrs.update(
+            dict(
+                standard_name="aggregate_quality_flag",
+                long_name="aggregated quality flag for sonde",
+                flag_values="0 1 2",
+                flag_meaning="BAD GOOD UGLY",
+            )
+        )
+        ds = hx.add_ancillary_var(ds, "sonde_id", qc_name)
+
+        return ds
