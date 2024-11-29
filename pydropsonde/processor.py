@@ -711,6 +711,38 @@ class Sonde:
 
         return self
 
+    def add_qc_to_l2(
+        self,
+        add_var_qc=True,
+        add_details=True,
+    ):
+        """
+        Adds quality control (QC) flags to the level 2 dataset.
+
+        This function updates the internal level 2 dataset (`_interim_l2_ds`) by adding
+        quality control flags. If `add_as_vars` is set to True, it adds the QC flags as
+        variables within the dataset. The function assigns an overall quality flag named
+        "sonde_all_qc" and updates its attributes to describe the flag values and meanings.
+        It also iterates over the QC variables, adding individual QC flags and their
+        details to the dataset.
+
+        Parameters:
+        - add_as_vars (bool): If True, QC flags are added as variables in the dataset.
+
+        Returns:
+        - self: The instance of the class with the updated dataset.
+
+        """
+        ds = self._interim_l2_ds
+        if add_var_qc:
+            for variable in self.qc.qc_vars:
+                ds = self.qc.add_variable_flags_to_ds(ds, variable, details=add_details)
+        ds = self.qc.add_non_var_qc_to_ds(ds)
+        ds = self.qc.add_sonde_flag_to_ds(ds, "sonde_qc")
+
+        object.__setattr__(self, "_interim_l2_ds", ds)
+        return self
+
     def get_l2_filename(
         self, l2_filename: str = None, l2_filename_template: str = None
     ):
