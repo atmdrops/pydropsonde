@@ -539,6 +539,7 @@ pipeline = {
             "make_attr_coordinates",
             "add_qc_to_interim_l3",
             "make_prep_interim",
+            "add_expected_coords",
             "save_interim_l3",
         ],
         "output": "sondes",
