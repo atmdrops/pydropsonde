@@ -536,6 +536,7 @@ pipeline = {
             "add_attributes_as_var",
             "make_attr_coordinates",
             "make_prep_interim",
+            "add_expected_coords",
             "save_interim_l3",
         ],
         "output": "sondes",
