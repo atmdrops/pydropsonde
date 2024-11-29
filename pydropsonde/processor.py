@@ -13,6 +13,7 @@ from xhistogram.xarray import histogram
 import glob
 
 import pydropsonde.helper as hh
+from pydropsonde.helper.quality import QualityControl
 import pydropsonde.helper.xarray_helper as hx
 from importlib.metadata import version
 
@@ -250,6 +251,14 @@ class Sonde:
             + f" ASPEN processing with {aspen_version} \n"
         )
         object.__setattr__(self, "history", history)
+        return self
+
+    def initialize_qc(self):
+        """
+        initialize QC object for easier handling of quality control
+        """
+
+        object.__setattr__(self, "qc", QualityControl())
         return self
 
     def filter_no_launch_detect(self) -> None:
