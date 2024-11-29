@@ -147,5 +147,6 @@ def test_sonde_add_aspen_ds_with_mismatched_sonde_id(
     sonde.add_flight_id(flight_id)
     sonde.add_level_dir()
     sonde.run_aspen(temp_postaspenfile)
+    sonde.add_launch_detect(True)
     with pytest.raises(ValueError):
         sonde.add_aspen_ds()
