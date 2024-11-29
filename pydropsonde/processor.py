@@ -302,8 +302,6 @@ class Sonde:
 
     def detect_floater(
         self,
-        gpsalt_threshold: float = 25,
-        consecutive_time_steps: int = 3,
         skip: bool = False,
     ):
         """
@@ -311,60 +309,20 @@ class Sonde:
 
         Parameters
         ----------
-        gpsalt_threshold : float, optional
-            The gpsalt altitude below which the sonde will check for time periods when gpsalt and pres have not changed. Default is 25.
         skip : bool, optional
             If True, the function will return the object without performing any operations. Default is False.
 
         Returns
         -------
         self
-            The object itself with the new `is_floater` attribute added based on the function parameters.
+            The object itself with the new `is_floater` entry added to the quality control object
         """
         if hh.get_bool(skip):
             return self
         else:
-            if isinstance(gpsalt_threshold, str):
-                gpsalt_threshold = float(gpsalt_threshold)
-
             if hasattr(self, "aspen_ds"):
-                surface_ds = (
-                    self.aspen_ds.where(
-                        self.aspen_ds.gpsalt < gpsalt_threshold, drop=True
-                    )
-                    .sortby("time")
-                    .dropna(dim="time", how="any", subset=["pres", "gpsalt"])
-                )
-                gpsalt_diff = np.diff(surface_ds.gpsalt)
-                pressure_diff = np.diff(surface_ds.pres)
-                gpsalt_diff_below_threshold = (
-                    np.abs(gpsalt_diff) < 1
-                )  # GPS altitude value at surface shouldn't change by more than 1 m
-                pressure_diff_below_threshold = (
-                    np.abs(pressure_diff) < 1
-                )  # Pressure value at surface shouldn't change by more than 1 hPa
-                floater = gpsalt_diff_below_threshold & pressure_diff_below_threshold
-                if np.any(floater):
-                    object.__setattr__(self, "is_floater", True)
-                    for time_index in range(len(floater) - consecutive_time_steps + 1):
-                        if np.all(
-                            floater[time_index : time_index + consecutive_time_steps]
-                        ):
-                            landing_time = surface_ds.time[time_index - 1].values
-                            object.__setattr__(self, "landing_time", landing_time)
-                            print(
-                                f"{self.serial_id}: Floater detected! The landing time is estimated as {landing_time}."
-                            )
-                            break
-                        if not hasattr(self, "landing_time"):
-                            print(
-                                f"{self.serial_id}: Floater detected! However, the landing time could not be estimated. Therefore setting landing time as {surface_ds.time[0].values}"
-                            )
-                            object.__setattr__(
-                                self, "landing_time", surface_ds.time[0].values
-                            )
-                else:
-                    object.__setattr__(self, "is_floater", False)
+                landing_time = self.qc.get_is_floater(aspen_ds=self.aspen_ds)
+                object.__setattr__(self, "landing_time", landing_time)
             else:
                 raise ValueError(
                     "The attribute `aspen_ds` does not exist. Please run `add_aspen_ds` method first."
@@ -685,9 +643,7 @@ class Sonde:
         self : object
             Returns the sonde object with the interim L2 dataset added as an attribute.
         """
-        if self.is_floater:
-            if not hasattr(self, "cropped_aspen_ds"):
-                self.crop_aspen_ds_to_landing_time()
+        if self.qc.is_floater:
             ds = self.cropped_aspen_ds
         else:
             ds = self.aspen_ds
@@ -850,19 +806,9 @@ class Sonde:
                 if hasattr(self.aspen_ds, "launch_time")
                 else np.datetime64(self.aspen_ds.base_time.values)
             ),
-            "is_floater": self.is_floater.__str__(),
+            "is_floater": self.qc.is_floater.__str__(),
             "sonde_serial_ID": self.serial_id,
         }
-
-        for attr in dir(self):
-            if attr.startswith("near_surface_count_"):
-                sonde_attrs[attr] = getattr(self, attr)
-            if attr.startswith("profile_fullness_fraction_"):
-                sonde_attrs[attr] = getattr(self, attr)
-
-        for attr in dir(self.qc):
-            if not attr.startswith("__"):
-                sonde_attrs[f"qc_{attr}"] = int(getattr(self.qc, attr))
 
         object.__setattr__(self, "sonde_attrs", sonde_attrs)
 
