@@ -420,7 +420,7 @@ class Sonde:
 
         return self
 
-    def convert_to_si(self, variables=["rh", "pres", "tdry"], skip=False):
+    def convert_to_si(self, variables=["rh", "p", "ta"], skip=False):
         """
         Converts variables to SI units.
 
@@ -458,7 +458,9 @@ class Sonde:
 
             for variable in variables:
                 func = hh.get_si_converter_function_based_on_var(variable)
-                ds = ds.assign({f"{variable}": func(self.aspen_ds[variable])})
+                var_attrs = ds[variable].attrs
+                ds = ds.assign({f"{variable}": func(ds[variable])})
+                ds[variable].attrs.update(var_attrs)
 
             object.__setattr__(self, "_interim_l2_ds", ds)
 
@@ -497,8 +499,7 @@ class Sonde:
         for variable, variable_dict in l2_variables.items():
             if "attributes" in variable_dict:
                 ds[variable].attrs = variable_dict["attributes"]
-            if "rename_to" in variable_dict:
-                ds = ds.rename({variable: variable_dict["rename_to"]})
+            ds = ds.rename({variable: variable_dict["rename_to"]})
 
         object.__setattr__(self, "_interim_l2_ds", ds)
 
