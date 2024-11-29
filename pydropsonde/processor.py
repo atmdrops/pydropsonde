@@ -229,6 +229,13 @@ class Sonde:
                     )
             elif ds.attrs["SondeId"] == self.serial_id:
                 object.__setattr__(self, "aspen_ds", ds)
+            elif self.launch_detect == "UGLY":
+                warnings.warn(
+                    f"I found the `SondeId` global attribute ({ds.attrs['SondeId']}) to not match with this instance's `serial_id` attribute ({self.serial_id}). This could be due to no afile for this sonde. Serial id is updated."
+                )
+                object.__setattr__(self, "serial_id", ds.attrs["SondeId"])
+                object.__setattr__(self, "aspen_ds", ds)
+
             else:
                 raise ValueError(
                     f"I found the `SondeId` global attribute ({ds.attrs['SondeId']}) to not match with this instance's `serial_id` attribute ({self.serial_id}). Therefore, I am not storing the xarray dataset as an attribute."
