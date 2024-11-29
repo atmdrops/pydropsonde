@@ -1,6 +1,8 @@
 import numpy as np
 import warnings
 
+import pydropsonde.helper.xarray_helper as hx
+
 
 class QualityControl:
     """
@@ -253,3 +255,165 @@ class QualityControl:
             return True
         else:
             return False
+
+    def get_qc_by_var(self):
+        """
+        Organizes quality control (QC) flags and details by variable.
+
+        This method iterates over each variable in `self.qc_vars` and filters the
+        `self.qc_flags` and `self.qc_details` dictionaries to include only the keys
+        that are associated with the current variable. The keys are identified by
+        checking if they contain the variable name as a prefix, followed by an
+        underscore. The filtered dictionaries are then stored in `self.qc_flags`
+        and `self.qc_details` under the corresponding variable name.
+
+        Attributes:
+            self.qc_vars (list): A list of variable names to filter QC data by.
+            self.qc_flags (dict): A dictionary containing QC flags, which will be
+                filtered and organized by variable.
+            self.qc_details (dict): A dictionary containing QC details, which will
+                be filtered and organized by variable.
+
+        """
+        for variable in self.qc_vars:
+            self.qc_by_var[variable]["qc_flags"].update(
+                {
+                    key: self.qc_flags.get(key)
+                    for key in list(self.qc_flags.keys())
+                    if f"{variable}_" in key
+                }
+            )
+            self.qc_by_var[variable]["qc_details"].update(
+                {
+                    key: self.qc_details.get(key)
+                    for key in list(self.qc_details.keys())
+                    if f"{variable}_" in key
+                }
+            )
+
+    def get_byte_array(self, variable):
+        """
+        Generate a byte array and associated attributes for a given variable's quality control flags.
+
+        This function checks if quality control flags for the specified variable are available.
+        If not, it retrieves them. It then calculates a byte value representing the quality control
+        status by iterating over the flags and their values. Additionally, it constructs a dictionary
+        of attributes that describe the quality control flags.
+
+        Parameters:
+        - variable (str): The name of the variable for which to generate the byte array and attributes.
+
+        Returns:
+        - tuple: A tuple containing:
+            - np.byte: The calculated byte value representing the quality control status.
+            - dict: A dictionary of attributes with the following keys:
+                - long_name (str): A descriptive name for the quality control of the variable.
+                - standard_name (str): A standard name indicating the type of flag.
+                - flag_masks (str): A comma-separated string of binary masks for each flag.
+                - flag_meanings (str): A comma-separated string of the meanings of each flag.
+        """
+        if not self.qc_by_var.get(variable, {}).get("qc_flags"):
+            self.get_qc_by_var()
+        qc_val = np.byte(0)
+        keys = []
+        for i, (key, value) in enumerate(
+            self.qc_by_var.get(variable).get("qc_flags").items()
+        ):
+            qc_val = qc_val + (2**i) * np.byte(value)
+            keys.append(key.split("_", 1)[1])
+        if qc_val == 0:
+            qc_status = "BAD"
+        elif qc_val == 2 ** (i + 1) - 1:
+            qc_status = "GOOD"
+        else:
+            qc_status = "UGLY"
+        attrs = dict(
+            long_name=f"qc for {variable}",
+            standard_name="status_flag",
+            flag_masks=", ".join([f"{2**x}b" for x in range(i + 1)]),
+            flag_meanings=", ".join(keys),
+            qc_status=qc_status,
+        )
+        return np.byte(qc_val), attrs
+
+    def get_details(self, variable):
+        """
+        Retrieve quality control details and attributes for a specified variable.
+
+        This method checks if the quality control (QC) details for the given variable are available. If not, it invokes the `get_qc_by_var` method to populate them. It then constructs a dictionary of attributes for each QC key associated with the variable, providing a descriptive long name and units.
+
+        Parameters:
+            variable (str): The name of the variable for which QC details are to be retrieved.
+
+        Returns:
+            tuple: A tuple containing:
+                - dict: The QC details for the specified variable.
+                - dict: A dictionary of attributes for each QC key, including:
+                    - long_name (str): A descriptive name for the QC key.
+                    - units (str): The units for the QC key, defaulted to "1".
+        """
+        if self.qc_by_var.get(variable, {}).get("qc_details") is not None:
+            self.get_qc_by_var()
+        attrs = {}
+        for key in list(self.qc_by_var.get(variable).get("qc_details").keys()):
+            name = key.split("_", 1)[1]
+            attrs.update(
+                {
+                    key: dict(
+                        long_name=f"value for qc  {variable} " + name.replace("_", " "),
+                        units="1",
+                    )
+                }
+            )
+        return self.qc_by_var.get(variable).get("qc_details"), attrs
+
+    def add_variable_flags_to_ds(self, ds, variable, details=True):
+        name = f"{variable}_qc"
+        value, attrs = self.get_byte_array(variable)
+        ds = ds.assign({name: value})
+        ds[name].attrs.update(attrs)
+        ds = hx.add_ancillary_var(ds, variable, name)
+        # get detail
+        if details:
+            qc_dict, attrs = self.get_details(variable)
+            for key in list(qc_dict.keys()):
+                ds = ds.assign({key: qc_dict.get(key)})
+                ds[key].attrs.update(attrs.get(key))
+                ds = hx.add_ancillary_var(ds, variable, key)
+
+        return ds
+
+    def add_alt_near_gpsalt_to_ds(self, ds):
+        ds = ds.assign(
+            {"alt_near_gpsalt": np.byte(self.qc_flags.get("alt_near_gpsalt"))}
+        )
+        ds["alt_near_gpsalt"].attrs.update(
+            dict(
+                standard_name="alt_max_diff_gpsalt_quality_flag",
+                long_name="maximal difference between alt and gpsalt",
+                flag_values="0 1 ",
+                flag_meaning="BAD GOOD",
+            )
+        )
+
+        ds = ds.assign(
+            {
+                "alt_near_gpsalt_max_diff": self.qc_details.get(
+                    "alt_near_gpsalt_max_diff"
+                )
+            }
+        )
+        ds["alt_near_gpsalt_max_diff"].attrs.update(
+            dict(
+                long_name="maximal difference between alt and gpsalt",
+                units="m",
+            )
+        )
+
+        ds = hx.add_ancillary_var(ds, "alt", "alt_near_gpsalt alt_near_gpsalt_max_diff")
+        return ds
+
+    def add_non_var_qc_to_ds(self, ds):
+        ds_out = self.add_alt_near_gpsalt_to_ds(ds)
+
+        return ds_out
