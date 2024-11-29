@@ -201,6 +201,40 @@ def get_si_converter_function_based_on_var(var_name):
     return func
 
 
+def calc_q_from_rh_sonde(ds):
+    """
+    Input :
+
+        ds : Dataset
+
+    Output :
+
+        ds : Dataset with rh added
+
+    Function to estimate specific humidity from the relative humidity, temperature and pressure in the given dataset.
+    """
+    e_s = mtsvp.liq_hardy(ds.ta.values)
+    w_s = mtf.partial_pressure_to_mixing_ratio(e_s, ds.p.values)
+    w = ds.rh.values * w_s
+    q = physics.mr2q(w)
+    try:
+        q_attrs = ds.q.attrs
+        q_attrs.update(
+            dict(
+                method="calculated from measured RH following Hardy 1998",
+            )
+        )
+    except AttributeError:
+        q_attrs = dict(
+            standard_name="specific_humidity",
+            long_name="specific humidity",
+            units="1",
+            method="calculated from measured RH following Hardy 1998",
+        )
+    ds = ds.assign(q=(ds.rh.dims, q, q_attrs))
+    return ds
+
+
 def calc_q_from_rh(ds):
     """
     Input :
