@@ -955,11 +955,14 @@ class Sonde:
                 curr_alt = alt[i]
         _prep_l3_ds[alt_var] = alt
 
-        mask = ~np.isnan(alt)
+        if np.all(np.isnan(alt)):
+            print(f"No {alt_var} values. Sonde is discarded")
+            return None
+
         object.__setattr__(
             self,
             "_prep_l3_ds",
-            _prep_l3_ds.sel(time=mask),
+            _prep_l3_ds,
         )
         return self
 
