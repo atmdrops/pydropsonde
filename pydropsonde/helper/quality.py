@@ -216,3 +216,40 @@ class QualityControl:
         else:
             self.qc_flags["alt_near_gpsalt"] = True
         self.qc_details["alt_near_gpsalt_max_diff"] = max_diff.values
+
+    def check_qc(self, used_flags=None, check_ugly=True):
+        """
+        check if any qc check has failed.
+        If any has failed, return False, if not True
+
+        Parameters:
+        -----------
+        used_flags: string or list
+            list of qc flags to check
+        """
+        if used_flags is None:
+            used_flags = []
+        elif used_flags == "all":
+            used_flags = list(self.qc_flags.keys()).copy()
+        elif isinstance(used_flags, str):
+            used_flags = used_flags.split(",")
+            if (len(used_flags) == 1) and used_flags[0].startswith("all_except_"):
+                all_flags = self.qc_flags.copy()
+                all_flags.pop(used_flags[0].replace("all_except_", ""))
+                used_flags = all_flags.copy()
+            elif used_flags[0].startswith("all_except_"):
+                raise ValueError(
+                    "If 'all_except_<prefix>' is provided in filter_flags, it should be the only value."
+                )
+        if not all(flag in self.qc_flags for flag in used_flags):
+            raise ValueError(
+                "not all flags are in the qc dict. please check you ran all qc tests"
+            )
+
+        used_flags = {key: self.qc_flags[key] for key in used_flags}
+        if check_ugly and all(used_flags.values()):
+            return True
+        elif (not check_ugly) and any(used_flags.values()):
+            return True
+        else:
+            return False
