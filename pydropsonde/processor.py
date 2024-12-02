@@ -864,7 +864,10 @@ class Sonde:
         return self
 
     def check_interim_l3(
-        self, interim_l3_dir: str = None, interim_l3_filename: str = None
+        self,
+        interim_l3_dir: str = None,
+        interim_l3_filename: str = None,
+        skip=False,
     ):
         if interim_l3_dir is None:
             interim_l3_dir = self.l2_dir.replace("Level_2", "Level_3_interim").replace(
@@ -880,7 +883,9 @@ class Sonde:
             )
         object.__setattr__(self, "interim_l3_dir", interim_l3_dir)
         object.__setattr__(self, "interim_l3_filename", interim_l3_filename)
-        if os.path.exists(os.path.join(interim_l3_dir, interim_l3_filename)):
+        if (not skip) and os.path.exists(
+            os.path.join(interim_l3_dir, interim_l3_filename)
+        ):
             object.__setattr__(
                 self,
                 "_interim_l3_ds",
