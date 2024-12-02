@@ -162,5 +162,5 @@ class TestGroup:
     def test_N_m(self, sonde_interp, test_input, expected):
         new_sonde = self.interp_sonde.get_N_m_values(alt_var="alt")
         print(new_sonde._prep_l3_ds)
-        assert np.all(new_sonde._prep_l3_ds["Nq"].values == expected["Nq"])
-        assert np.all(new_sonde._prep_l3_ds["mq"].values == expected["mq"])
+        assert np.all(new_sonde._prep_l3_ds["q_N_qc"].values == expected["Nq"])
+        assert np.all(new_sonde._prep_l3_ds["q_m_qc"].values == expected["mq"])
