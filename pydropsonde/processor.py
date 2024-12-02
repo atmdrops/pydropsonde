@@ -946,34 +946,102 @@ class Sonde:
         object.__setattr__(self, "_prep_l3_ds", ds)
         return self
 
-    def remove_non_mono_incr_alt(self, alt_var="alt"):
+    def set_alt_dim(self, alt_dim="alt"):
+        self.qc.alt_dim = alt_dim
+        object.__setattr__(
+            self,
+            "alt_dim",
+            alt_dim,
+        )
+        return self
+
+    def replace_alt_dim(self, drop_nan=True):
+        """
+        Replaces the altitude dimension in the dataset if all altitude values are NaN.
+
+        This function loads the interim level 2 dataset and checks the altitude variable for NaN values.
+        If all values are NaN, it attempts to replace the altitude variable with the other (alt and gpsalt)
+        Depending on the `drop_nan` parameter, it either drops sonde from the dictionary or sets the qc values.
+        If the altitude values remain NaN after replacement, the dataset is dropped.
+
+        Parameters:
+        - drop_nan (bool): Determines whether to drop the dataset if altitude values are NaN.
+        If True, the dataset is dropped; otherwise, it attempts to switch the altitude variable.
+
+        Returns:
+        - self: Returns the object itself if the altitude dimension is successfully replaced or remains valid.
+        - None: Returns None if the dataset is dropped due to NaN altitude values.
+        """
+        alt_dim = self.alt_dim
+        ds = self._interim_l2_ds.load()
+        alt = ds[alt_dim]
+        if np.all(np.isnan(alt)):
+            ds = self.qc.replace_alt_var(ds, alt_dim)
+            if hh.get_bool(drop_nan):
+                print(
+                    f"No {alt_dim} values.  Sonde {self.serial_id} from {self.flight_id} is dropped"
+                )
+                return None
+            else:
+                print(
+                    f"No {alt_dim} values.  Sonde {self.serial_id} from {self.flight_id} altitude is switched"
+                )
+                alt = ds[alt_dim]
+                if np.all(np.isnan(alt)):
+                    print(
+                        f"No altitude values. Sonde {self.serial_id} from {self.flight_id} is dropped"
+                    )
+                    return None
+                object.__setattr__(self, "_interim_l2_ds", ds)
+        return self
+
+    def swap_alt_dimension(self):
+        """
+        Swap the 'time' dimension with an alternative dimension (either alt or gpsalt) in the dataset.
+
+        This method swaps the 'time' dimension of the dataset with an alternative
+        dimension specified by the `alt_dim` attribute of the object. It then loads
+        the dataset with the new dimension configuration and updates the object's
+        internal dataset attribute `_prep_l3_ds`.
+
+        Returns:
+            self: The instance of the object with the updated dataset.
+        """
+        alt_dim = self.alt_dim
+        ds = (self._prep_l3_ds.swap_dims({"time": alt_dim})).load()
+
+        object.__setattr__(
+            self,
+            "_prep_l3_ds",
+            ds,
+        )
+        return self
+
+    def remove_non_mono_incr_alt(self):
         """
         This function removes the indices in the some height variable that are not monotonically increasing
         """
-        _prep_l3_ds = self._prep_l3_ds.load()
-        alt = _prep_l3_ds[alt_var]
+        alt_dim = self.alt_dim
+        ds = self._prep_l3_ds.load()
+        alt = ds[alt_dim]
+
         curr_alt = alt.isel(time=0)
         for i in range(len(alt)):
             if alt[i] > curr_alt:
                 alt[i] = np.nan
             elif ~np.isnan(alt[i]):
                 curr_alt = alt[i]
-        _prep_l3_ds[alt_var] = alt
-
-        if np.all(np.isnan(alt)):
-            print(f"No {alt_var} values. Sonde is discarded")
-            return None
+        ds[alt_dim] = alt
 
         object.__setattr__(
             self,
             "_prep_l3_ds",
-            _prep_l3_ds,
+            ds,
         )
         return self
 
     def interpolate_alt(
         self,
-        alt_var="alt",
         interp_start=-5,
         interp_stop=14600,
         interp_step=10,
@@ -984,18 +1052,19 @@ class Sonde:
         """
         Interpolate sonde data along comon altitude grid to prepare concatenation
         """
+        alt_dim = self.alt_dim
         interpolation_grid = np.arange(interp_start, interp_stop, interp_step)
+        ds = self._prep_l3_ds
 
-        if not (self._prep_l3_ds[alt_var].diff(dim="time") < 0).any():
+        if not (self._prep_l3_ds[alt_dim].diff(dim=alt_dim) < 0).any():
             warnings.warn(
                 f"your altitude for sonde {self.serial_id
                 } on {self.launch_time} is not sorted."
             )
-        ds = (self._prep_l3_ds.swap_dims({"time": alt_var})).load()
         if p_log:
             ds = ds.assign(p=(ds.p.dims, np.log(ds.p.values), ds.p.attrs))
         if method == "linear_interpolate":
-            interp_ds = ds.interp({alt_var: interpolation_grid})
+            interp_ds = ds.interp({alt_dim: interpolation_grid})
         elif method == "bin":
             mean_ds = {}
             count_dict = {}
@@ -1014,16 +1083,16 @@ class Sonde:
             ]:
                 if (var in ds.variables) and (var not in ds.dims):
                     count_dict[var] = histogram(
-                        ds[alt_var].where(~np.isnan(ds[var])),
+                        ds[alt_dim].where(~np.isnan(ds[var])),
                         bins=interpolation_grid,
-                        dim=[alt_var],
+                        dim=[alt_dim],
                     )
 
                     new_ds = (
                         histogram(
-                            ds[alt_var].where(~np.isnan(ds[var])),
+                            ds[alt_dim].where(~np.isnan(ds[var])),
                             bins=interpolation_grid,
-                            dim=[alt_var],
+                            dim=[alt_dim],
                             weights=ds[var]
                             .astype(np.float64)
                             .where(~np.isnan(ds[var])),
@@ -1039,11 +1108,11 @@ class Sonde:
             interp_ds = (
                 interp_ds.transpose()
                 .interpolate_na(
-                    dim=f"{alt_var}_bin", max_gap=max_gap_fill, use_coordinate=True
+                    dim=f"{alt_dim}_bin", max_gap=max_gap_fill, use_coordinate=True
                 )
-                .rename({f"{alt_var}_bin": alt_var})
+                .rename({f"{alt_dim}_bin": alt_dim})
             )
-            interp_ds[alt_var].attrs.update(ds[alt_var].attrs)
+            interp_ds[alt_dim].attrs.update(ds[alt_dim].attrs)
             time_type = ds["time"].values.dtype
             interp_ds = interp_ds.assign(
                 interp_time=(
@@ -1063,7 +1132,8 @@ class Sonde:
         object.__setattr__(self, "_prep_l3_ds", interp_ds)
         return self
 
-    def get_N_m_values(self, alt_var="alt"):
+    def get_N_m_values(self):
+        alt_dim = self.alt_dim
         count_dict = self._count_dict
         prep_l3 = self._prep_l3_ds
 
@@ -1073,12 +1143,12 @@ class Sonde:
                 long_name=f"Number of values per bin for {variable}",
                 units="1",
             )
-            Nvar = Nvar.rename({alt_var + "_bin": alt_var})
+            Nvar = Nvar.rename({alt_dim + "_bin": alt_dim})
 
             prep_l3 = prep_l3.assign(
                 {
                     N_name: (
-                        alt_var,
+                        alt_dim,
                         Nvar.astype(int).values,
                         N_attrs,
                     )
@@ -1104,7 +1174,7 @@ class Sonde:
             prep_l3 = prep_l3.assign(
                 {
                     m_name: (
-                        alt_var,
+                        alt_dim,
                         m.astype(int).values,
                         m_attrs,
                     )
@@ -1265,7 +1335,7 @@ class Sonde:
         object.__setattr__(self, "_interim_l3_ds", ds)
         return self
 
-    def save_interim_l3(self, alt_dim="alt"):
+    def save_interim_l3(self):
         ds = self._interim_l3_ds
         if hasattr(self, "broken_sondes"):
             if self.serial_id in self.broken_sondes:
@@ -1277,7 +1347,7 @@ class Sonde:
             dir=self.interim_l3_dir,
             filename=self.interim_l3_filename,
             object_dim="sonde_id",
-            alt_dim=alt_dim,
+            alt_dim=self.alt_dim,
         )
 
         return self
@@ -1424,7 +1494,7 @@ class Gridded:
 
         return self
 
-    def write_l3(self, l3_dir: str = None, alt_dim="alt"):
+    def write_l3(self, l3_dir: str = None):
         """
         Writes the L3 file to the specified directory.
 
@@ -1459,7 +1529,7 @@ class Gridded:
             dir=l3_dir,
             filename=self.l3_filename,
             object_dim="sonde_id",
-            alt_dim=alt_dim,
+            alt_dim=self.alt_dim,
         )
         return self
 
