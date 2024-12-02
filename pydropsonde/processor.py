@@ -1275,6 +1275,17 @@ class Sonde:
         return self
 
     def get_N_m_values(self):
+        """
+        Updates the internal dataset with the number of values per bin and interpolation method flags for each variable.
+
+        Attributes:
+            - alt_dim (str): The name of the altitude dimension.
+            _count_dict (dict): A dictionary containing variables and their corresponding count data arrays.
+            _prep_l3_ds (xarray.Dataset): The dataset to be updated with new variables.
+
+        Returns:
+            self: The updated sonde with the modified dataset.
+        """
         alt_dim = self.alt_dim
         count_dict = self.count_dict
         prep_l3 = self.interim_l3_ds
@@ -1326,6 +1337,16 @@ class Sonde:
         return self
 
     def remove_N_m_duplicates(self):
+        """
+        Removes duplicate N and m quality control variables (for variables from the same sensor).
+
+
+        Attributes:
+            interim_l3_ds (xarray.Dataset): The dataset from which duplicates are removed and variables are renamed.
+
+        Returns:
+            self: The updated sonde with the modified dataset.
+        """
         ds = self.interim_l3_ds
         nm_vars = ["lat", "u", "p", "q", "theta"]
         if "lat in ds.variables":
@@ -1367,6 +1388,15 @@ class Sonde:
         return self
 
     def add_Nm_to_vars(self):
+        """
+        Adds ancillary N and m quality control variables to essential variables in the internal dataset.
+
+        Attributes:
+            _prep_l3_ds (xarray.Dataset): The dataset to which ancillary variables are added.
+
+        Returns:
+            self: The updated instance with the modified dataset.
+        """
         self.remove_N_m_duplicates()
         ds = self.interim_l3_ds
 
