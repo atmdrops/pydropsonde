@@ -1520,6 +1520,12 @@ class Sonde:
         return self
 
     def add_globals_l3(self):
+        """
+        Prepare the interim Level 3 dataset with global attributes and history.
+
+        Returns:
+            self: The instance with updated `interim_l3_ds` including global attributes and history.
+        """
         ds = self.interim_l3_ds
         if hasattr(self, "global_attrs"):
             ds = ds.assign_attrs(self.global_attrs)
@@ -1535,6 +1541,12 @@ class Sonde:
         return self
 
     def save_interim_l3(self):
+        """
+        Save the interim Level 3 dataset to a specified directory.
+
+        Returns:
+            self: The instance after saving the `interim_l3_ds`.
+        """
         ds = self.interim_l3_ds
         if hasattr(self, "broken_sondes"):
             if self.serial_id in self.broken_sondes:
