@@ -1361,23 +1361,45 @@ class Gridded:
         self.history = new_hist
         return self
 
+    def add_alt_dim(self):
+        sonde = list(self.sondes.values())[0]
+        self.alt_dim = sonde.alt_dim
+        return self
+
     def check_broken(self):
         sonde = list(self.sondes.values())[0]
         if hasattr(sonde, "broken_sondes"):
             self.broken_sondes = sonde.broken_sondes
         return self
 
-    def concat_sondes(self, sortby=None):
+    def concat_sondes(self, sortby=None, coords=None):
         """
         function to concatenate all sondes using the combination of all measurement times and launch times and add global attributes to resulting dataset
         """
         if sortby is None:
             sortby = list(hh.l3_coords.keys())[0]
         list_of_l2_ds = [sonde._interim_l3_ds for sonde in self.sondes.values()]
-        ds = xr.concat(list_of_l2_ds, dim="sonde_id", join="exact").sortby(sortby)
+        try:
+            ds = xr.concat(list_of_l2_ds, dim="sonde_id", join="exact").sortby(sortby)
+        except AttributeError:
+            if coords is None:
+                coords = hh.l3_coords
+            for i, l2_ds in enumerate(list_of_l2_ds):
+                missing_coords = set(coords.keys()) - set(l2_ds.coords)
+                list_of_l2_ds[i] = l2_ds.assign_coords(
+                    {
+                        coord: (
+                            ("sonde_id",),
+                            np.full(ds.sizes["sonde_id"], np.nan),
+                            coords[coord],
+                        )
+                        for coord in missing_coords
+                    }
+                )
+            ds = xr.concat(list_of_l2_ds, dim="sonde_id", join="exact").sortby(sortby)
+
         if hasattr(self, "global_attrs"):
             ds = ds.assign_attrs(self.global_attrs)
-
         self._interim_l3_ds = ds
         return self
 
