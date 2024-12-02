@@ -25,10 +25,10 @@ class Circle:
         """
         ds = self.circle_ds
         ds = ds.drop_vars(
-            [f"m{var}" for var in ds.variables],
+            [f"{var}_m_qc" for var in ds.variables],
             errors="ignore",
         ).drop_vars(
-            [f"N{var}" for var in ds.variables],
+            [f"{var}_N_qc" for var in ds.variables],
             errors="ignore",
         )
         self.circle_ds = ds
