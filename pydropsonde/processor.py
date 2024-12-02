@@ -1019,6 +1019,19 @@ class Sonde:
         return self
 
     def recalc_rh_and_ta(self):
+        """
+        Recalculates relative humidity and temperature after the interpolation and
+        adds it to the interim level 3 dataset
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        self : object
+            Returns the sonde object with potential temperature and specific humidity added to the interim l3 dataset.
+        """
         ds = self.interim_l3_ds
         ds = hh.calc_T_from_theta(ds)
         ds = hh.calc_rh_from_q(ds)
@@ -1026,18 +1039,54 @@ class Sonde:
         return self
 
     def add_iwv(self):
+        """
+        Calculates interpolated water vapor from the interim l3 dataset.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        self : object
+            Returns the sonde object with integrated water vapour added to the interim l3 dataset.
+        """
+
         self.interim_l3_ds = hh.calc_iwv(self.interim_l3_ds)
 
         return self
 
     def add_thetas(self):
-        ds = self.interim_l3_ds
-        ds = hh.calc_theta_e(ds)
-        self.interim_l3_ds = ds
+        """
+        Calculates theta_e from the interim l3 dataset and adds it to the interim l3 dataset
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        self : object
+            Returns the sonde object with theta_e added to the interim l3 dataset.
+        """
+        self.interim_l3_ds = hh.calc_theta_e(self.interim_l3_ds) 
 
         return self
 
     def add_wind(self):
+        """
+        Calculates wind direction and speed from the interim l3 dataset
+        and adds it to the interim l3 dataset
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        self : object
+            Returns the sonde object with wind direction and speed added to the interim l3 dataset.
+        """
         self.interim_l3_ds = hh.calc_wind_dir_and_speed(self.interim_l3_ds)
         return self
 
