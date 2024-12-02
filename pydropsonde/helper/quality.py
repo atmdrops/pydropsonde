@@ -420,6 +420,24 @@ class QualityControl:
         return ds
 
     def replace_alt_var(self, ds, alt_var):
+        """
+        Replace the altitude variable in a dataset with its counterpart.
+
+        This method swaps the values of the specified altitude variable with its counterpart
+        in the dataset. If `alt_var` is "alt", it will be replaced with "gpsalt", and vice versa.
+        If `alt_var` is neither "alt" nor "gpsalt", a ValueError is raised.
+
+        Parameters:
+        - ds: The dataset containing the altitude variables.
+        - alt_var: A string specifying the altitude variable to be replaced.
+                It must be either "alt" or "gpsalt".
+
+        Returns:
+        - A new dataset with the specified altitude variable replaced by its counterpart.
+
+        Raises:
+        - ValueError: If `alt_var` is not "alt" or "gpsalt".
+        """
         if alt_var == "alt":
             replace_var = "gpsalt"
         elif alt_var == "gpsalt":
@@ -433,6 +451,21 @@ class QualityControl:
         return ds_out
 
     def add_replace_alt_var_to_ds(self, ds):
+        """
+        Adds  an ancillary variable in the dataset for the altitude dimension.
+
+        This function assigns a new variable to the dataset `ds` with a name based on
+        the `alt_dim` attribute of the class. The new variable indicates whether values
+        for the specified dimension are present in the raw data, using quality control
+        flags. It updates the attributes of the new variable to include a long name,
+        flag values, and flag meanings.
+
+        Parameters:
+        - ds: The dataset to which the ancillary variable will be added or replaced.
+
+        Returns:
+        - The updated dataset with the ancillary variable added or replaced.
+        """
         ds = ds.assign(
             {
                 f"{self.alt_dim}_values": np.byte(
@@ -452,6 +485,19 @@ class QualityControl:
         return ds
 
     def add_non_var_qc_to_ds(self, ds):
+        """
+        Adds non-variable quality control (QC) data to the given dataset.
+
+        This method performs the following operations on the input dataset `ds`:
+        1. Adds altitude near GPS altitude to the dataset using the `add_alt_near_gpsalt_to_ds` method.
+        2. Replaces altitude variable in the dataset using the `add_replace_alt_var_to_ds` method.
+
+        Parameters:
+        - ds: The input dataset to which non-variable QC data will be added.
+
+        Returns:
+        - ds_out: The output dataset with added non-variable QC data.
+        """
         ds_out = self.add_alt_near_gpsalt_to_ds(ds)
         ds_out = self.add_replace_alt_var_to_ds(ds_out)
 
