@@ -16,6 +16,7 @@ class QualityControl:
         self.qc_flags = {}
         self.qc_details = {}
         self.qc_by_var = {}
+        self.alt_dim = "time"
 
     def set_qc_variables(self, qc_variables):
         self.qc_vars = self.qc_vars + list(qc_variables)
@@ -212,11 +213,14 @@ class QualityControl:
         """
 
         dataset = ds[["alt", "gpsalt"]]
+        if not self.qc_flags.get(f"{self.alt_dim}_values", True):
+            return 0
+
         max_diff = np.abs((dataset.alt - dataset.gpsalt).max(skipna=True))
-        if max_diff > diff_threshold:
-            self.qc_flags["alt_near_gpsalt"] = False
-        else:
+        if max_diff < diff_threshold:
             self.qc_flags["alt_near_gpsalt"] = True
+        else:
+            self.qc_flags["alt_near_gpsalt"] = False
         self.qc_details["alt_near_gpsalt_max_diff"] = max_diff.values
 
     def check_qc(self, used_flags=None, check_ugly=True):
@@ -384,44 +388,81 @@ class QualityControl:
         return ds
 
     def add_alt_near_gpsalt_to_ds(self, ds):
+        if self.qc_flags.get("alt_near_gpsalt") is not None:
+            ds = ds.assign(
+                {"alt_near_gpsalt": np.byte(self.qc_flags.get("alt_near_gpsalt"))}
+            )
+            ds["alt_near_gpsalt"].attrs.update(
+                dict(
+                    long_name="maximal difference between alt and gpsalt",
+                    flag_values="0 1 ",
+                    flag_meaning="BAD GOOD",
+                )
+            )
+
+            ds = ds.assign(
+                {
+                    "alt_near_gpsalt_max_diff": self.qc_details.get(
+                        "alt_near_gpsalt_max_diff"
+                    )
+                }
+            )
+            ds["alt_near_gpsalt_max_diff"].attrs.update(
+                dict(
+                    long_name="maximal difference between alt and gpsalt",
+                    units="m",
+                )
+            )
+
+            ds = hx.add_ancillary_var(
+                ds, "alt", "alt_near_gpsalt alt_near_gpsalt_max_diff"
+            )
+        return ds
+
+    def replace_alt_var(self, ds, alt_var):
+        if alt_var == "alt":
+            replace_var = "gpsalt"
+        elif alt_var == "gpsalt":
+            replace_var = "alt"
+        else:
+            raise ValueError(f"{alt_var} is no known altitude variable.")
+
+        ds_out = ds.assign({alt_var: ds[replace_var]})
+        self.qc_flags.update({f"{alt_var}_values": False})
+
+        return ds_out
+
+    def add_replace_alt_var_to_ds(self, ds):
         ds = ds.assign(
-            {"alt_near_gpsalt": np.byte(self.qc_flags.get("alt_near_gpsalt"))}
+            {
+                f"{self.alt_dim}_values": np.byte(
+                    self.qc_flags.get(f"{self.alt_dim}_values", True)
+                )
+            }
         )
-        ds["alt_near_gpsalt"].attrs.update(
+        ds[f"{self.alt_dim}_values"].attrs.update(
             dict(
-                standard_name="alt_max_diff_gpsalt_quality_flag",
-                long_name="maximal difference between alt and gpsalt",
+                long_name=f"Values for {self.alt_dim} are present in raw data",
                 flag_values="0 1 ",
                 flag_meaning="BAD GOOD",
             )
         )
 
-        ds = ds.assign(
-            {
-                "alt_near_gpsalt_max_diff": self.qc_details.get(
-                    "alt_near_gpsalt_max_diff"
-                )
-            }
-        )
-        ds["alt_near_gpsalt_max_diff"].attrs.update(
-            dict(
-                long_name="maximal difference between alt and gpsalt",
-                units="m",
-            )
-        )
-
-        ds = hx.add_ancillary_var(ds, "alt", "alt_near_gpsalt alt_near_gpsalt_max_diff")
+        ds = hx.add_ancillary_var(ds, self.alt_dim, f"{self.alt_dim}_values")
         return ds
 
     def add_non_var_qc_to_ds(self, ds):
         ds_out = self.add_alt_near_gpsalt_to_ds(ds)
+        ds_out = self.add_replace_alt_var_to_ds(ds_out)
 
         return ds_out
 
     def add_sonde_flag_to_ds(self, ds, qc_name):
         if all(self.qc_flags.values()):
             qc_val = 1
-        elif any(self.qc_flags.values()):
+        elif any(self.qc_flags.values()) and (
+            self.qc_flags.get(f"{self.alt_dim}_values", True)
+        ):
             qc_val = 2
         else:
             qc_val = 0
