@@ -1063,7 +1063,7 @@ class Sonde:
         prep_l3 = self._prep_l3_ds
 
         for variable, Nvar in count_dict.items():
-            N_name = f"N{variable}"
+            N_name = f"{variable}_N_qc"
             N_attrs = dict(
                 long_name=f"Number of values per bin for {variable}",
                 units="1",
@@ -1088,13 +1088,12 @@ class Sonde:
             m = xr.where(Nvar > 0, x=2, y=0)
             m = xr.where(m_mask, x=1, y=m)
 
-            m_name = f"m{variable}"
+            m_name = f"{variable}_m_qc"
             m_attrs = {
                 "long_name": f"interp method for {variable}",
-                "units": "1",
-                "0": "no data",
-                "1": "no raw data, interpolated",
-                "2": "average over raw data",
+                "standard_name": "status_flag",
+                "flag_values": "0, 1, 2",
+                "flag_meanings": "no_data interpolated_no_raw_data average_over_raw_data",
             }
             prep_l3 = prep_l3.assign(
                 {
@@ -1114,27 +1113,38 @@ class Sonde:
         nm_vars = ["lat", "u", "p", "q", "theta"]
         if "lat in ds.variables":
             np.testing.assert_array_equal(
-                ds.mlat.values,
-                ds.mlon.values,
-                err_msg="mlat and mlon not identical",
+                ds.lat_m_qc.values,
+                ds.lon_m_qc.values,
+                err_msg="lat_m_qc and lon_m_qc not identical",
             )
         np.testing.assert_array_equal(
-            ds.mu.values, ds.mv.values, err_msg="mv and mu not identical"
+            ds.u_m_qc.values,
+            ds.v_m_qc.values,
+            err_msg="v_m_qc and u_m_qc not identical",
         )
         np.testing.assert_array_equal(
-            ds.Nu.values, ds.Nv.values, err_msg="Nv and Nu not identical"
+            ds.u_N_qc.values,
+            ds.v_N_qc.values,
+            err_msg="v_N_qc and u_N_qc not identical",
         )
 
         ds = (
             ds.drop_vars(
-                [f"N{var}" for var in ds.variables if var not in nm_vars],
+                [f"{var}_N_qc" for var in ds.variables if var not in nm_vars],
                 errors="ignore",
             )
             .drop_vars(
-                [f"m{var}" for var in ds.variables if var not in nm_vars],
+                [f"{var}_m_qc" for var in ds.variables if var not in nm_vars],
                 errors="ignore",
             )
-            .rename({"Nlat": "Ngpspos", "mlat": "mgpspos", "Nu": "Ngps", "mu": "mgps"})
+            .rename(
+                {
+                    "lat_N_qc": "gpspos_N_qc",
+                    "lat_m_qc": "gpspos_m_qc",
+                    "u_N_qc": "gps_N_qc",
+                    "u_m_qc": "gps_m_qc",
+                }
+            )
         )
 
         object.__setattr__(self, "_prep_l3_ds", ds)
@@ -1148,8 +1158,8 @@ class Sonde:
         mN_vars = ["gps", "gps", "q", "p", "theta", "gpspos", "gpspos"]
 
         for essential_var, mNvar in zip(essential_vars, mN_vars):
-            ds = hx.add_ancillary_var(ds, essential_var, "m" + mNvar)
-            ds = hx.add_ancillary_var(ds, essential_var, "N" + mNvar)
+            ds = hx.add_ancillary_var(ds, essential_var, mNvar + "_m_qc")
+            ds = hx.add_ancillary_var(ds, essential_var, mNvar + "_N_qc")
 
         object.__setattr__(self, "_prep_l3_ds", ds)
         return self
