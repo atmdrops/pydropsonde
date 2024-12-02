@@ -115,6 +115,7 @@ class TestGroup:
         sonde = Sonde(serial_id=s_id, launch_time=launch_time)
         sonde.add_flight_id(flight_id)
         sonde.add_platform_id(platform_id)
+        sonde.set_alt_dim("alt")
         self.sonde = sonde
 
     @pytest.fixture
@@ -131,9 +132,9 @@ class TestGroup:
         ds = xr.Dataset.from_dict(data_dict)
 
         object.__setattr__(self.sonde, "_prep_l3_ds", ds)
+        self.sonde.swap_alt_dimension()
 
         new_sonde = self.sonde.interpolate_alt(
-            alt_var="alt",
             interp_start=-5,
             interp_stop=36,
             interp_step=10,
@@ -160,7 +161,7 @@ class TestGroup:
         self.interp_sonde = new_sonde
 
     def test_N_m(self, sonde_interp, test_input, expected):
-        new_sonde = self.interp_sonde.get_N_m_values(alt_var="alt")
+        new_sonde = self.interp_sonde.get_N_m_values()
         print(new_sonde._prep_l3_ds)
         assert np.all(new_sonde._prep_l3_ds["Nq"].values == expected["Nq"])
         assert np.all(new_sonde._prep_l3_ds["mq"].values == expected["mq"])
