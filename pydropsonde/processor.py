@@ -120,6 +120,26 @@ class Sonde:
         return self
 
     def add_level_dir(self, l0_dir: str = None, l1_dir: str = None, l2_dir: str = None):
+        """
+        Sets the directory paths for different data levels (Level 0, Level 1, Level 2)
+        within the object. If specific directories are not provided, default paths
+        are generated based on the existing 'afile' attribute or by replacing
+        'Level_0' in the path with 'Level_1' or 'Level_2'.
+
+        Parameters:
+        - l0_dir (str, optional): The directory path for Level 0 data. If not provided,
+        it defaults to the directory of 'afile'.
+        - l1_dir (str, optional): The directory path for Level 1 data. If not provided,
+        it defaults to the Level 0 directory with 'Level_0' replaced by 'Level_1'.
+        Can include a placeholder '{flight_id}' for dynamic replacement.
+        - l2_dir (str, optional): The directory path for Level 2 data. If not provided,
+        it defaults to the Level 0 directory with 'Level_0' replaced by 'Level_2'.
+        Can include a placeholder '{flight_id}' for dynamic replacement.
+
+        Raises:
+        - ValueError: If 'afile' attribute is not present in the sonde and 'l0_dir'
+        is not provided.
+        """
         if l0_dir is None:
             if not hasattr(self, "afile"):
                 raise ValueError("No afile in sonde. Cannot continue")
@@ -138,6 +158,17 @@ class Sonde:
         object.__setattr__(self, "l2_dir", l2_dir)
 
     def add_broken(self, broken_sondes: dict):
+        """
+        Assigns a dictionary of broken sondes to this sonde.
+
+        This method sets the 'broken_sondes' attribute of this sonde
+        to the provided dictionary of broken sondes.
+
+        Parameters:
+        - broken_sondes (dict): A dictionary containing information about
+        broken sondes, where keys are identifiers and values are details
+        about the broken sondes.
+        """
         object.__setattr__(self, "broken_sondes", broken_sondes)
 
     def run_aspen(self, path_to_postaspenfile: str = None) -> None:
@@ -247,6 +278,20 @@ class Sonde:
         return self
 
     def add_aspen_history(self):
+        """
+        Append ASPEN processing history to the object's history attribute.
+
+        This method retrieves the ASPEN version and processing time from the `aspen_ds` attribute
+        of the sonde and appends a formatted history entry to the `history` attribute. The processing
+        time is expected to be in UTC format.
+
+        Returns:
+            self: The sonde object with updated history.
+
+        Raises:
+            AssertionError: If the processing time does not end with "UTC".
+        """
+
         history = getattr(self, "history", "")
         if hasattr(self.aspen_ds, "AspenVersion"):
             aspen_version = self.aspen_ds.AspenVersion
@@ -403,6 +448,23 @@ class Sonde:
         return self
 
     def remove_non_qc_sondes(self, used_flags=None, remove_ugly=True):
+        """
+        Removes sondes that do not pass quality control checks.
+
+        This method checks the quality control (QC) status of the sonde using the specified flags.
+        If the sonde passes the QC checks, it is retained; otherwise, it is filtered out.
+
+        Parameters:
+        - used_flags (optional): A list of flags to be used for the QC check. If not provided, default flags are used.
+        - remove_ugly (bool, optional): A flag indicating whether drop 'UGLY' sondes.
+        Defaults to True.
+
+        Returns:
+        - self: If the sonde passes the QC checks.
+        - None: If the sonde fails the QC checks
+
+        Prints a message indicating the sonde has been filtered out if it fails the QC checks.
+        """
         if self.qc.check_qc(used_flags, check_ugly=remove_ugly):
             return self
         else:
@@ -858,6 +920,13 @@ class Sonde:
             return None
 
     def create_prep_l3(self):
+        """
+        Assigns sonde_id coordinate to the  Level 2 dataset (`l2_ds`)  and sorts the dataset by time.
+        The resulting dataset is stored in`_prep_l3_ds` within the object.
+
+        Returns:
+            self: A sonde object with the updated `_prep_l3_ds` attribute.
+        """
         _prep_l3_ds = self.l2_ds.assign_coords(
             {"sonde_id": ("sonde_id", [self.l2_ds.sonde_id.values])}
         ).sortby("time")
@@ -870,6 +939,22 @@ class Sonde:
         interim_l3_filename: str = None,
         skip=False,
     ):
+        """
+        sets interim level 3 directory and filename.
+        Checks if an interim level 3 file already exists and sets a cont attribute in the sonde
+        to skip level 2 to level 3 processing if so.
+
+        Parameters:
+        - interim_l3_dir (str, optional): The directory for interim Level 3 files.
+        Defaults to a modified version of the Level 2 directory.
+        - interim_l3_filename (str, optional): The filename for the interim Level 3
+        file. Defaults to a formatted string using `sonde_id` and `version`.
+        - skip (bool, optional): If True, skips checking for the file's existence.
+        Defaults to False.
+
+        Returns:
+        - self: The sonde instance with updated attributes.
+        """
         if interim_l3_dir is None:
             interim_l3_dir = self.l2_dir.replace("Level_2", "Level_3_interim").replace(
                 self.flight_id, ""
@@ -920,6 +1005,19 @@ class Sonde:
         return self
 
     def recalc_rh_and_ta(self):
+        """
+        Recalculates relative humidity and temperature after the interpolation and
+        adds it to the interim level 3 dataset
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        self : object
+            Returns the sonde object with potential temperature and specific humidity added to the interim l3 dataset.
+        """
         ds = self._prep_l3_ds
         ds = hh.calc_T_from_theta(ds)
         ds = hh.calc_rh_from_q(ds)
@@ -927,6 +1025,18 @@ class Sonde:
         return self
 
     def add_iwv(self):
+        """
+        Calculates interpolated water vapor from the interim l3 dataset.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        self : object
+            Returns the sonde object with integrated water vapour added to the interim l3 dataset.
+        """
         ds = self._prep_l3_ds
         ds = hh.calc_iwv(ds)
 
@@ -935,6 +1045,18 @@ class Sonde:
         return self
 
     def add_thetas(self):
+        """
+        Calculates theta_e from the interim l3 dataset and adds it to the interim l3 dataset
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        self : object
+            Returns the sonde object with theta_e added to the interim l3 dataset.
+        """
         ds = self._prep_l3_ds
         ds = hh.calc_theta_e(ds)
         object.__setattr__(self, "_prep_l3_ds", ds)
@@ -942,6 +1064,19 @@ class Sonde:
         return self
 
     def add_wind(self):
+        """
+        Calculates wind direction and speed from the interim l3 dataset
+        and adds it to the interim l3 dataset
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        self : object
+            Returns the sonde object with wind direction and speed added to the interim l3 dataset.
+        """
         ds = self._prep_l3_ds
         ds = hh.calc_wind_dir_and_speed(ds)
         object.__setattr__(self, "_prep_l3_ds", ds)
@@ -1146,6 +1281,17 @@ class Sonde:
         return self
 
     def get_N_m_values(self):
+        """
+        Updates the internal dataset with the number of values per bin and interpolation method flags for each variable.
+
+        Attributes:
+            - alt_dim (str): The name of the altitude dimension.
+            _count_dict (dict): A dictionary containing variables and their corresponding count data arrays.
+            _prep_l3_ds (xarray.Dataset): The dataset to be updated with new variables.
+
+        Returns:
+            self: The updated sonde with the modified dataset.
+        """
         alt_dim = self.alt_dim
         count_dict = self._count_dict
         prep_l3 = self._prep_l3_ds
@@ -1197,6 +1343,16 @@ class Sonde:
         return self
 
     def remove_N_m_duplicates(self):
+        """
+        Removes duplicate N and m quality control variables (for variables from the same sensor).
+
+
+        Attributes:
+            _prep_l3_ds (xarray.Dataset): The dataset from which duplicates are removed and variables are renamed.
+
+        Returns:
+            self: The updated sonde with the modified dataset.
+        """
         ds = self._prep_l3_ds
         nm_vars = ["lat", "u", "p", "q", "theta"]
         if "lat in ds.variables":
@@ -1239,6 +1395,15 @@ class Sonde:
         return self
 
     def add_Nm_to_vars(self):
+        """
+        Adds ancillary N and m quality control variables to essential variables in the internal dataset.
+
+        Attributes:
+            _prep_l3_ds (xarray.Dataset): The dataset to which ancillary variables are added.
+
+        Returns:
+            self: The updated instance with the modified dataset.
+        """
         self.remove_N_m_duplicates()
         ds = self._prep_l3_ds
 
@@ -1320,6 +1485,12 @@ class Sonde:
         return self
 
     def make_attr_coordinates(self):
+        """
+        Reshape and assign coordinats as defined in helper.__init__ to the level 3 dataset.
+
+        Returns:
+            self: The instance with updated coordinates in `_prep_l3_ds`.
+        """
         ds = self._prep_l3_ds
         new_coords = {
             coord: ("sonde_id", np.reshape(ds[coord].values, (1,)), ds[coord].attrs)
@@ -1331,6 +1502,19 @@ class Sonde:
         return self
 
     def add_qc_to_interim_l3(self, keep=["sonde_qc"]):
+        """
+        Add quality control flags to the interim Level 3 dataset.
+
+
+        Args:
+            keep (list or str): A list of quality control flags to keep. If 'all',
+                                all available flags are kept. If a string, it is
+                                split by commas to form a list.
+                                Default: sonde_qc
+
+        Returns:
+            self: The instance with updated `_prep_l3_ds` including quality control flags.
+        """
         if keep is None:
             keep = []
         elif keep == "all":
@@ -1344,6 +1528,12 @@ class Sonde:
         return self
 
     def make_prep_interim(self):
+        """
+        Prepare the interim Level 3 dataset with global attributes and history.
+
+        Returns:
+            self: The instance with updated `_interim_l3_ds` including global attributes and history.
+        """
         ds = self._prep_l3_ds
         if hasattr(self, "global_attrs"):
             ds = ds.assign_attrs(self.global_attrs)
@@ -1359,6 +1549,12 @@ class Sonde:
         return self
 
     def save_interim_l3(self):
+        """
+        Save the interim Level 3 dataset to a specified directory.
+
+        Returns:
+            self: The instance after saving the `_interim_l3_ds`.
+        """
         ds = self._interim_l3_ds
         if hasattr(self, "broken_sondes"):
             if self.serial_id in self.broken_sondes:
@@ -1376,6 +1572,16 @@ class Sonde:
         return self
 
     def add_expected_coords(self):
+        """
+        Add missing expected coordinates to the dataset.
+
+        This method checks for any missing coordinates in the dataset (`_interim_l3_ds`)
+        by comparing it to the l3 coordinats as in helper.__init (`l3_coords`).
+        For each missing coordinate, it assigns a new coordinate filled with NaN values.
+
+        Returns:
+            self: The instance with the updated dataset containing all expected coordinates.
+        """
         ds = self._interim_l3_ds
         missing_coords = set(hh.l3_coords.keys()) - set(ds.coords)
         for coord in missing_coords:
@@ -1399,10 +1605,26 @@ class Gridded:
     global_attrs: dict
 
     def __post_init__(self):
+        """
+        Initializes the Gridded object, ensuring that global attributes are set to an empty dictionary if not provided.
+        """
         if self.global_attrs is None:
             self.global_attrs = {}
 
     def check_aspen_version(self):
+        """
+        Checks if all sondes have been processed with the same Aspen version.
+
+        Raises
+        ------
+        ValueError
+            If sondes have been processed with different Aspen versions.
+
+        Returns
+        -------
+        self : Gridded
+            Returns the Gridded object.
+        """
         list_of_l2_hist = [
             sonde._interim_l3_ds.attrs["history"].splitlines()[0]
             for sonde in self.sondes.values()
@@ -1415,6 +1637,19 @@ class Gridded:
         return self
 
     def check_pydropsonde_version(self):
+        """
+        Checks if all sondes have been processed with the same pydropsonde version.
+
+        Raises
+        ------
+        ValueError
+            If sondes have been processed with different pydropsonde versions.
+
+        Returns
+        -------
+        self : Gridded
+            Returns the Gridded object.
+        """
         list_of_l2_hist = [
             sonde._interim_l3_ds.attrs["history"].splitlines()[1]
             for sonde in self.sondes.values()
@@ -1427,6 +1662,14 @@ class Gridded:
         return self
 
     def add_history_to_ds(self):
+        """
+        Adds history information to the dataset by processing the history attribute of the first sonde.
+
+        Returns
+        -------
+        self : Gridded
+            Returns the Gridded object.
+        """
         first_sonde_history = list(self.sondes.values())[0]._interim_l3_ds.attrs[
             "history"
         ]
@@ -1445,11 +1688,27 @@ class Gridded:
         return self
 
     def add_alt_dim(self):
+        """
+        Adds altitude dimension from the first sonde to the Gridded object.
+
+        Returns
+        -------
+        self : Gridded
+            Returns the Gridded object.
+        """
         sonde = list(self.sondes.values())[0]
         self.alt_dim = sonde.alt_dim
         return self
 
     def check_broken(self):
+        """
+        Checks for broken sondes and adds them to the Gridded object if present.
+
+        Returns
+        -------
+        self : Gridded
+            Returns the Gridded object.
+        """
         sonde = list(self.sondes.values())[0]
         if hasattr(sonde, "broken_sondes"):
             self.broken_sondes = sonde.broken_sondes
@@ -1457,7 +1716,19 @@ class Gridded:
 
     def concat_sondes(self, sortby=None, coords=None):
         """
-        function to concatenate all sondes using the combination of all measurement times and launch times and add global attributes to resulting dataset
+        Concatenates all sondes using the combination of all measurement times and launch times, and adds global attributes to the resulting dataset.
+
+        Parameters
+        ----------
+        sortby : str, optional
+            The coordinate to sort the concatenated dataset by.
+        coords : dict, optional
+            Coordinates to assign to the dataset if missing.
+
+        Returns
+        -------
+        self : Gridded
+            Returns the Gridded object with concatenated sondes.
         """
         if sortby is None:
             sortby = list(hh.l3_coords.keys())[0]
@@ -1487,6 +1758,14 @@ class Gridded:
         return self
 
     def get_all_attrs(self):
+        """
+        Collects all unique attributes from the sondes and stores them in the Gridded object.
+
+        Returns
+        -------
+        self : Gridded
+            Returns the Gridded object with collected attributes.
+        """
         attrs = set()
         for sonde in list(self.sondes.values()):
             attrs = set(sonde.attrs) | attrs
@@ -1494,6 +1773,24 @@ class Gridded:
         return self
 
     def get_l3_dir(self, l3_dir: str = None):
+        """
+        Determines the Level 3 directory for the Gridded object.
+
+        Parameters
+        ----------
+        l3_dir : str, optional
+            The Level 3 directory to set.
+
+        Raises
+        ------
+        ValueError
+            If no sondes and no Level 3 directory are provided.
+
+        Returns
+        -------
+        self : Gridded
+            Returns the Gridded object with the Level 3 directory set.
+        """
         if l3_dir:
             self.l3_dir = l3_dir
         elif self.sondes is not None:
@@ -1508,6 +1805,19 @@ class Gridded:
         return self
 
     def get_l3_filename(self, l3_filename: str = None):
+        """
+        Sets the Level 3 filename for the Gridded object.
+
+        Parameters
+        ----------
+        l3_filename : str, optional
+            The Level 3 filename to set.
+
+        Returns
+        -------
+        self : Gridded
+            Returns the Gridded object with the Level 3 filename set.
+        """
         if l3_filename is None:
             l3_filename = hh.l3_filename
         else:
@@ -1557,6 +1867,19 @@ class Gridded:
         return self
 
     def add_l3_ds(self, l3_dir: str = None):
+        """
+        Adds the Level 3 dataset to the Gridded object.
+
+        Parameters
+        ----------
+        l3_dir : str, optional
+            The directory to load the Level 3 dataset from.
+
+        Returns
+        -------
+        self : Gridded
+            Returns the Gridded object with the Level 3 dataset added.
+        """
         if l3_dir is None:
             self.l3_ds = self._interim_l3_ds.copy()
         else:
@@ -1564,6 +1887,22 @@ class Gridded:
         return self
 
     def get_simple_circle_times_from_yaml(self, yaml_file: str = None):
+        """
+        Extracts circle times and related information from a simplified YAML file.
+        This can be used for intermediated processing until the full flight
+        segmentation is available
+
+        Parameters:
+        - yaml_file (str): The path to the YAML file containing flight information.
+
+        Returns:
+        - self: The instance of the class with updated attributes:
+        - circle_times: List of tuples containing start and end times for each segment.
+        - sonde_ids: List of sonde IDs for each segment.
+        - segment_ids: List of segment IDs.
+        - platform_ids: List of platform IDs.
+        - flight_ids: List of flight IDs.
+        """
         with open(yaml_file) as source:
             flightinfo = yaml.load(source, Loader=yaml.SafeLoader)
 
