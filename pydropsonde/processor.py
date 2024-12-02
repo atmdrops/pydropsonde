@@ -936,6 +936,13 @@ class Sonde:
             return None
 
     def create_interim_l3(self):
+        """
+        Assigns sonde_id coordinate to the  Level 2 dataset (`l2_ds`)  and sorts the dataset by time.
+        The resulting dataset is stored in`interim_l3_ds` within the object.
+
+        Returns:
+            self: A sonde object with the updated `interim_l3_ds` attribute.
+        """
         self.interim_l3_ds = self.l2_ds.assign_coords(
             {"sonde_id": ("sonde_id", [self.l2_ds.sonde_id.values])}
         ).sortby("time")
