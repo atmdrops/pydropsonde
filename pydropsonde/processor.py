@@ -1281,7 +1281,7 @@ class Sonde:
         Attributes:
             - alt_dim (str): The name of the altitude dimension.
             _count_dict (dict): A dictionary containing variables and their corresponding count data arrays.
-            _prep_l3_ds (xarray.Dataset): The dataset to be updated with new variables.
+            interim_l3_ds (xarray.Dataset): The dataset to be updated with new variables.
 
         Returns:
             self: The updated sonde with the modified dataset.
@@ -1392,7 +1392,7 @@ class Sonde:
         Adds ancillary N and m quality control variables to essential variables in the internal dataset.
 
         Attributes:
-            _prep_l3_ds (xarray.Dataset): The dataset to which ancillary variables are added.
+           interim_l3_ds (xarray.Dataset): The dataset to which ancillary variables are added.
 
         Returns:
             self: The updated instance with the modified dataset.
@@ -1503,7 +1503,7 @@ class Sonde:
                                 Default: sonde_qc
 
         Returns:
-            self: The instance with updated `_prep_l3_ds` including quality control flags.
+            self: The instance with updated `interim_l3_ds` including quality control flags.
         """
         if keep is None:
             keep = []
