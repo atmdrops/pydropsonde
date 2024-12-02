@@ -142,6 +142,11 @@ def get_global_attrs_from_config(config):
     except NoSectionError:
         print("No global attributes in config")
         global_attrs = {}
+    global_attrs.update(
+        dict(
+            featureType="trajectoryProfile",
+        )
+    )
 
     return global_attrs
 
