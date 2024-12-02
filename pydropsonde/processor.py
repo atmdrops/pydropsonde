@@ -755,7 +755,8 @@ class Sonde:
         if add_var_qc:
             for variable in self.qc.qc_vars:
                 ds = self.qc.add_variable_flags_to_ds(ds, variable, details=add_details)
-        ds = self.qc.add_non_var_qc_to_ds(ds)
+
+            ds = self.qc.add_non_var_qc_to_ds(ds)
         ds = self.qc.add_sonde_flag_to_ds(ds, "sonde_qc")
 
         object.__setattr__(self, "_interim_l2_ds", ds)
