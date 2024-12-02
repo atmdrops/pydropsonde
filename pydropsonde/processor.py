@@ -948,6 +948,18 @@ class Sonde:
         return self
 
     def set_alt_dim(self, alt_dim="alt"):
+        """
+        Set the altitude dimension attribute for the sonde
+
+        This method updates the `alt_dim` attribute of the `qc` and the sonde.
+        It allows for customization of the altitude dimension used as a dimension from level 3 onwards.
+
+        Parameters:
+        alt_dim (str): The name of the altitude dimension to set. Defaults to "alt".
+
+        Returns:
+        self: Returns the sonde instance
+        """
         self.qc.alt_dim = alt_dim
         object.__setattr__(
             self,
