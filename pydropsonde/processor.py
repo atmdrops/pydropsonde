@@ -1069,11 +1069,12 @@ class Sonde:
         interpolation_grid = np.arange(interp_start, interp_stop, interp_step)
         ds = self._prep_l3_ds
 
-        if not (self._prep_l3_ds[alt_dim].diff(dim=alt_dim) < 0).any():
+        if (ds[alt_dim].diff(dim=alt_dim) > 0).any():
             warnings.warn(
                 f"your altitude for sonde {self.serial_id
                 } on {self.launch_time} is not sorted."
             )
+            print(ds[alt_dim].values)
         if p_log:
             ds = ds.assign(p=(ds.p.dims, np.log(ds.p.values), ds.p.attrs))
         if method == "linear_interpolate":
