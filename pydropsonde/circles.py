@@ -3,6 +3,9 @@ import numpy as np
 import xarray as xr
 import tqdm
 import circle_fit as cf
+from moist_thermodynamics import constants
+
+import pydropsonde.helper.physics as hp
 
 _no_default = object()
 
@@ -158,10 +161,9 @@ class Circle:
             output_core_dims=[(), (), ()],  # Output dimensions as scalars
         )
 
-    def apply_fit2d(self, alt_var="alt"):
+    def apply_fit2d(self, alt_dim="alt"):
         variables = ["u", "v", "q", "ta", "p"]
         alt_attrs = self.circle_ds[alt_var].attrs
-
         assign_dict = {}
 
         for par in tqdm.tqdm(variables):
@@ -213,4 +215,109 @@ class Circle:
             ds = self.circle_ds.assign(assign_dict)
         ds[alt_var].attrs.update(alt_attrs)
         self.circle_ds = ds
+        return self
+
+    def get_divergence(self, alt_dim="alt"):
+        D = self.circle_ds.dudx + self.circle_ds.dvdy
+        D_attrs = {
+            "standard_name": "divergence_of_wind",
+            "long_name": "Area-averaged horizontal mass divergence",
+            "units": "m-1",
+        }
+        self.circle_ds = self.circle_ds.assign(
+            D=([alt_dim], D.values, D_attrs)
+        )
+        return self
+    
+    def get_vorticity(self, alt_dim="alt"):
+        vor = self.circle_ds.dvdx - self.circle_ds.dudy
+
+        vor_attrs = {
+            "standard_name": "atmosphere_relative_vorticity",
+            "long_name": "Area-averaged horizontal relative vorticity",
+            "units": "s-1",
+        }
+        self.circle_ds = self.circle_ds.assign(
+            vor=([alt_dim], vor.values, vor_attrs)
+        )
+        return self
+
+    def get_density(self, sonde_dim="sonde_id", alt_dim="alt"):
+        density = hp.density(
+            self.circle_ds.p,
+            self.circle_ds.ta,
+            constants.Rv,
+        )
+        density_attrs = {
+            "standard_name": "air_density",
+            "long_name": "Air density",
+            "units": "kg m-3",
+        }
+        mean_density_attrs = {
+            "standard_name": "mean_air_density",
+            "long_name": "Mean air density in circle",
+            "units": "kg m-3",
+        }
+        self.circle_ds = self.circle_ds.assign(
+            dict(
+                density=(self.circle_ds.ta.dims, density.values, density_attrs),
+                mean_density=(
+                    [alt_dim],
+                    density.mean(sonde_dim).values,
+                    mean_density_attrs,
+                ),
+            )
+        )
+        return self
+
+    def get_vertical_velocity(self, alt_dim="alt"):
+        D = self.circle_ds.D.where(~np.isnan(self.circle_ds.D), drop=True).sortby(
+            "alt"
+        )
+        zero_vel = xr.DataArray(data=[0], dims=alt_dim, coords={alt_dim: [0]})
+
+        height = xr.concat([zero_vel, D[alt_dim]], dim=alt_dim)
+        height_diff = height.diff(dim=alt_dim)
+
+        del_w = - D * height_diff.values
+
+        w_vel = del_w.cumsum(dim=alt_dim)
+        w_vel_attrs = {
+            "standard_name": "upward_air_velocity",
+            "long_name": "Area-averaged vertical air velocity",
+            "units": "m s-1",
+        }
+        self.circle_ds = self.circle_ds.assign(
+            w_vel=([alt_dim], w_vel.values, w_vel_attrs)
+        )
+
+        import matplotlib.pyplot as plt
+
+        plt.plot(self.circle_ds.w_vel)
+        plt.show()
+        print(self.circle_ds)
+        return self
+
+    def get_omega(self):
+        # Ensure density and vertical velocity are properly aligned and use correct units
+        rho = self.circle_ds.mean_density
+
+        w = self.circle_ds.w_vel
+
+        # Calculate omega using the correct formula: omega = - rho * g * w
+        g = constants.gravity_earth  # gravitational constant
+
+        # Compute omega (vertical pressure velocity)
+        p_vel = -(rho * g * w)
+
+        # Assign omega to the dataset with correct attributes
+        omega_attrs = {
+            "standard_name": "atmosphere_vertical_velocity",
+            "long_name": "Area-averaged atmospheric pressure velocity",
+            "units": str(p_vel.units),
+        }
+        self.circle_ds = self.circle_ds.assign(
+            omega=(self.circle_ds.w_vel.dims, p_vel.magnitude, omega_attrs)
+        )
+
         return self

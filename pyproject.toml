@@ -22,7 +22,6 @@ packages = [{include = "pydropsonde"}]
 [tool.poetry.dependencies]
 python = ">=3.10"
 PyYAML = "*"
-
 bottleneck = "*"
 circle-fit = "*"
 cmocean = "*"
@@ -42,6 +41,7 @@ tqdm = "*"
 xarray = "*"
 xhistogram = "*"
 zarr = "*"
+circle-fit = "*"
 
 [tool.poetry.group.test.dependencies]
 pytest = "*"
