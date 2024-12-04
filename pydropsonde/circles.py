@@ -18,6 +18,7 @@ class Circle:
     flight_id: str
     platform_id: str
     segment_id: str
+    alt_dim: str
 
     def drop_m_N_vars(self):
         """
@@ -124,8 +125,8 @@ class Circle:
             circle_lon=([], circle_x, circle_lon_attrs),
             circle_lat=([], circle_y, circle_lat_attrs),
             circle_diameter=([], circle_diameter, circle_diameter_attrs),
-            x=(["sonde_id", "alt"], delta_x.values, delta_x_attrs),
-            y=(["sonde_id", "alt"], delta_y.values, delta_y_attrs),
+            x=(["sonde_id", self.alt_dim], delta_x.values, delta_x_attrs),
+            y=(["sonde_id", self.alt_dim], delta_y.values, delta_y_attrs),
         )
 
         self.circle_ds = self.circle_ds.assign(new_vars)
@@ -158,8 +159,9 @@ class Circle:
             output_core_dims=[(), (), ()],  # Output dimensions as scalars
         )
 
-    def apply_fit2d(self, alt_var="alt"):
+    def apply_fit2d(self):
         variables = ["u", "v", "q", "ta", "p"]
+        alt_var = self.alt_dim
         alt_attrs = self.circle_ds[alt_var].attrs
 
         assign_dict = {}

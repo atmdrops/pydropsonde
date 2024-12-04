@@ -264,6 +264,7 @@ def create_and_populate_circle_object(
             flight_id=flight_id,
             platform_id=platform_id,
             segment_id=segment_id,
+            alt_dim=gridded.alt_dim,
         )
         circle_id = f"{flight_id}_{segment_id}"
         circles[circle_id] = circle
