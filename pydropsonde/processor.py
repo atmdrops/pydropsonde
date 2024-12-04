@@ -1335,10 +1335,12 @@ class Sonde:
         if keep is None:
             keep = []
         elif keep == "all":
-            keep = list(self.qc.qc_flags.keys()) + list(self.qc.qc_details.keys())
+            keep = [f"{var}_qc" for var in list(self.qc.qc_by_var.keys())] + list(
+                self.qc.qc_details.keys()
+            )
         elif isinstance(keep, str):
             keep = keep.split(",")
-        keep = keep + ["sonde_id"]
+        keep = keep + ["sonde_qc"]
         ds_qc = self._interim_l2_ds[keep].expand_dims("sonde_id")
         ds = xr.merge([self._prep_l3_ds, ds_qc])
         object.__setattr__(self, "_prep_l3_ds", ds)
