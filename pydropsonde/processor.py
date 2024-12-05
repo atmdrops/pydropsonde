@@ -1569,39 +1569,18 @@ class Gridded:
     def get_simple_circle_times_from_yaml(self, yaml_file: str = None):
         with open(yaml_file) as source:
             flightinfo = yaml.load(source, Loader=yaml.SafeLoader)
-
-        circle_times = []
-        sonde_ids = []
-        segment_ids = []
-        platform_ids = []
-        flight_ids = []
+        segments = []
         for c in flightinfo["segments"]:
-            circle_times.append([(np.datetime64(c["start"]), np.datetime64(c["end"]))])
-            segment_ids.append(c["segment_id"])
-            platform_ids.append(flightinfo["platform"])
-            flight_ids.append(flightinfo["flight_id"])
-
-            try:
-                ds_c = self.l3_ds.where(
-                    self.l3_ds["launch_time"] > np.datetime64(c["start"]),
-                    drop=True,
-                ).where(
-                    self.l3_ds["launch_time"] < np.datetime64(c["end"]),
-                    drop=True,
+            segments.append(
+                dict(
+                    segment_id=c["segment_id"],
+                    platform_id=flightinfo["platform"],
+                    flight_id=flightinfo["flight_id"],
+                    start=c["start"],
+                    end=c["end"],
                 )
-            except ValueError:
-                c_id = c["segment_id"]
-                print(f"No sondes for circle {c_id}. It is omitted")
-                sonde_ids.append([])
-            else:
-                print(ds_c.sonde_id.values)
-                sonde_ids.append(list(ds_c.sonde_id.values))
-
-        self.circle_times = circle_times
-        self.sonde_ids = sonde_ids
-        self.segment_ids = segment_ids
-        self.platform_ids = platform_ids
-        self.flight_ids = flight_ids
+            )
+        self.segments = segments
 
         return self
 
