@@ -11,17 +11,12 @@ The default-pipeline allows a change of the vertical coordinate. For example, to
 
 .. code-block:: ini
 
-        [processor.Sonde.remove_non_mono_incr_alt]
-        alt_var=gpsalt
-
-        [processor.Sonde.interpolate_alt]
-        alt_var=gpsalt
-
-        [processor.Sonde.get_N_m_values]
-        alt_var=gpsalt
-
-        [processor.Sonde.save_interim_l3]
+        [processor.Sonde.set_alt_dim]
         alt_dim=gpsalt
 
-        [processor.Gridded.write_l3]
-        alt_dim=gpsalt
+If the altitude dimension is replaced, all sondes that do not have values in that dimension are dropped. The user can choose to replace the former altitude dimension instead, by setting
+
+.. code-block:: ini
+
+        [processor.Sonde.replace_alt_dim]
+        drop_nan=False
