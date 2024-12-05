@@ -9,6 +9,7 @@ from .circles import Circle
 import configparser
 import inspect
 from tqdm import tqdm
+import numpy as np
 import os
 import xarray as xr
 
@@ -255,19 +256,22 @@ def create_and_populate_circle_object(
 
     circles = {}
 
-    for flight_id, platform_id, segment_id, sonde_ids in zip(
-        gridded.flight_ids, gridded.platform_ids, gridded.segment_ids, gridded.sonde_ids
-    ):
-        circle_ds = gridded.l3_ds.sel(sonde_id=sonde_ids)
+    for segment in gridded.segments:
+        circle_ds = gridded.l3_ds.where(
+            gridded.l3_ds["launch_time"] > np.datetime64(segment["start"]),
+            drop=True,
+        ).where(
+            gridded.l3_ds["launch_time"] < np.datetime64(segment["end"]),
+            drop=True,
+        )
         circle = Circle(
             circle_ds=circle_ds,
-            flight_id=flight_id,
-            platform_id=platform_id,
-            segment_id=segment_id,
+            flight_id=segment["flight_id"],
+            platform_id=segment["platform_id"],
+            segment_id=segment["segment_id"],
             alt_dim=gridded.alt_dim,
         )
-        circle_id = f"{flight_id}_{segment_id}"
-        circles[circle_id] = circle
+        circles[segment["segment_id"]] = circle
 
     return circles
 
