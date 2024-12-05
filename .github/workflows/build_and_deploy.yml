@@ -13,20 +13,17 @@ jobs:
         shell: bash -l {0}
     steps:
     - uses: actions/checkout@v4
-    - name: initialize conda
-      uses: conda-incubator/setup-miniconda@v3
+    - name: Set up Python
+      uses: actions/setup-python@v5
       with:
-        activate-environment: pydropsonde_env
-        auto-activate-base: false
-        use-mamba: true
-        miniforge-variant: Mambaforge
-        miniforge-version: latest
-    - name: install conda environment
+        python-version: '3.x'
+    - name: Install Python dependencies
+      uses: py-actions/py-dependency-install@v4
+      with:
+        path: "sphinx_requirements.txt"
+    - name: build docs
       run:
-          mamba env update -n pydropsonde_env -f environment.yaml
-    - name: Sphinx build
-      run:
-          sphinx-build -W docs/source docs/_build --keep-going
+        sphinx-build -W docs/source docs/_build --keep-going
     - name: Deploy to GitHub Pages
       uses: peaceiris/actions-gh-pages@v3
       if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
