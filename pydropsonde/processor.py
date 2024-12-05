@@ -10,11 +10,11 @@ import yaml
 import numpy as np
 import xarray as xr
 from xhistogram.xarray import histogram
-import glob
 
 import pydropsonde.helper as hh
 from pydropsonde.helper.quality import QualityControl
 import pydropsonde.helper.xarray_helper as hx
+import pydropsonde.helper.rawreader as rr
 from importlib.metadata import version
 
 __version__ = version("pydropsonde")
@@ -1569,88 +1569,40 @@ class Gridded:
     def get_simple_circle_times_from_yaml(self, yaml_file: str = None):
         with open(yaml_file) as source:
             flightinfo = yaml.load(source, Loader=yaml.SafeLoader)
-
-        circle_times = []
-        sonde_ids = []
-        segment_ids = []
-        platform_ids = []
-        flight_ids = []
+        segments = []
         for c in flightinfo["segments"]:
-            circle_times.append([(np.datetime64(c["start"]), np.datetime64(c["end"]))])
-            segment_ids.append(c["segment_id"])
-            platform_ids.append(flightinfo["platform"])
-            flight_ids.append(flightinfo["flight_id"])
-
-            try:
-                ds_c = self.l3_ds.where(
-                    self.l3_ds["launch_time"] > np.datetime64(c["start"]),
-                    drop=True,
-                ).where(
-                    self.l3_ds["launch_time"] < np.datetime64(c["end"]),
-                    drop=True,
+            segments.append(
+                dict(
+                    segment_id=c["segment_id"],
+                    platform_id=flightinfo["platform"],
+                    flight_id=flightinfo["flight_id"],
+                    start=c["start"],
+                    end=c["end"],
                 )
-            except ValueError:
-                c_id = c["segment_id"]
-                print(f"No sondes for circle {c_id}. It is omitted")
-                sonde_ids.append([])
-            else:
-                print(ds_c.sonde_id.values)
-                sonde_ids.append(list(ds_c.sonde_id.values))
-
-        self.circle_times = circle_times
-        self.sonde_ids = sonde_ids
-        self.segment_ids = segment_ids
-        self.platform_ids = platform_ids
-        self.flight_ids = flight_ids
+            )
+        self.segments = segments
 
         return self
 
-    def get_circle_info_from_yaml(self, yaml_dir: str = None):
-        allyamlfiles = sorted(glob.glob(yaml_dir + "*.yaml"))
-
-        circle_times = []
-        sonde_ids = []
-        flight_ids = []
-        platform_ids = []
-        segment_ids = []
-        segment_ids = []
-
-        for i in allyamlfiles:
-            with open(i) as source:
-                flightinfo = yaml.load(source, Loader=yaml.SafeLoader)
-            platform_ids.append(flightinfo.platform)
-            flight_ids.append(flightinfo["flight_id"])
-            circle_times.append(
-                [
-                    (c["start"], c["end"])
-                    for c in flightinfo["segments"]
-                    if "circle" in c["kinds"]
-                    if len(c["dropsondes"]["GOOD"]) >= 6
-                ]
-            )
-
-            sonde_ids.append(
-                [
-                    c["dropsondes"]["GOOD"]
-                    for c in flightinfo["segments"]
-                    if "circle" in c["kinds"]
-                    if len(c["dropsondes"]["GOOD"]) >= 6
-                ]
-            )
-
-            segment_ids.append(
-                [
-                    (c["segment_id"])
-                    for c in flightinfo["segments"]
-                    if "circle" in c["kinds"]
-                    if len(c["dropsondes"]["GOOD"]) >= 6
-                ]
-            )
-
-        self.circle_times = circle_times
-        self.sonde_ids = sonde_ids
-        self.segment_ids = segment_ids
-        self.platform_ids = platform_ids
-        self.flight_ids = flight_ids
+    def get_circle_times_from_segmentation(self, yaml_file: str = None):
+        if yaml_file is None:
+            warnings.warn("No segmentation file provided. No circle analysis done")
+            return None
+        segmentation = rr.get_flight_segmentation(yaml_file)
+        platform_ids = set(self.l3_ds.platform_id.values)
+        flight_ids = set(self.l3_ds.flight_id.values)
+        self.segments = [
+            {
+                **s,
+                "platform_id": platform_id,
+                "flight_id": flight_id,
+            }
+            for platform_id in platform_ids
+            for flight_id in flight_ids
+            for s in segmentation.get(platform_id, {})
+            .get(flight_id, {})
+            .get("segments", [])
+            if "circle" in s["kinds"]
+        ]
 
         return self

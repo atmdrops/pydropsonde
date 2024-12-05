@@ -6,11 +6,20 @@ from datetime import datetime
 import logging
 from typing import List
 import os
+import fsspec
+import yaml
 
 import numpy as np
 
 # create logger
 module_logger = logging.getLogger("pydropsonde.helper.rawreader")
+
+
+def get_flight_segmentation(yaml_file: str):
+    flight_segment_file = yaml_file
+    with fsspec.open(flight_segment_file) as f:
+        meta = yaml.safe_load(f)
+    return meta
 
 
 def check_launch_detect_in_afile(a_file: "str") -> bool:
