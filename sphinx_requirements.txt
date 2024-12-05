@@ -1,0 +1,7 @@
+nbsphinx
+sphinx
+sphinx-autodoc2
+sphinx-autobuild
+sphinx-book-theme
+sphinx-last-updated-by-git
+.
