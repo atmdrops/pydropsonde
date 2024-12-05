@@ -17,8 +17,8 @@ and create a respective python environment with ``conda`` from the base folder d
 
 This will install ``pydropsonde`` in development mode.
 
-Alternatively, you can directly install the package from github using ``pip``
+Alternatively, you can directly install the package with ``pip``
 
 .. code-block:: bash
 
-    pip install git+https://github.com/atmdrops/pydropsonde.git
+    pip install pydropsonde
