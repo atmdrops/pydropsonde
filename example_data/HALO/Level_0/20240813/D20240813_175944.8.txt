@@ -1,7 +1,7 @@
 AVAPS-T08 STA 234030010 240813 174906.26
-AVAPS-T08 COM            UTC     UTC       Air    Air     Rel   Wind   Wind   Vert      GPS        GPS     Geopoten GPS  Sonde  Sonde GPS Wind    GPS   
+AVAPS-T08 COM            UTC     UTC       Air    Air     Rel   Wind   Wind   Vert      GPS        GPS     Geopoten GPS  Sonde  Sonde GPS Wind    GPS
 AVAPS-T08 COM   Sonde    Date    Time     Press   Temp   Humid  Dir    Spd    Veloc  Longitude   Latitude  Altitude Wnd   RH1    RH2  Snd Error Altitude
-AVAPS-T08 COM    ID     yymmdd hhmmss.ss   (mb)  (degC)   (%)   (deg)  (m/s)  (m/s)    (deg)       (deg)      (m)   Sat   (%)    (%)  Sat (m/s)    (m)  
+AVAPS-T08 COM    ID     yymmdd hhmmss.ss   (mb)  (degC)   (%)   (deg)  (m/s)  (m/s)    (deg)       (deg)      (m)   Sat   (%)    (%)  Sat (m/s)    (m)
 AVAPS-T08 COM --------- ------ --------- ------- ------ ------ ------ ------ ------ ----------- ---------- -------- --- ------ ------ --- ----- --------
 AVAPS-D08 P00 234030010 240813 174912.00  857.51  20.45   9.85 150.72 240.62   0.27  -22.253904   6.583854 99999.00  10   9.85 999.00  10  0.19 13867.89
 AVAPS-D08 P10 234030010 240813 174912.25 9999.00  99.00 999.00 150.69 240.61   0.11  999.000000  99.000000 99999.00  10 999.00 999.00  10  0.14 99999.00
@@ -6664,7 +6664,7 @@ AVAPS-T08 COM Aircraft Type/ID:                  HALO, D ADLR
 AVAPS-T08 COM Launch Time (y,m,d,h,m,s):         2024-08-13, 17:59:44
 AVAPS-T08 COM Sounding Name:                     cs08
 AVAPS-T08 COM Sonde ID/Type/Rev/Built/Sensors:   234030010, 3, A2, 20231117T155916Z, RSS421,NEO-M8Q-0-10
-AVAPS-T08 COM Sonde Freq/Batt/Firmware/Shutoff:   404.20 MHz,  5.9 v,     2.11,   32768 sec, 
+AVAPS-T08 COM Sonde Freq/Batt/Firmware/Shutoff:   404.20 MHz,  5.9 v,     2.11,   32768 sec,
 AVAPS-T08 COM Sonde Baseline Errors (p,t,h1,h2):    0.0 mb,    0.0 C,     0.0 %,    0.0 %
 AVAPS-T08 COM Sonde Dynamic Errors  (p,t,h):        0.0 mb,    0.0 C,     0.0 %
 AVAPS-T08 COM Pre-launch Obs Data System/Time:   IWGADTS Format (IWG1), 17:59:44

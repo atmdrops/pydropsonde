@@ -7,7 +7,7 @@ Aircraft Type/ID:                  HALO, D ADLR
 Launch Time (y,m,d,h,m,s):         2024-08-13, 17:42:19
 Sounding Name:                     cs04
 Sonde ID/Type/Rev/Built/Sensors:   234030497, 3, A2, 20231116T132453Z, RSS421,NEO-M8Q-0-10
-Sonde Freq/Batt/Firmware/Shutoff:   402.60 MHz, -999.0 v,     2.11,   32768 sec, 
+Sonde Freq/Batt/Firmware/Shutoff:   402.60 MHz, -999.0 v,     2.11,   32768 sec,
 Sonde Baseline Errors (p,t,h1,h2):    0.0 mb,    0.0 C,     0.0 %,    0.0 %
 Sonde Dynamic Errors  (p,t,h):        0.0 mb,    0.0 C,     0.0 %
 Pre-launch Obs Data System/Time:   IWGADTS Format (IWG1), 17:42:18
@@ -135,13 +135,13 @@ Rcvr Default Freq (MHz) = 0
 Rcvr Sounding Freq (MHz) = 402.600006
 Rcvr Signal Strength (dBm) = -107.598678
 Spectrum Anlyzr Rcvr$ = NCAR 400 MHz Narrow Band
-Spec Analyzer Rcvr ID$ = 
+Spec Analyzer Rcvr ID$ =
 Spec Rcvr Firmware = 0
 Sweep Freq MIN (MHz) = 0
 Sweep Freq MAX (MHz) = 0
 Sweep Step Size (MHz) = 0
 FSK Demodulator$ = NCAR FSK Demod
-FSK Demod ID$ = 
+FSK Demod ID$ =
 FSK Demod Firmware = 0
 Sonde Interface$ = NCAR Sonde Interface
 Sonde Interface ID$ = 00_0000_00_0000_0
@@ -151,7 +151,7 @@ Test Sonde Firmware = 0
 Test Sonde Default Freq (MHz) = 0
 Test Sonde Power Level (1-63) = 63
 AVAPS Launcher$ = none
-Launcher ID$ = 
+Launcher ID$ =
 Launcher Firmware = 0
 Launcher Capacity = 0
 
@@ -191,4 +191,3 @@ Drop Name = cs04
 Standard Comments = Good Drop
 Operator Name = Theresa
 Operator Comments = none
-

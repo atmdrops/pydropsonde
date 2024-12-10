@@ -1,7 +1,7 @@
 AVAPS-T05 STA 234021432 240813 173228.03
-AVAPS-T05 COM            UTC     UTC       Air    Air     Rel   Wind   Wind   Vert      GPS        GPS     Geopoten GPS  Sonde  Sonde GPS Wind    GPS   
+AVAPS-T05 COM            UTC     UTC       Air    Air     Rel   Wind   Wind   Vert      GPS        GPS     Geopoten GPS  Sonde  Sonde GPS Wind    GPS
 AVAPS-T05 COM   Sonde    Date    Time     Press   Temp   Humid  Dir    Spd    Veloc  Longitude   Latitude  Altitude Wnd   RH1    RH2  Snd Error Altitude
-AVAPS-T05 COM    ID     yymmdd hhmmss.ss   (mb)  (degC)   (%)   (deg)  (m/s)  (m/s)    (deg)       (deg)      (m)   Sat   (%)    (%)  Sat (m/s)    (m)  
+AVAPS-T05 COM    ID     yymmdd hhmmss.ss   (mb)  (degC)   (%)   (deg)  (m/s)  (m/s)    (deg)       (deg)      (m)   Sat   (%)    (%)  Sat (m/s)    (m)
 AVAPS-T05 COM --------- ------ --------- ------- ------ ------ ------ ------ ------ ----------- ---------- -------- --- ------ ------ --- ----- --------
 AVAPS-D05 P10 234021432 240813 173235.00 9999.00  99.00 999.00 243.37 197.26  -0.06  999.000000  99.000000 99999.00  10 999.00 999.00  10  0.14 99999.00
 AVAPS-D05 P00 234021432 240813 173235.25  855.86  21.18  15.65 243.35 197.25   0.16  -22.764259   4.929655 99999.00  10  15.65 999.00  10  0.27 13868.14
@@ -7610,7 +7610,7 @@ AVAPS-T05 COM Aircraft Type/ID:                  HALO, D ADLR
 AVAPS-T05 COM Launch Time (y,m,d,h,m,s):         2024-08-13, 17:47:14
 AVAPS-T05 COM Sounding Name:                     cs05
 AVAPS-T05 COM Sonde ID/Type/Rev/Built/Sensors:   234021432, 3, A2, 20231116T154905Z, RSS421,NEO-M8Q-0-10
-AVAPS-T05 COM Sonde Freq/Batt/Firmware/Shutoff:   402.20 MHz,  5.8 v,     2.11,   32768 sec, 
+AVAPS-T05 COM Sonde Freq/Batt/Firmware/Shutoff:   402.20 MHz,  5.8 v,     2.11,   32768 sec,
 AVAPS-T05 COM Sonde Baseline Errors (p,t,h1,h2):    0.0 mb,    0.0 C,     0.0 %,    0.0 %
 AVAPS-T05 COM Sonde Dynamic Errors  (p,t,h):        0.0 mb,    0.0 C,     0.0 %
 AVAPS-T05 COM Pre-launch Obs Data System/Time:   IWGADTS Format (IWG1), 17:47:13

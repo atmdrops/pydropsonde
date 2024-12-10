@@ -1,7 +1,7 @@
 AVAPS-T07 STA 234020777 240813 174401.27
-AVAPS-T07 COM            UTC     UTC       Air    Air     Rel   Wind   Wind   Vert      GPS        GPS     Geopoten GPS  Sonde  Sonde GPS Wind    GPS   
+AVAPS-T07 COM            UTC     UTC       Air    Air     Rel   Wind   Wind   Vert      GPS        GPS     Geopoten GPS  Sonde  Sonde GPS Wind    GPS
 AVAPS-T07 COM   Sonde    Date    Time     Press   Temp   Humid  Dir    Spd    Veloc  Longitude   Latitude  Altitude Wnd   RH1    RH2  Snd Error Altitude
-AVAPS-T07 COM    ID     yymmdd hhmmss.ss   (mb)  (degC)   (%)   (deg)  (m/s)  (m/s)    (deg)       (deg)      (m)   Sat   (%)    (%)  Sat (m/s)    (m)  
+AVAPS-T07 COM    ID     yymmdd hhmmss.ss   (mb)  (degC)   (%)   (deg)  (m/s)  (m/s)    (deg)       (deg)      (m)   Sat   (%)    (%)  Sat (m/s)    (m)
 AVAPS-T07 COM --------- ------ --------- ------- ------ ------ ------ ------ ------ ----------- ---------- -------- --- ------ ------ --- ----- --------
 AVAPS-D07 P00 234020777 240813 174408.00  856.86  20.32  12.94 181.03 222.37   0.09  -22.102152   5.978251 99999.00  10  12.94 999.00  10  0.13 13860.32
 AVAPS-D07 P10 234020777 240813 174408.25 9999.00  99.00 999.00 181.00 222.34   0.15  999.000000  99.000000 99999.00  10 999.00 999.00  10  0.13 99999.00
@@ -6650,7 +6650,7 @@ AVAPS-T07 COM Aircraft Type/ID:                  HALO, D ADLR
 AVAPS-T07 COM Launch Time (y,m,d,h,m,s):         2024-08-13, 17:56:48
 AVAPS-T07 COM Sounding Name:                     cs07
 AVAPS-T07 COM Sonde ID/Type/Rev/Built/Sensors:   234020777, 3, A2, 20231116T161500Z, RSS421,NEO-M8Q-0-10
-AVAPS-T07 COM Sonde Freq/Batt/Firmware/Shutoff:   401.40 MHz,  5.8 v,     2.11,   32768 sec, 
+AVAPS-T07 COM Sonde Freq/Batt/Firmware/Shutoff:   401.40 MHz,  5.8 v,     2.11,   32768 sec,
 AVAPS-T07 COM Sonde Baseline Errors (p,t,h1,h2):    0.0 mb,    0.0 C,     0.0 %,    0.0 %
 AVAPS-T07 COM Sonde Dynamic Errors  (p,t,h):        0.0 mb,    0.0 C,     0.0 %
 AVAPS-T07 COM Pre-launch Obs Data System/Time:   IWGADTS Format (IWG1), 17:56:47
