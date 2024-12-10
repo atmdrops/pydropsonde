@@ -1,7 +1,7 @@
 AVAPS-T06 STA 231221570 240818 113818.57
-AVAPS-T06 COM            UTC     UTC       Air    Air     Rel   Wind   Wind   Vert      GPS        GPS     Geopoten GPS  Sonde  Sonde GPS Wind    GPS   
+AVAPS-T06 COM            UTC     UTC       Air    Air     Rel   Wind   Wind   Vert      GPS        GPS     Geopoten GPS  Sonde  Sonde GPS Wind    GPS
 AVAPS-T06 COM   Sonde    Date    Time     Press   Temp   Humid  Dir    Spd    Veloc  Longitude   Latitude  Altitude Wnd   RH1    RH2  Snd Error Altitude
-AVAPS-T06 COM    ID     yymmdd hhmmss.ss   (mb)  (degC)   (%)   (deg)  (m/s)  (m/s)    (deg)       (deg)      (m)   Sat   (%)    (%)  Sat (m/s)    (m)  
+AVAPS-T06 COM    ID     yymmdd hhmmss.ss   (mb)  (degC)   (%)   (deg)  (m/s)  (m/s)    (deg)       (deg)      (m)   Sat   (%)    (%)  Sat (m/s)    (m)
 AVAPS-T06 COM --------- ------ --------- ------- ------ ------ ------ ------ ------ ----------- ---------- -------- --- ------ ------ --- ----- --------
 AVAPS-D06 P10 231221570 240818 113827.00 9999.00  99.00 999.00 178.39 244.67  -0.18  999.000000  99.000000 99999.00  13 999.00 999.00  13  0.13 99999.00
 AVAPS-D06 P00 231221570 240818 113827.25  873.03  24.58  20.81 178.36 244.68  -0.25  -27.492579  12.037134 99999.00  13  20.81 999.00  13  0.13 13319.59
@@ -6311,7 +6311,7 @@ AVAPS-T06 COM Aircraft Type/ID:                  HALO, D ADLR
 AVAPS-T06 COM Launch Time (y,m,d,h,m,s):         2024-08-18, 11:49:03
 AVAPS-T06 COM Sounding Name:                     cn06
 AVAPS-T06 COM Sonde ID/Type/Rev/Built/Sensors:   231221570, 3, A2, 20230628T201030Z, RSS421,NEO-M8Q-0-10
-AVAPS-T06 COM Sonde Freq/Batt/Firmware/Shutoff:   404.20 MHz,  5.8 v,     2.11,   32768 sec, 
+AVAPS-T06 COM Sonde Freq/Batt/Firmware/Shutoff:   404.20 MHz,  5.8 v,     2.11,   32768 sec,
 AVAPS-T06 COM Sonde Baseline Errors (p,t,h1,h2):    0.0 mb,    0.0 C,     0.0 %,    0.0 %
 AVAPS-T06 COM Sonde Dynamic Errors  (p,t,h):        0.0 mb,    0.0 C,     0.0 %
 AVAPS-T06 COM Pre-launch Obs Data System/Time:   IWGADTS Format (IWG1), 11:49:03

@@ -1,7 +1,7 @@
 AVAPS-T02 STA 231050749 240818 104946.50
-AVAPS-T02 COM            UTC     UTC       Air    Air     Rel   Wind   Wind   Vert      GPS        GPS     Geopoten GPS  Sonde  Sonde GPS Wind    GPS   
+AVAPS-T02 COM            UTC     UTC       Air    Air     Rel   Wind   Wind   Vert      GPS        GPS     Geopoten GPS  Sonde  Sonde GPS Wind    GPS
 AVAPS-T02 COM   Sonde    Date    Time     Press   Temp   Humid  Dir    Spd    Veloc  Longitude   Latitude  Altitude Wnd   RH1    RH2  Snd Error Altitude
-AVAPS-T02 COM    ID     yymmdd hhmmss.ss   (mb)  (degC)   (%)   (deg)  (m/s)  (m/s)    (deg)       (deg)      (m)   Sat   (%)    (%)  Sat (m/s)    (m)  
+AVAPS-T02 COM    ID     yymmdd hhmmss.ss   (mb)  (degC)   (%)   (deg)  (m/s)  (m/s)    (deg)       (deg)      (m)   Sat   (%)    (%)  Sat (m/s)    (m)
 AVAPS-T02 COM --------- ------ --------- ------- ------ ------ ------ ------ ------ ----------- ---------- -------- --- ------ ------ --- ----- --------
 AVAPS-D02 P10 231050749 240818 104952.00 9999.00  99.00 999.00  61.96 259.18  -0.30  999.000000  99.000000 99999.00  12 999.00 999.00  12  0.12 99999.00
 AVAPS-D02 P00 231050749 240818 104952.25  872.11  28.48  28.00  61.93 259.24   0.15  -27.376433  13.692962 99999.00  12  28.00 999.00  12  0.13 13326.87
@@ -13789,7 +13789,7 @@ AVAPS-T02 COM Aircraft Type/ID:                  HALO, D ADLR
 AVAPS-T02 COM Launch Time (y,m,d,h,m,s):         2024-08-18, 11:30:55
 AVAPS-T02 COM Sounding Name:                     cn02
 AVAPS-T02 COM Sonde ID/Type/Rev/Built/Sensors:   231050749, 3, A2, 20230731T172304Z, RSS421,NEO-M8Q-0-10
-AVAPS-T02 COM Sonde Freq/Batt/Firmware/Shutoff:   402.40 MHz,  5.9 v,     2.11,   32768 sec, 
+AVAPS-T02 COM Sonde Freq/Batt/Firmware/Shutoff:   402.40 MHz,  5.9 v,     2.11,   32768 sec,
 AVAPS-T02 COM Sonde Baseline Errors (p,t,h1,h2):    0.0 mb,    0.0 C,     0.0 %,    0.0 %
 AVAPS-T02 COM Sonde Dynamic Errors  (p,t,h):        0.0 mb,    0.0 C,     0.0 %
 AVAPS-T02 COM Pre-launch Obs Data System/Time:   IWGADTS Format (IWG1), 11:30:54

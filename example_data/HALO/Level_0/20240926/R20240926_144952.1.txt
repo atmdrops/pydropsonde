@@ -237,7 +237,7 @@ Aircraft Type/ID:                  HALO, D ADLR
 Launch Time (y,m,d,h,m,s):         2024-09-26, 14:49:52
 Sounding Name:                     cse01
 Sonde ID/Type/Rev/Built/Sensors:   233340720, 3, A2, 20231010T171327Z, RSS421,NEO-M8Q-0-10
-Sonde Freq/Batt/Firmware/Shutoff:   401.60 MHz,  5.7 v,     2.11,   32768 sec, 
+Sonde Freq/Batt/Firmware/Shutoff:   401.60 MHz,  5.7 v,     2.11,   32768 sec,
 Sonde Baseline Errors (p,t,h1,h2):    0.0 mb,    0.0 C,     0.0 %,    0.0 %
 Sonde Dynamic Errors  (p,t,h):        0.0 mb,    0.0 C,     0.0 %
 Pre-launch Obs Data System/Time:   IWGADTS Format (IWG1), 14:49:52
