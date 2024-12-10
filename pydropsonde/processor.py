@@ -1069,7 +1069,7 @@ class Sonde:
         self : object
             Returns the sonde object with theta_e added to the interim l3 dataset.
         """
-        self.interim_l3_ds = hh.calc_theta_e(self.interim_l3_ds) 
+        self.interim_l3_ds = hh.calc_theta_e(self.interim_l3_ds)
 
         return self
 
