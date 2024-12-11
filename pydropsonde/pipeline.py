@@ -272,8 +272,11 @@ def create_and_populate_circle_object(
                 platform_id=segment["platform_id"],
                 segment_id=segment["segment_id"],
                 alt_dim=gridded.alt_dim,
+                clon=segment.get("clon"),
+                clat=segment.get("clat"),
+                crad=segment.get("radius"),
             )
-            circles[segment["segment_id"]] = circle
+        circles[segment["segment_id"]] = circle
 
     return circles
 
