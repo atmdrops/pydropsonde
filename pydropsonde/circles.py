@@ -25,12 +25,16 @@ class Circle:
         drop m and N variables from level 3 from circle dataset
         """
         ds = self.circle_ds
-        ds = ds.drop_vars(
-            [f"{var}_m_qc" for var in ds.variables],
-            errors="ignore",
-        ).drop_vars(
-            [f"{var}_N_qc" for var in ds.variables],
-            errors="ignore",
+        ds = (
+            ds.drop_vars(
+                [f"{var}_m_qc" for var in ds.variables],
+                errors="ignore",
+            )
+            .drop_vars(
+                [f"{var}_N_qc" for var in ds.variables],
+                errors="ignore",
+            )
+            .drop_vars(["gps_m_qc", "gps_N_qc", "gpspos_N_qc", "gpspos_m_qc"])
         )
         self.circle_ds = ds
         return self
