@@ -251,27 +251,28 @@ def create_and_populate_circle_object(
     gridded: Gridded, config: configparser.ConfigParser
 ) -> dict[Circle]:
     """
-    create circle objects for further analysis
+    Create circle objects for further analysis
     """
-
     circles = {}
 
     for segment in gridded.segments:
-        circle_ds = gridded.l3_ds.where(
-            gridded.l3_ds["launch_time"] > np.datetime64(segment["start"]),
-            drop=True,
-        ).where(
-            gridded.l3_ds["launch_time"] < np.datetime64(segment["end"]),
-            drop=True,
-        )
-        circle = Circle(
-            circle_ds=circle_ds,
-            flight_id=segment["flight_id"],
-            platform_id=segment["platform_id"],
-            segment_id=segment["segment_id"],
-            alt_dim=gridded.alt_dim,
-        )
-        circles[segment["segment_id"]] = circle
+        try:
+            circle_ds = gridded.l3_ds.where(
+                gridded.l3_ds.launch_time > np.datetime64(segment["start"]), drop=True
+            ).where(gridded.l3_ds.launch_time < np.datetime64(segment["end"]))
+
+            circle = Circle(
+                circle_ds=circle_ds,
+                flight_id=segment["flight_id"],
+                platform_id=segment["platform_id"],
+                segment_id=segment["segment_id"],
+                alt_dim=gridded.alt_dim,
+            )
+
+            circles[segment["segment_id"]] = circle
+
+        except ValueError:
+            print(f"No sondes in segment {segment}")
 
     return circles
 
