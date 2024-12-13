@@ -297,3 +297,32 @@ class Circle:
         }
         self.circle_ds = ds.assign(vor=(ds.dudx.dims, vor.values, vor_attrs))
         return self
+
+    def add_omega(self):
+        """
+        Calculate vertical pressure velocity as
+        \int div dp
+
+        This calculates the vertical pressure velocity as described in
+        Bony and Stevens 2019
+
+        Returns:
+            self: circle object with updated circle_ds
+        """
+        ds = self.circle_ds
+        alt_dim = self.alt_dim
+        div = ds.div.where(~np.isnan(ds.div), drop=True).sortby(alt_dim)
+        p = ds.mean_p.where(~np.isnan(ds.div), drop=True).sortby(alt_dim)
+        zero_vel = xr.DataArray(data=[0], dims=alt_dim, coords={alt_dim: [0]})
+        pres_diff = xr.concat([zero_vel, p.diff(dim=alt_dim)], dim=alt_dim)
+        del_omega = -div * pres_diff.values
+        omega = del_omega.cumsum(dim=alt_dim) * 0.01 * 60**2
+        omega_attrs = {
+            "standard_name": "atmosphere_vertical_velocity",
+            "long_name": "Area-averaged atmospheric pressure velocity",
+            "units": "hPa hr-1",
+        }
+        self.circle_ds = ds.assign(
+            dict(omega_p=(ds.div.dims, omega.values, omega_attrs))
+        )
+        return self

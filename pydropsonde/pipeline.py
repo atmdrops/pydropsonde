@@ -603,7 +603,13 @@ pipeline = {
     "calculate_circle_data": {
         "intake": "circles",
         "apply": iterate_Circle_method_over_dict_of_Circle_objects,
-        "functions": ["add_density", "apply_fit2d", "add_divergence", "add_vorticity"],
+        "functions": [
+            "add_density",
+            "apply_fit2d",
+            "add_divergence",
+            "add_vorticity",
+            "add_omega",
+        ],
         "output": "circles",
         "comment": "calculate circle products",
     },
