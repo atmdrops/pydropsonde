@@ -34,11 +34,14 @@ def mr2q(mr):
     return mr / (1 + mr)
 
 
-def density(p, T, R):
+def density(p, T, mr, eps=None):
     """
     returns density for given pressure, temperature and R
     """
-    return p / (R * T)  # water vapor density
+    Rd = constants.dry_air_gas_constant
+    if eps is None:
+        eps = constants.eps1
+    return eps * p * (1 + mr) / (Rd * T * (mr + eps))  # water vapor density
 
 
 def theta2ta(theta, P, qv=0.0, ql=0.0, qi=0.0):
