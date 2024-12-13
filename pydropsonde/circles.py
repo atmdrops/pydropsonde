@@ -252,3 +252,24 @@ class Circle:
             )
         )
         return self
+
+    def add_divergence(self):
+        """
+        Calculate and add the divergence to the circle dataset.
+
+        This method computes the area-averaged horizontal mass divergence.
+        The result is added to the dataset.
+
+        Returns:
+            self: circle object with updated circle_ds
+        """
+        ds = self.circle_ds
+        D = ds.dudx + ds.dvdy
+        D_attrs = {
+            "standard_name": "divergence_of_wind",
+            "long_name": "Area-averaged horizontal mass divergence",
+            "units": "s-1",
+        }
+        self.circle_ds = ds.assign(div=(ds.dudx.dims, D.values, D_attrs))
+        return self
+
