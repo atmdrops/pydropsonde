@@ -273,3 +273,22 @@ class Circle:
         self.circle_ds = ds.assign(div=(ds.dudx.dims, D.values, D_attrs))
         return self
 
+    def add_vorticity(self):
+        """
+        Calculate and add the vorticity to the circle dataset.
+
+        This method computes the area-averaged horizontal vorticity.
+        The result is added to the dataset.
+
+        Returns:
+            self: circle object with updated circle_ds
+        """
+        ds = self.circle_ds
+        vor = ds.dvdx - ds.dudy
+        vor_attrs = {
+            "standard_name": "atmosphere_relative_vorticity",
+            "long_name": "Area-averaged horizontal relative vorticity",
+            "units": "s-1",
+        }
+        self.circle_ds = ds.assign(vor=(ds.dudx.dims, vor.values, vor_attrs))
+        return self
