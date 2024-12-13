@@ -590,10 +590,17 @@ pipeline = {
         "output": "circles",
         "comment": "This step creates a dictionary of patterns by creating the pattern with the flight-phase segmentation file.",
     },
+    "prepare_circle_dataset": {
+        "intake": "circles",
+        "apply": iterate_Circle_method_over_dict_of_Circle_objects,
+        "functions": ["drop_m_N_vars", "get_xy_coords_for_circles"],
+        "output": "circles",
+        "comment": "prepare circle dataset for calculation",
+    },
     "calculate_circle_data": {
         "intake": "circles",
         "apply": iterate_Circle_method_over_dict_of_Circle_objects,
-        "functions": ["drop_m_N_vars", "get_xy_coords_for_circles", "apply_fit2d"],
+        "functions": ["add_density", "apply_fit2d"],
         "output": "circles",
         "comment": "calculate circle products",
     },

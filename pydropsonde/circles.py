@@ -3,6 +3,7 @@ import numpy as np
 import xarray as xr
 import tqdm
 import circle_fit as cf
+import pydropsonde.helper.physics as hp
 
 _no_default = object()
 
@@ -163,8 +164,9 @@ class Circle:
             output_core_dims=[(), (), ()],  # Output dimensions as scalars
         )
 
-    def apply_fit2d(self):
-        variables = ["u", "v", "q", "ta", "p"]
+    def apply_fit2d(self, variables=None):
+        if variables is None:
+            variables = ["u", "v", "q", "ta", "p", "density"]
         alt_var = self.alt_dim
         alt_attrs = self.circle_ds[alt_var].attrs
 
@@ -219,4 +221,34 @@ class Circle:
             ds = self.circle_ds.assign(assign_dict)
         ds[alt_var].attrs.update(alt_attrs)
         self.circle_ds = ds
+        return self
+
+    def add_density(self, sonde_dim="sonde_id", alt_dim="gpsalt"):
+        """
+        Calculate and add the density to the circle dataset.
+
+        This method computes each sondes density.
+        The result is added to the dataset.
+
+        Returns:
+            self: circle object with updated circle_ds
+        """
+        ds = self.circle_ds
+        assert ds.p.attrs["units"] == "Pa"
+        assert ds.ta.attrs["units"] == "K"
+        density = hp.density(
+            ds.p,
+            ds.ta,
+            hp.q2mr(ds.q),
+        )
+        density_attrs = {
+            "standard_name": "air_density",
+            "long_name": "Air density",
+            "units": "kg m-3",
+        }
+        self.circle_ds = ds.assign(
+            dict(
+                density=(ds.ta.dims, density.values, density_attrs),
+            )
+        )
         return self
