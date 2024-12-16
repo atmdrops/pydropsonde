@@ -38,7 +38,9 @@ class Circle:
                 [f"{var}_N_qc" for var in ds.variables],
                 errors="ignore",
             )
-            .drop_vars(["gps_m_qc", "gps_N_qc", "gpspos_N_qc", "gpspos_m_qc"])
+            .drop_vars(
+                ["gps_m_qc", "gps_N_qc", "gpspos_N_qc", "gpspos_m_qc"], errors="ignore"
+            )
         )
         self.circle_ds = ds
         return self

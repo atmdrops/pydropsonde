@@ -265,6 +265,7 @@ def create_and_populate_circle_object(
             )
         except ValueError:
             print(f"No data for segment {segment["segment_id"]}")
+
         else:
             circle = Circle(
                 circle_ds=circle_ds,
@@ -276,7 +277,7 @@ def create_and_populate_circle_object(
                 clat=segment.get("clat"),
                 crad=segment.get("radius"),
             )
-        circles[segment["segment_id"]] = circle
+            circles[segment["segment_id"]] = circle
 
     return circles
 

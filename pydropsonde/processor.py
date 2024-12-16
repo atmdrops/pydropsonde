@@ -1203,7 +1203,6 @@ class Sonde:
                 f"your altitude for sonde {self.serial_id
                 } on {self.launch_time} is not sorted."
             )
-            print(ds[alt_dim].values)
         if p_log:
             ds = ds.assign(p=(ds.p.dims, np.log(ds.p.values), ds.p.attrs))
         if method == "linear_interpolate":
@@ -1674,7 +1673,6 @@ class Gridded:
         new_hist = ""
         for line_nb, line in enumerate(first_sonde_history.splitlines()):
             split_line = line.split(" ", 1)
-            print(split_line[0])
             try:
                 datetime.fromisoformat(split_line[0])
             except ValueError:
