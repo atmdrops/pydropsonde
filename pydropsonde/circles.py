@@ -318,8 +318,8 @@ class Circle:
         del_omega = -div * pres_diff.values
         omega = del_omega.cumsum(dim=alt_dim) * 0.01 * 60**2
         omega_attrs = {
-            "standard_name": "atmosphere_vertical_velocity",
-            "long_name": "Area-averaged atmospheric pressure velocity",
+            "standard_name": "vertical_air_velocity_expressed_as_tendency_of_pressure",
+            "long_name": "Area-averaged atmospheric pressure velocity (omega)",
             "units": "hPa hr-1",
         }
         self.circle_ds = ds.assign(
