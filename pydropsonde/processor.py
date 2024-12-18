@@ -906,7 +906,7 @@ class Sonde:
             ds=ds,
             dir=l2_dir,
             filename=self.l2_filename,
-            object_dim="sonde_id",
+            object_dims=("sonde_id",),
             alt_dim="time",
         )
         return self
@@ -1556,7 +1556,7 @@ class Sonde:
             ds=ds,
             dir=self.interim_l3_dir,
             filename=self.interim_l3_filename,
-            object_dim="sonde_id",
+            object_dims=("sonde_id",),
             alt_dim=self.alt_dim,
         )
 
@@ -1593,6 +1593,7 @@ class Sonde:
 class Gridded:
     sondes: dict
     global_attrs: dict
+    circles: dict = None
 
     @property
     def l3_ds(self):
@@ -1753,6 +1754,104 @@ class Gridded:
         self.concat_sonde_ds = ds
         return self
 
+    def concat_circles(self, sortby=None):
+        if sortby is None:
+            sortby = list(hh.l4_coords.keys())[0]
+
+        list_of_circle_ds = [
+            circle.circle_ds.assign_coords(circle_id=circle_id).expand_dims("circle_id")
+            for circle_id, circle in self.circles.items()
+        ]
+
+        self._interim_l4_ds = xr.concat(list_of_circle_ds, dim="circle_id")
+
+        if sortby in self._interim_l4_ds.coords:
+            self._interim_l4_ds = self._interim_l4_ds.sortby(sortby)
+        else:
+            raise ValueError(f"Coordinate '{sortby}' not found in the dataset.")
+
+        return self
+
+    def concatenate_circles_with_ragged_structure(self, alt_dim="alt", sortby=None):
+        sonde_ids = []
+        circle_ids = []
+        altitudes = None
+        combined_vars = {}
+
+        for circle_id, circle in self.circles.items():
+            circle_ds = circle.circle_ds
+            print(circle_ds)
+
+            if circle_id not in circle_ids:
+                circle_ids.append(circle_id)
+
+            for sonde_id in circle_ds.sonde_id.values:
+                if sonde_id not in sonde_ids:
+                    sonde_ids.append(sonde_id)
+
+            if altitudes is None:
+                altitudes = circle_ds[alt_dim].values
+            else:
+                assert np.array_equal(
+                    altitudes, circle_ds[alt_dim].values
+                ), "Altitude dimensions must match"
+
+            for var_name, var_data in circle_ds.data_vars.items():
+                if var_name not in combined_vars:
+                    combined_vars[var_name] = []
+
+                combined_vars[var_name].append((circle_id, var_data))
+
+        global_sonde_ids = np.array(sonde_ids)
+        global_circle_ids = np.array(circle_ids)
+
+        final_vars = {}
+        for var_name, datasets in combined_vars.items():
+            if len(datasets[0][1].dims) == 2:
+                aligned_data = []
+                for circle_id, var_data in datasets:
+                    reindexed_data = xr.DataArray(
+                        var_data,
+                        coords={
+                            "sonde_id": var_data["sonde_id"],
+                            alt_dim: var_data[alt_dim],
+                        },
+                    ).reindex(sonde_id=global_sonde_ids, method=None)
+                    aligned_data.append(reindexed_data)
+
+                final_vars[var_name] = xr.concat(aligned_data, dim="circle_id")
+
+            elif len(datasets[0][1].dims) == 1:
+                if alt_dim in datasets[0][1].dims:  # (alt,)
+                    final_vars[var_name] = xr.DataArray(
+                        datasets[0][1].values,
+                        dims=[alt_dim],
+                        coords={alt_dim: altitudes},
+                    )
+                else:
+                    aligned_data = []
+                    for circle_id, var_data in datasets:
+                        reindexed_data = xr.DataArray(
+                            var_data,
+                            coords={"sonde_id": var_data["sonde_id"]},
+                        ).reindex(sonde_id=global_sonde_ids, method=None)
+                        aligned_data.append(reindexed_data)
+
+                    final_vars[var_name] = xr.concat(aligned_data, dim="circle_id")
+
+        combined_ds = xr.Dataset(
+            data_vars=final_vars,
+            coords={
+                "sonde_id": ("sonde_id", global_sonde_ids),
+                "circle_id": ("circle_id", global_circle_ids),
+                alt_dim: (alt_dim, altitudes),
+            },
+        )
+
+        self._interim_l4_ds = combined_ds
+
+        return self
+
     def get_all_attrs(self):
         """
         Collects all unique attributes from the sondes and stores them in the Gridded object.
@@ -1857,7 +1956,7 @@ class Gridded:
             ds=self.concat_sonde_ds,
             dir=l3_dir,
             filename=self.l3_filename,
-            object_dim="sonde_id",
+            object_dims=("sonde_id",),
             alt_dim=self.alt_dim,
         )
         return self
@@ -1937,4 +2036,49 @@ class Gridded:
             if "circle" in s["kinds"]
         ]
 
+        return self
+
+    def get_l4_dir(self, l4_dir: str = None):
+        if l4_dir:
+            self.l4_dir = l4_dir
+        elif self.circles is not None:
+            self.l4_dir = (
+                list(self.circles.values())[0]
+                .l2_dir.replace("Level_2", "Level_4")
+                .replace(list(self.circles.values())[0].flight_id, "")
+                .replace(list(self.circles.values())[0].platform_id, "")
+            )
+        else:
+            raise ValueError("No circles and no l4 directory given, cannot continue")
+        return self
+
+    def get_l4_filename(self, l4_filename: str = None):
+        if l4_filename is None:
+            l4_filename = hh.l4_filename
+        else:
+            l4_filename = l4_filename
+
+        self.l4_filename = l4_filename
+        return self
+
+    def write_l4(self, l4_dir: str = None, _interim_l4_ds: xr.Dataset = None):
+        if l4_dir is None:
+            l4_dir = self.l4_dir
+        ds = self._interim_l4_ds
+        history = getattr(self, "history", "")
+        history = (
+            history
+            + datetime.now(timezone.utc).isoformat()
+            + f" level4 concatenation with pydropsonde {__version__} \n"
+        )
+        object.__setattr__(self, "history", history)
+        ds.attrs.update({"history": history})
+
+        hx.write_ds(
+            ds=ds,
+            dir=l4_dir,
+            filename=self.l4_filename,
+            object_dims=("sonde_id", "circle_id"),
+            alt_dim="alt",
+        )
         return self
