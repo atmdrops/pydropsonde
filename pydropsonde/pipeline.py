@@ -506,6 +506,8 @@ pipeline = {
             "get_l2_variables",
             "set_alt_dim",
             "replace_alt_dim",
+            "get_flight_attributes",
+            "get_sonde_attributes",
             "set_qc_vars",
             "get_qc",
             #            "remove_non_qc_sondes",
@@ -517,8 +519,6 @@ pipeline = {
         "apply": iterate_Sonde_method_over_dict_of_Sondes_objects,
         "functions": [
             "convert_to_si",
-            "get_flight_attributes",
-            "get_sonde_attributes",
             "add_l2_attributes_to_interim_l2_ds",
             "add_sonde_id_variable",
             "add_platform_id_variable",
