@@ -76,6 +76,40 @@ class QualityControl:
         )
         return surface_ds.time[0].values
 
+    def profile_extent(
+        self,
+        ds,
+        alt_dim="gpsalt",
+        extent_min=8000,
+    ):
+        """
+        Calculate the profile extent quality control flag and details for a given variable.
+
+        This function calculates the altitude of the first measurement for a given variable and checks
+        that this is above a given ratio.
+        Adds the qc flag to the object.
+
+        Parameters:
+            self (object): The object containing the necessary attributes and methods.
+            variable (str): The name of the variable being processed.
+            ds (xarray.Dataset): The dataset containing the variable data.
+            alt_dim (str): The dimension name of the altitude coordinate.
+            extent_min (float): The minimum maximal height that is accepted for a good sonde
+
+        Returns:
+            None
+        """
+        variables = self.qc_vars
+        for variable in variables:
+            no_na = ds.dropna(dim="time", subset=[variable])[alt_dim].values
+            if no_na.size > 0:
+                max_alt = np.nanmax(no_na)
+            else:
+                max_alt = np.nan
+
+            self.qc_flags[f"{variable}_profile_extent"] = max_alt > extent_min
+            self.qc_details[f"{variable}_profile_extent_max"] = max_alt
+
     def profile_fullness(
         self,
         ds,
