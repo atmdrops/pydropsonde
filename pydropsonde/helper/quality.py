@@ -76,6 +76,28 @@ class QualityControl:
         )
         return surface_ds.time[0].values
 
+    def profile_extend(
+        self,
+        ds,
+        alt_dim="gpsalt",
+        extend_diff=1000,
+    ):
+        variables = self.qc_vars
+        for variable in variables:
+            drop_alt = ds.attrs["aircraft_msl_altitude_(m)"]
+            no_na = ds.dropna(dim="time", subset=[variable])[alt_dim].values
+            if no_na.size > 0:
+                max_alt = np.nanmax(no_na)
+            else:
+                max_alt = np.nan
+
+            max_diff = drop_alt - max_alt
+            if max_diff > extend_diff:
+                self.qc_flags[f"{variable}_profile_extend"] = False
+            else:
+                self.qc_flags[f"{variable}_profile_extend"] = True
+            self.qc_details[f"{variable}_profile_extend_max_diff"] = max_diff
+
     def profile_fullness(
         self,
         ds,
