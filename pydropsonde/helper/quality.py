@@ -80,7 +80,7 @@ class QualityControl:
         self,
         ds,
         alt_dim="gpsalt",
-        extend_diff=1000,
+        extend_ratio=0.1,
     ):
         variables = self.qc_vars
         for variable in variables:
@@ -92,7 +92,7 @@ class QualityControl:
                 max_alt = np.nan
 
             max_diff = drop_alt - max_alt
-            if max_diff > extend_diff:
+            if max_diff > drop_alt * float(extend_ratio):
                 self.qc_flags[f"{variable}_profile_extend"] = False
             else:
                 self.qc_flags[f"{variable}_profile_extend"] = True
