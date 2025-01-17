@@ -464,7 +464,12 @@ class Sonde:
             contains qc functions in the QualityControl class that should be run on the qc_variables. Can be a list of strings or a string with comma-separated variable names
         """
         if run_qc is None:
-            run_qc = ["profile_fullness", "near_surface_coverage", "alt_near_gpsalt"]
+            run_qc = [
+                "profile_fullness",
+                "near_surface_coverage",
+                "alt_near_gpsalt",
+                "low_physics",
+            ]
         elif isinstance(run_qc, str):
             run_qc = run_qc.split(",")
         ds = self.interim_l2_ds
@@ -1051,8 +1056,9 @@ class Sonde:
         self : object
             Returns the sonde object with integrated water vapour added to the interim l3 dataset.
         """
-
-        self.interim_l3_ds = hh.calc_iwv(self.interim_l3_ds)
+        self.interim_l3_ds = hh.calc_iwv(
+            self.interim_l3_ds, qc_var=["rh_qc", "ta_qc", "low_physics"]
+        )
 
         return self
 
@@ -1504,17 +1510,43 @@ class Sonde:
         Returns:
             self: The instance with updated `interim_l3_ds` including quality control flags.
         """
+        ds = self.interim_l3_ds
         if keep is None:
             keep = []
         elif keep == "all":
-            keep = [f"{var}_qc" for var in list(self.qc.qc_by_var.keys())] + list(
-                self.qc.qc_details.keys()
+            keep = (
+                [f"{var}_qc" for var in list(self.qc.qc_by_var.keys())]
+                + list(self.qc.qc_details.keys())
+                + ["low_physics", "alt_near_gpsalt"]
             )
-        elif isinstance(keep, str):
-            keep = keep.split(",")
-        keep = keep + ["sonde_id"]
+        else:
+            for var in ds.variables:
+                ds[var].attrs.pop("ancillary_variables", None)
+            if keep is None:
+                keep = []
+            elif keep == "var_flags":
+                keep = [f"{var}_qc" for var in list(self.qc.qc_by_var.keys())] + [
+                    "sonde_qc"
+                ]
+                for var in self.qc.qc_by_var.keys():
+                    ds = hx.add_ancillary_var(ds, var, var + "_qc")
+                if (not np.isin("q", self.qc.qc_vars)) and np.isin(
+                    "rh", self.qc.qc_vars
+                ):
+                    ds = hx.add_ancillary_var(ds, "q", "rh_qc")
+                if (not np.isin("theta", self.qc.qc_vars)) and np.isin(
+                    "ta", self.qc.qc_vars
+                ):
+                    ds = hx.add_ancillary_var(ds, "theta", "ta_qc")
+
+            else:
+                warnings.warn(
+                    "your keep argument for the qc flags in level 3 is not valid, no qc added"
+                )
+                keep = []
+        keep = keep + ["sonde_qc"]
         ds_qc = self.interim_l2_ds[keep].expand_dims("sonde_id")
-        self.interim_l3_ds = xr.merge([self.interim_l3_ds, ds_qc])
+        self.interim_l3_ds = xr.merge([ds, ds_qc])
 
         return self
 

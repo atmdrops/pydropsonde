@@ -222,6 +222,20 @@ class QualityControl:
             self.qc_flags["alt_near_gpsalt"] = False
         self.qc_details["alt_near_gpsalt_max_diff"] = max_diff.values
 
+    def low_physics(self, ds, alt_dim="gpsalt"):
+        ds_check = ds.where(ds[alt_dim] < 100, drop=True)
+        if ds_check.sizes["time"] == 0:
+            self.qc_flags["low_physics"] = False
+            self.qc_details["low_physics_rh_min"] = np.nan
+            self.qc_details["low_physics_ta_min"] = np.nan
+        else:
+            if (ds_check.rh.min() < 30) or (ds_check.ta.min() < 20):
+                self.qc_flags["low_physics"] = False
+            else:
+                self.qc_flags["low_physics"] = True
+            self.qc_details["low_physics_rh_min"] = ds_check.rh.min().values
+            self.qc_details["low_physics_ta_min"] = ds_check.ta.min().values
+
     def check_qc(self, used_flags=None, check_ugly=True):
         """
         check if any qc check has failed.
@@ -371,19 +385,21 @@ class QualityControl:
             )
         return self.qc_by_var.get(variable).get("qc_details"), attrs
 
-    def add_variable_flags_to_ds(self, ds, variable, details=True):
+    def add_variable_flags_to_ds(self, ds, variable, add_to=None, details=True):
+        if add_to is None:
+            add_to = variable
         name = f"{variable}_qc"
         value, attrs = self.get_byte_array(variable)
         ds = ds.assign({name: value})
         ds[name].attrs.update(attrs)
-        ds = hx.add_ancillary_var(ds, variable, name)
+        ds = hx.add_ancillary_var(ds, add_to, name)
         # get detail
         if details:
             qc_dict, attrs = self.get_details(variable)
             for key in list(qc_dict.keys()):
                 ds = ds.assign({key: qc_dict.get(key)})
                 ds[key].attrs.update(attrs.get(key))
-                ds = hx.add_ancillary_var(ds, variable, key)
+                ds = hx.add_ancillary_var(ds, add_to, key)
 
         return ds
 
@@ -416,6 +432,56 @@ class QualityControl:
 
             ds = hx.add_ancillary_var(
                 ds, "alt", "alt_near_gpsalt alt_near_gpsalt_max_diff"
+            )
+        return ds
+
+    def add_low_physic_flags_to_ds(self, ds):
+        if self.qc_flags.get("low_physics") is not None:
+            ds = ds.assign(
+                {"low_physics": np.byte(not self.qc_flags.get("low_physics"))}
+            )
+            ds["low_physics"].attrs.update(
+                dict(
+                    long_name="low physics",
+                    flag_values="0 1 ",
+                    flag_meaning="GOOD BAD",
+                )
+            )
+
+            ds = ds.assign(
+                {"low_physics_rh_min": self.qc_details.get("low_physics_rh_min")}
+            )
+            ds["low_physics_rh_min"].attrs.update(
+                dict(
+                    long_name="minimal relative humidity below 100m",
+                    units="%",
+                )
+            )
+
+            ds = ds.assign(
+                {"low_physics_ta_min": self.qc_details.get("low_physics_ta_min")}
+            )
+            ds["low_physics_ta_min"].attrs.update(
+                dict(
+                    long_name="minimal temperature below 100m",
+                    units="degreeC",
+                )
+            )
+
+            ds = hx.add_ancillary_var(
+                ds,
+                "sonde_id",
+                "low_physics",
+            )
+            ds = hx.add_ancillary_var(
+                ds,
+                "rh",
+                "low_physics_rh_min",
+            )
+            ds = hx.add_ancillary_var(
+                ds,
+                "ta",
+                "low_physics_ta_min",
             )
         return ds
 
@@ -500,6 +566,7 @@ class QualityControl:
         """
         ds_out = self.add_alt_near_gpsalt_to_ds(ds)
         ds_out = self.add_replace_alt_var_to_ds(ds_out)
+        ds_out = self.add_low_physic_flags_to_ds(ds_out)
 
         return ds_out
 
