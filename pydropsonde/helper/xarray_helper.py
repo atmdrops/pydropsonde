@@ -118,7 +118,7 @@ def open_dataset(path):
         raise ValueError(f"Could not open: unrecognized filetype for {path}")
 
 
-def to_file(ds, path, filetype, overwrite=False, **kwargs):
+def to_file(ds, path, filetype, overwrite=True, **kwargs):
     """
     write dataset to file depending on filetype.
     """
@@ -129,7 +129,7 @@ def to_file(ds, path, filetype, overwrite=False, **kwargs):
             ds.to_zarr(path, **kwargs)
         except ContainsGroupError:
             if overwrite:
-                ds.to_zarr(path, mode="w", **kwargs)
+                ds.to_zarr(path, zarr_format=2, mode="w", **kwargs)
             else:
                 warnings.warn(f"file {path} already exists. no new file written")
     else:
