@@ -222,7 +222,7 @@ class QualityControl:
             self.qc_flags["alt_near_gpsalt"] = False
         self.qc_details["alt_near_gpsalt_max_diff"] = max_diff.values
 
-    def low_physics(self, ds, alt_dim="gpsalt"):
+    def low_physics(self, ds, rh_min=0.3, ta_min=293.15, alt_dim="gpsalt"):
         """
         Checks that the temperature and relative humidity in the lowest 100m in a dataset
         are above a certain value
@@ -247,8 +247,8 @@ class QualityControl:
             self.qc_details["low_physics_rh_min"] = np.nan
             self.qc_details["low_physics_ta_min"] = np.nan
         else:
-            self.qc_flags["low_physics"] = (ds_check.rh.min() > 30) and (
-                ds_check.ta.min() > 20
+            self.qc_flags["low_physics"] = (ds_check.rh.min() > float(rh_min)) and (
+                ds_check.ta.min() > float(ta_min)
             )
             self.qc_details["low_physics_rh_min"] = ds_check.rh.min().values
             self.qc_details["low_physics_ta_min"] = ds_check.ta.min().values
