@@ -1921,107 +1921,126 @@ class Gridded:
         self.circles = circles
         return self
 
+    # def concat_circles(self, sortby=None):
+    #     count = []
+    #     data = []
+    #     circle_ids = []
+    #     circle_indices = np.full(len(self.circles), np.nan)
+
+    #     if sortby is None:
+    #         sortby = list(hh.l4_coords.keys())[0]
+
+    #     for circle_index, (circle_id, circle) in enumerate(self.circles.items()):
+    #         circle_ds = circle.circle_ds
+
+    #         if "launch_time" in circle_ds:
+    #             circle_ds = circle_ds.rename({"launch_time": "sonde_time"})
+    #         else:
+    #             raise ValueError(
+    #                 f"Coordinate 'launch_time' not found in circle {circle_id}."
+    #             )
+
+    #         circle_ds_sorted = circle_ds.sortby("sonde_time")
+    #         sonde = np.arange(1, len(circle_ds_sorted.sonde_id) + 1)
+
+    #         circle_ds_sorted = circle_ds_sorted.assign_coords(sonde=("sonde_id", sonde))
+    #         circle_ds_sorted = circle_ds_sorted.swap_dims({"sonde_id": "sonde"})
+
+    #         print("circle ds", circle_ds_sorted)
+    #         print()
+
+    #         count.append(len(circle_ds_sorted.sonde))
+    #         data.append(circle_ds_sorted)
+    #         circle_ids.append(circle_id)
+    #         circle_indices[circle_index] = int(circle_index + 1)
+
+    #     concatenated_ds = xr.concat(data, dim="circle_id")
+    #     circle_ds_sorted = circle_ds_sorted.assign_coords(circle=("circle_id", circle_indices))
+    #     circle_ds_sorted = circle_ds_sorted.swap_dims({"circle_id": "circle"})
+    #     print("concatenated")
+    #     print(circle_ds_sorted)
+
+    #     concatenated_ds = concatenated_ds.assign_coords(
+    #         circle_id=("circle", circle_ids), count=("circle", np.array(count))
+    #     )
+    #     concatenated_ds.attrs["sample_dimension"] = "sonde"
+
+    #     vars_to_drop_circle_id = [
+    #         var
+    #         for var in concatenated_ds.variables
+    #         if ({"sonde", "alt"} <= set(concatenated_ds[var].dims))
+    #         or ({"circle", "sonde"} <= set(concatenated_ds[var].dims))
+    #     ]
+
+    #     for var in vars_to_drop_circle_id:
+    #         print(var, concatenated_ds[var])
+    #         concatenated_ds[var] = concatenated_ds[var].isel(circle=0, drop=True)
+
+    #     self._interim_l4_ds = concatenated_ds
+    #     print("concat", concatenated_ds)
+
+    #     return self
+
     def concat_circles(self, sortby=None):
+        count = []
+        data = []
+        circle_ids = []
+        circle_indices = []
+
         if sortby is None:
             sortby = list(hh.l4_coords.keys())[0]
 
-        list_of_circle_ds = [
-            circle.circle_ds.assign_coords(circle_id=circle_id).expand_dims("circle_id")
-            for circle_id, circle in self.circles.items()
-        ]
-
-        self._interim_l4_ds = xr.concat(list_of_circle_ds, dim="circle_id")
-
-        if sortby in self._interim_l4_ds.coords:
-            self._interim_l4_ds = self._interim_l4_ds.sortby(sortby)
-        else:
-            raise ValueError(f"Coordinate '{sortby}' not found in the dataset.")
-
-        return self
-
-    def concatenate_circles_with_ragged_structure(self, alt_dim="alt", sortby=None):
-        sonde_ids = []
-        circle_ids = []
-        altitudes = None
-        combined_vars = {}
-
+        circle_index = 1
         for circle_id, circle in self.circles.items():
             circle_ds = circle.circle_ds
 
-            if circle_id not in circle_ids:
-                circle_ids.append(circle_id)
+            if "launch_time" in circle_ds:
+                circle_ds = circle_ds.swap_dims({"sonde_id": "launch_time"})
+                circle_ds_sorted = circle_ds.sortby("launch_time")
+                circle_ds_sorted = circle_ds_sorted.rename(
+                    {"launch_time": "sonde_time"}
+                )
 
-            for sonde_id in circle_ds.sonde_id.values:
-                if sonde_id not in sonde_ids:
-                    sonde_ids.append(sonde_id)
-
-            if altitudes is None:
-                altitudes = circle_ds[alt_dim].values
             else:
-                assert np.array_equal(
-                    altitudes, circle_ds[alt_dim].values
-                ), "Altitude dimensions must match"
+                raise ValueError(
+                    f"Coordinate 'launch_time' not found in circle_id {circle_id}."
+                )
 
-            for var_name, var_data in circle_ds.data_vars.items():
-                if var_name not in combined_vars:
-                    combined_vars[var_name] = []
+            count.append(len(circle_ds_sorted.sonde_time))
+            data.append(circle_ds_sorted)
+            circle_ids.append(circle_id)
+            circle_indices.append(circle_index)
+            circle_index += 1
 
-                combined_vars[var_name].append((circle_id, var_data))
-
-        global_sonde_ids = np.array(sonde_ids)
-        global_circle_ids = np.array(circle_ids)
-
-        final_vars = {}
-        for var_name, datasets in combined_vars.items():
-            if len(datasets[0][1].dims) == 2:
-                aligned_data = []
-                for circle_id, var_data in datasets:
-                    reindexed_data = xr.DataArray(
-                        var_data,
-                        coords={
-                            "sonde_id": var_data["sonde_id"],
-                            alt_dim: var_data[alt_dim],
-                        },
-                    ).reindex(sonde_id=global_sonde_ids, method=None)
-                    aligned_data.append(reindexed_data)
-
-                final_vars[var_name] = xr.concat(aligned_data, dim="circle_id")
-
-            elif len(datasets[0][1].dims) == 1:
-                if alt_dim in datasets[0][1].dims:  # (alt,)
-                    aligned_data = []
-                    for circle_id, var_data in datasets:
-                        # Create a DataArray with an explicit "circle_id" dimension
-                        reindexed_data = xr.DataArray(
-                            var_data.values,
-                            dims=[alt_dim],
-                            coords={alt_dim: var_data[alt_dim].values},
-                        ).expand_dims(circle_id=[circle_id])
-                        aligned_data.append(reindexed_data)
-
-                    # Concatenate along "circle_id"
-                    final_vars[var_name] = xr.concat(aligned_data, dim="circle_id")
-                else:
-                    aligned_data = []
-                    for circle_id, var_data in datasets:
-                        reindexed_data = xr.DataArray(
-                            var_data,
-                            coords={"sonde_id": var_data["sonde_id"]},
-                        ).reindex(sonde_id=global_sonde_ids, method=None)
-                        aligned_data.append(reindexed_data)
-
-                    final_vars[var_name] = xr.concat(aligned_data, dim="circle_id")
-
-        combined_ds = xr.Dataset(
-            data_vars=final_vars,
-            coords={
-                "sonde_id": ("sonde_id", global_sonde_ids),
-                "circle_id": ("circle_id", global_circle_ids),
-                alt_dim: (alt_dim, altitudes),
-            },
+        concatenated_ds = xr.concat(data, dim="circle_id")
+        concatenated_ds = concatenated_ds.assign_coords(
+            circle_id=("circle_id", circle_ids),
+            circle=("circle_id", circle_indices),
+            count=("circle_id", np.array(count)),
         )
+        concatenated_ds = concatenated_ds.swap_dims({"circle_id": "circle"})
+        concatenated_ds = concatenated_ds.reset_coords(["circle_id"])
 
-        self._interim_l4_ds = combined_ds
+        sonde_indices = np.arange(1, len(concatenated_ds.sonde_time) + 1)
+        concatenated_ds = concatenated_ds.assign_coords(
+            sonde=("sonde_time", sonde_indices)
+        )
+        concatenated_ds = concatenated_ds.swap_dims({"sonde_time": "sonde"})
+        concatenated_ds = concatenated_ds.reset_coords(["sonde_id"])
+
+        concatenated_ds.attrs["sample_dimension"] = "sonde"
+
+        vars_to_drop_circle_id = [
+            var
+            for var in concatenated_ds.variables
+            if ({"sonde", "alt"} <= set(concatenated_ds[var].dims))
+            or ({"circle", "sonde"} <= set(concatenated_ds[var].dims))
+        ]
+
+        for var in vars_to_drop_circle_id:
+            concatenated_ds[var] = concatenated_ds[var].isel(circle=0, drop=True)
+
+        self._interim_l4_ds = concatenated_ds
 
         return self
 
@@ -2251,7 +2270,7 @@ class Gridded:
             ds=ds,
             dir=l4_dir,
             filename=self.l4_filename,
-            object_dims=("sonde_id", "circle_id"),
+            object_dims=("sonde", "circle"),
             alt_dim="alt",
         )
         return self

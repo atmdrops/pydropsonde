@@ -621,7 +621,7 @@ pipeline = {
     "concatenate_circles": {
         "intake": "gridded",
         "apply": apply_method_to_dataset,
-        "functions": ["concatenate_circles_with_ragged_structure"],
+        "functions": ["concat_circles"],
         "output": "gridded",
         "comment": "This step concatenates the individual circle datasets to create the L4 dataset.",
     },
@@ -629,7 +629,6 @@ pipeline = {
         "intake": "gridded",
         "apply": apply_method_to_dataset,
         "functions": [
-            "concatenate_circles_with_ragged_structure",
             "get_l4_dir",
             "get_l4_filename",
             "write_l4",
