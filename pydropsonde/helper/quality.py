@@ -247,10 +247,9 @@ class QualityControl:
             self.qc_details["low_physics_rh_min"] = np.nan
             self.qc_details["low_physics_ta_min"] = np.nan
         else:
-            if (ds_check.rh.min() < 30) or (ds_check.ta.min() < 20):
-                self.qc_flags["low_physics"] = False
-            else:
-                self.qc_flags["low_physics"] = True
+            self.qc_flags["low_physics"] = (ds_check.rh.min() > 30) and (
+                ds_check.ta.min() > 20
+            )
             self.qc_details["low_physics_rh_min"] = ds_check.rh.min().values
             self.qc_details["low_physics_ta_min"] = ds_check.ta.min().values
 
