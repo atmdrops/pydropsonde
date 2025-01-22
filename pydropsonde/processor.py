@@ -1197,8 +1197,8 @@ class Sonde:
         alt_dim = self.alt_dim
         interpolation_grid = np.arange(interp_start, interp_stop, interp_step)
         ds = self.interim_l3_ds
-
-        if not (ds[alt_dim].diff(dim=alt_dim) < 0).any():
+        diff_array = ds[alt_dim].dropna(dim=alt_dim).diff(dim=alt_dim).values
+        if not (diff_array < 0).all():
             warnings.warn(
                 f"your altitude for sonde {self.serial_id
                 } on {self.launch_time} is not sorted."
