@@ -288,9 +288,7 @@ def create_and_populate_circle_object(
         else:
             print(f"No data for segment {segment["segment_id"]}")
 
-    gridded.circles = circles
-
-    return gridded
+    return circles
 
 
 def iterate_Sonde_method_over_dict_of_Sondes_objects(
@@ -590,7 +588,7 @@ pipeline = {
     "get_circles": {
         "intake": "gridded",
         "apply": apply_method_to_dataset,
-        "functions": ["add_l3_ds", "get_simple_circle_times_from_yaml"],
+        "functions": ["add_l3_ds", "get_circle_times_from_segmentation"],
         "output": "gridded",
         "comment": "get circle times and add to gridded",
     },
