@@ -549,7 +549,6 @@ pipeline = {
             "add_attributes_as_var",
             "make_attr_coordinates",
             "add_qc_to_interim_l3",
-            "get_N_m_values",
             "add_Nm_to_vars",
             "add_globals_l3",
             "add_expected_coords",
