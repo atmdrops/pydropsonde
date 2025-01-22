@@ -223,6 +223,24 @@ class QualityControl:
         self.qc_details["alt_near_gpsalt_max_diff"] = max_diff.values
 
     def low_physics(self, ds, alt_dim="gpsalt"):
+        """
+        Checks that the temperature and relative humidity in the lowest 100m in a dataset
+        are above a certain value
+
+
+        Parameters
+        ----------
+        self : object
+        The object containing the necessary attributes and methods.
+        ds : xarray.Dataset
+        The dataset to check for low physics conditions.
+        alt_dim : str, optional
+        The dimension name of the altitude coordinate (default is "gpsalt").
+
+        Returns
+        -------
+        None
+        """
         ds_check = ds.where(ds[alt_dim] < 100, drop=True)
         if ds_check.sizes["time"] == 0:
             self.qc_flags["low_physics"] = False
