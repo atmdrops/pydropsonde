@@ -76,11 +76,11 @@ class QualityControl:
         )
         return surface_ds.time[0].values
 
-    def profile_extend(
+    def profile_extent(
         self,
         ds,
         alt_dim="gpsalt",
-        extend_ratio=0.1,
+        extent_ratio=0.1,
     ):
         variables = self.qc_vars
         for variable in variables:
@@ -93,7 +93,7 @@ class QualityControl:
 
             max_diff = drop_alt - max_alt
             self.qc_flags[f"{variable}_profile_extent"] = max_diff < drop_alt * float(
-                extend_ratio
+                extent_ratio
             )
             self.qc_details[f"{variable}_profile_extent_miss_ratio"] = (
                 max_diff / drop_alt

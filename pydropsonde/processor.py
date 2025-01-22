@@ -466,7 +466,7 @@ class Sonde:
         if run_qc is None:
             run_qc = [
                 "profile_fullness",
-                "profile_extend",
+                "profile_extent",
                 "near_surface_coverage",
                 "alt_near_gpsalt",
             ]
