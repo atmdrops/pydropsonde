@@ -92,11 +92,12 @@ class QualityControl:
                 max_alt = np.nan
 
             max_diff = drop_alt - max_alt
-            if max_diff > drop_alt * float(extend_ratio):
-                self.qc_flags[f"{variable}_profile_extend"] = False
-            else:
-                self.qc_flags[f"{variable}_profile_extend"] = True
-            self.qc_details[f"{variable}_profile_extend_max_diff"] = max_diff
+            self.qc_flags[f"{variable}_profile_extent"] = max_diff < drop_alt * float(
+                extend_ratio
+            )
+            self.qc_details[f"{variable}_profile_extent_miss_ratio"] = (
+                max_diff / drop_alt
+            )
 
     def profile_fullness(
         self,
