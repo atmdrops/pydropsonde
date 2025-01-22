@@ -1193,6 +1193,7 @@ class Sonde:
         interp_stop=14600,
         interp_step=10,
         max_gap_fill: int = 50,
+        interpolate=False,
         p_log=True,
         method: str = "bin",
     ):
@@ -1250,15 +1251,22 @@ class Sonde:
                     new_ds = new_ds.assign_attrs(ds[var].attrs)
                     mean_ds[var] = new_ds.copy()
             interp_ds = xr.Dataset(mean_ds)
-
+            count_dict.pop("time")
+            self.count_dict = count_dict
+            interp_ds = self.add_N_values(interp_ds)
             # interpolate missing values up to max_gap_fill meters
-            interp_ds = (
-                interp_ds.transpose()
-                .interpolate_na(
-                    dim=f"{alt_dim}_bin", max_gap=max_gap_fill, use_coordinate=True
+            if interpolate:
+                interp_ds = (
+                    interp_ds.transpose()
+                    .interpolate_na(
+                        dim=f"{alt_dim}_bin", max_gap=max_gap_fill, use_coordinate=True
+                    )
+                    .rename({f"{alt_dim}_bin": alt_dim})
                 )
-                .rename({f"{alt_dim}_bin": alt_dim})
-            )
+                interp_ds = self.add_m_values(interp_ds)
+
+            else:
+                interp_ds = interp_ds.rename({f"{alt_dim}_bin": alt_dim})
             interp_ds[alt_dim].attrs.update(ds[alt_dim].attrs)
             time_type = ds["time"].values.dtype
             interp_ds = interp_ds.assign(
@@ -1268,8 +1276,6 @@ class Sonde:
                     interp_ds.time.attrs,
                 )
             ).drop_vars("time")
-            count_dict.pop("time")
-            self.count_dict = count_dict
 
         if p_log:
             interp_ds = interp_ds.assign(
@@ -1278,9 +1284,9 @@ class Sonde:
         self.interim_l3_ds = interp_ds
         return self
 
-    def get_N_m_values(self):
+    def add_N_values(self, prep_l3):
         """
-        Updates the internal dataset with the number of values per bin and interpolation method flags for each variable.
+        Updates the internal dataset with the number of values per bin
 
         Attributes:
             - alt_dim (str): The name of the altitude dimension.
@@ -1292,7 +1298,6 @@ class Sonde:
         """
         alt_dim = self.alt_dim
         count_dict = self.count_dict
-        prep_l3 = self.interim_l3_ds
 
         for variable, Nvar in count_dict.items():
             N_name = f"{variable}_N_qc"
@@ -1311,8 +1316,24 @@ class Sonde:
                     )
                 }
             )
+        return prep_l3
 
-            # cast to int
+    def add_m_values(self, prep_l3):
+        """
+        Updates the internal dataset with interpolation method flags for each variable
+
+        Attributes:
+            - alt_dim (str): The name of the altitude dimension.
+            _count_dict (dict): A dictionary containing variables and their corresponding count data arrays.
+            interim_l3_ds (xarray.Dataset): The dataset to be updated with new variables.
+
+        Returns:
+            self: The updated sonde with the modified dataset.
+        """
+        alt_dim = self.alt_dim
+        count_dict = self.count_dict
+        for variable in count_dict.keys():
+            Nvar = prep_l3[f"{variable}_N_qc"]
             n_mask = Nvar.where(~np.isnan(Nvar), 0)
             int_mask = prep_l3[variable].where(~np.isnan(prep_l3[variable]), 0)
 
@@ -1336,9 +1357,7 @@ class Sonde:
                     )
                 }
             )
-        self.interim_l3_ds = prep_l3
-
-        return self
+        return prep_l3
 
     def remove_N_m_duplicates(self):
         """
@@ -1353,45 +1372,45 @@ class Sonde:
         """
         ds = self.interim_l3_ds
         nm_vars = ["lat", "u", "p", "q", "theta"]
-        if "lat in ds.variables":
+        if "lat_m_qc" in ds.variables:
             np.testing.assert_array_equal(
                 ds.lat_m_qc.values,
                 ds.lon_m_qc.values,
                 err_msg="lat_m_qc and lon_m_qc not identical",
             )
-        np.testing.assert_array_equal(
-            ds.u_m_qc.values,
-            ds.v_m_qc.values,
-            err_msg="v_m_qc and u_m_qc not identical",
-        )
+            np.testing.assert_array_equal(
+                ds.u_m_qc.values,
+                ds.v_m_qc.values,
+                err_msg="v_m_qc and u_m_qc not identical",
+            )
+            ds = ds.rename(
+                {
+                    "lat_m_qc": "gpspos_m_qc",
+                    "u_m_qc": "gps_m_qc",
+                }
+            ).drop_vars(
+                [f"{var}_m_qc" for var in ds.variables if var not in nm_vars],
+                errors="ignore",
+            )
         np.testing.assert_array_equal(
             ds.u_N_qc.values,
             ds.v_N_qc.values,
             err_msg="v_N_qc and u_N_qc not identical",
         )
 
-        ds = (
-            ds.drop_vars(
-                [f"{var}_N_qc" for var in ds.variables if var not in nm_vars],
-                errors="ignore",
-            )
-            .drop_vars(
-                [f"{var}_m_qc" for var in ds.variables if var not in nm_vars],
-                errors="ignore",
-            )
-            .rename(
-                {
-                    "lat_N_qc": "gpspos_N_qc",
-                    "lat_m_qc": "gpspos_m_qc",
-                    "u_N_qc": "gps_N_qc",
-                    "u_m_qc": "gps_m_qc",
-                }
-            )
+        ds = ds.drop_vars(
+            [f"{var}_N_qc" for var in ds.variables if var not in nm_vars],
+            errors="ignore",
+        ).rename(
+            {
+                "lat_N_qc": "gpspos_N_qc",
+                "u_N_qc": "gps_N_qc",
+            }
         )
         self.interim_l3_ds = ds
         return self
 
-    def add_Nm_to_vars(self):
+    def add_Nm_to_vars(self, add_m=False):
         """
         Adds ancillary N and m quality control variables to essential variables in the internal dataset.
 
@@ -1408,7 +1427,8 @@ class Sonde:
         mN_vars = ["gps", "gps", "q", "p", "theta", "gpspos", "gpspos"]
 
         for essential_var, mNvar in zip(essential_vars, mN_vars):
-            ds = hx.add_ancillary_var(ds, essential_var, mNvar + "_m_qc")
+            if add_m:
+                ds = hx.add_ancillary_var(ds, essential_var, mNvar + "_m_qc")
             ds = hx.add_ancillary_var(ds, essential_var, mNvar + "_N_qc")
         self.interim_l3_ds = ds
         return self
