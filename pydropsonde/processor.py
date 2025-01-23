@@ -450,7 +450,7 @@ class Sonde:
         """
 
         if qc_vars is None:
-            qc_vars = ["u", "v", "rh", "ta", "p"]
+            qc_vars = {"u": "m s-1", "v": "m s-1", "rh": "1", "ta": "K", "p": "Pa"}
         self.qc.set_qc_variables(qc_vars)
         return self
 
@@ -1515,7 +1515,7 @@ class Sonde:
             keep = (
                 [f"{var}_qc" for var in list(self.qc.qc_by_var.keys())]
                 + list(self.qc.qc_details.keys())
-                + ["low_physics", "alt_near_gpsalt"]
+                + ["alt_near_gpsalt"]
             )
         elif isinstance(keep, str):
             keep = keep.split(",")
