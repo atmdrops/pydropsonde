@@ -1517,7 +1517,7 @@ class Sonde:
             keep = (
                 [f"{var}_qc" for var in list(self.qc.qc_by_var.keys())]
                 + list(self.qc.qc_details.keys())
-                + ["low_physics", "alt_near_gpsalt"]
+                + ["alt_near_gpsalt"]
             )
         else:
             for var in ds.variables:
