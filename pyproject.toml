@@ -1,6 +1,5 @@
 [project]
 name = "pydropsonde"
-version = "0"
 repository = "https://github.com/atmdrops/pydropsonde"
 documentation = "https://atmdrops.github.io/pydropsonde/"
 description = "Tools to process dropsonde data"
@@ -19,6 +18,8 @@ classifiers = [
 ]
 packages = [{include = "pydropsonde"}]
 requires-python = ">3.10"
+dynamic=["version"]
+
 
 dependencies = [
     "PyYAML",
@@ -43,6 +44,9 @@ dependencies = [
     "zarr (>2.0.0,<3.0.0)",
 ]
 
+[tool.poetry]
+version = "0.0.0"
+
 [tool.poetry.group.test.dependencies]
 pytest = "*"
 pytest-watch = "*"
@@ -53,6 +57,10 @@ vcs = "git"
 
 [tool.poetry.scripts]
 pydropsonde = 'pydropsonde.main:main'
+
+[tool.poetry.requires-plugins]
+poetry-dynamic-versioning = { version = ">=1.0.0,<2.0.0", extras = ["plugin"] }
+
 
 [tool.poetry-dynamic-versioning.files."pydropsonde/_version.py"]
 persistent-substitution = true
