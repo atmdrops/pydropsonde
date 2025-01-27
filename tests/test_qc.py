@@ -46,10 +46,10 @@ def qc_vars(qc):
     return qc
 
 
-def test_profile_fullness(qc_vars):
-    qc_vars.profile_fullness(ds, variable_dict={"q": 2, "p": 2})
-    assert qc_vars.qc_flags["p_profile_fullness"]
-    assert not qc_vars.qc_flags["q_profile_fullness"]
+def test_profile_sparsity(qc_vars):
+    qc_vars.profile_sparsity(ds, variable_dict={"q": 2, "p": 2})
+    assert qc_vars.qc_flags["p_profile_sparsity"]
+    assert not qc_vars.qc_flags["q_profile_sparsity"]
 
 
 def test_near_surface(qc_vars):
@@ -66,18 +66,18 @@ def test_near_surface(qc_vars):
 @pytest.mark.parametrize(
     "qc_flag,output",
     [
-        ("p_profile_fullness", True),
-        ("q_profile_fullness", False),
-        ("p_profile_fullness,p_near_surface", True),
-        ("p_profile_fullness,q_near_surface", False),
+        ("p_profile_sparsity", True),
+        ("q_profile_sparsity", False),
+        ("p_profile_sparsity,p_near_surface", True),
+        ("p_profile_sparsity,q_near_surface", False),
         (None, True),
         ("all", False),
-        ("all_except_p_profile_fullness", False),
-        ("p_profile_fullness,rh_profile_fullness", ValueError),
+        ("all_except_p_profile_sparsity", False),
+        ("p_profile_sparsity,rh_profile_sparsity", ValueError),
     ],
 )
 def test_check_qc(qc_vars, qc_flag, output):
-    qc_vars.profile_fullness(ds, variable_dict={"q": 2, "p": 2})
+    qc_vars.profile_sparsity(ds, variable_dict={"q": 2, "p": 2})
     qc_vars.near_surface_coverage(
         ds, alt_bounds=[0, 18], alt_dim="alt", count_threshold=2
     )
@@ -98,7 +98,7 @@ def test_check_qc(qc_vars, qc_flag, output):
     ],
 )
 def test_add_variable_flag_to_ds(qc_vars, varname, output):
-    qc_vars.profile_fullness(ds, variable_dict={"q": 2, "p": 2, "rh": 2})
+    qc_vars.profile_sparsity(ds, variable_dict={"q": 2, "p": 2, "rh": 2})
     qc_vars.near_surface_coverage(
         ds, alt_bounds=[0, 18], alt_dim="alt", count_threshold=2
     )
@@ -106,7 +106,7 @@ def test_add_variable_flag_to_ds(qc_vars, varname, output):
     assert ds_out[f"{varname}_qc"].qc_status == output
     assert (
         ds_out[varname].attrs["ancillary_variables"]
-        == f"{varname}_qc {varname}_profile_fullness_fraction {varname}_near_surface_count"
+        == f"{varname}_qc {varname}_profile_sparsity_fraction {varname}_near_surface_count"
     )
 
 
@@ -124,7 +124,7 @@ def test_add_variable_flag_to_ds(qc_vars, varname, output):
 def test_sonde_qc(qc_vars, variables, output):
     varname = "sonde_qc"
     qc_vars.qc_vars = variables
-    qc_vars.profile_fullness(ds, variable_dict={var: 2 for var in variables})
+    qc_vars.profile_sparsity(ds, variable_dict={var: 2 for var in variables})
     qc_vars.near_surface_coverage(
         ds, alt_bounds=[0, 18], alt_dim="alt", count_threshold=2
     )

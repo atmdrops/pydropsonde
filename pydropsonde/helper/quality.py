@@ -110,13 +110,13 @@ class QualityControl:
             self.qc_flags[f"{variable}_profile_extent"] = max_alt > extent_min
             self.qc_details[f"{variable}_profile_extent_max"] = max_alt
 
-    def profile_fullness(
+    def profile_sparsity(
         self,
         ds,
         variable_dict={"u": 4, "v": 4, "rh": 2, "ta": 2, "p": 2},
         time_dimension="time",
         timestamp_frequency=4,
-        fullness_threshold=0.8,
+        sparsity_threshold=0.2,
     ):
         """
         Calculates the profile coverage for a given set of variables, considering their sampling frequency.
@@ -125,11 +125,11 @@ class QualityControl:
         implying a timestamp_frequency of 4 hertz. This is applicable for ASPEN-processed QC and PQC files,
         specifically for RD41.
 
-        For each variable in the variable_dict that is in self.qc_vars, the function calculates the fullness fraction. If the fullness
-        fraction is less than the fullness_threshold, it sets the entry "profile_fullness_{variable}" in `self.qc_flag` to False.
+        For each variable in the variable_dict that is in self.qc_vars, the function calculates the sparsity fraction. If the sparsity
+        fraction is less than the sparsity_threshold, it sets the entry "profile_sparsity_{variable}" in `self.qc_flag` to False.
         Otherwise, it sets this entry to True.
 
-        For each variable in the variable_dict  that is in self.qc_vars, the function adds the fullness fraction to the qc_details dictionary
+        For each variable in the variable_dict  that is in self.qc_vars, the function adds the sparsity fraction to the qc_details dictionary
 
         Parameters
         ----------
@@ -142,8 +142,8 @@ class QualityControl:
             The independent dimension of the profile. Default is "time".
         timestamp_frequency : numeric, optional
             The sampling frequency of `time_dimension` in hertz. Default is 4.
-        fullness_threshold : float or str, optional
-            The threshold for the fullness fraction. If the calculated fullness fraction is less than this threshold,
+        sparsity_threshold : float or str, optional
+            The threshold for the sparsity fraction. If the calculated sparsity fraction is less than this threshold,
             the profile is considered not full. Default is 0.8.
 
 
@@ -160,12 +160,13 @@ class QualityControl:
             weighed_time_size = len(dataset[time_dimension]) / (
                 timestamp_frequency / sampling_frequency
             )
-            fullness_fraction = np.sum(~np.isnan(dataset.values)) / weighed_time_size
-            if fullness_fraction < fullness_threshold:
-                self.qc_flags[f"{variable}_profile_fullness"] = False
-            else:
-                self.qc_flags[f"{variable}_profile_fullness"] = True
-            self.qc_details[f"{variable}_profile_fullness_fraction"] = fullness_fraction
+            sparsity_fraction = (
+                1 - np.sum(~np.isnan(dataset.values)) / weighed_time_size
+            )
+            self.qc_flags[f"{variable}_profile_sparsity"] = (
+                sparsity_fraction < sparsity_threshold
+            )
+            self.qc_details[f"{variable}_profile_sparsity_fraction"] = sparsity_fraction
 
     def near_surface_coverage(
         self,
@@ -179,7 +180,7 @@ class QualityControl:
 
 
         For each variable in self.qc_variable, the function calculates the near surface count. If the near surface count is less than
-        the fullness_threshold, it sets the entry "near_surface_{variable}" in `self.qc_flag` to False.
+        the count_threshold, it sets the entry "near_surface_{variable}" in `self.qc_flag` to False.
         Otherwise, it sets this entry to True.
 
         For each variable in self.qc_vars, the function adds the near surface count to the qc_details dictionary
