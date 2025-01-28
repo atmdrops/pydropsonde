@@ -144,7 +144,7 @@ class QualityControl:
             The sampling frequency of `time_dimension` in hertz. Default is 4.
         sparsity_threshold : float or str, optional
             The threshold for the sparsity fraction. If the calculated sparsity fraction is less than this threshold,
-            the profile is considered not full. Default is 0.8.
+            the profile is considered not full. Default is 0.2.
 
 
         """
