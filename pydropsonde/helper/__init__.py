@@ -462,6 +462,7 @@ def calc_wind_dir_and_speed(ds):
             w_dir,
             dict(
                 standard_name="wind_from_direction",
+                long_name="wind direction",
                 units="degree",
             ),
         )
@@ -473,6 +474,7 @@ def calc_wind_dir_and_speed(ds):
             w_spd,
             dict(
                 standard_name="wind_speed",
+                long_name="wind speed",
                 units="m s-1",
             ),
         )
