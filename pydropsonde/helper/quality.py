@@ -79,7 +79,6 @@ class QualityControl:
     def profile_extent(
         self,
         ds,
-        alt_dim="gpsalt",
         extent_min=8000,
     ):
         """
@@ -99,6 +98,7 @@ class QualityControl:
         Returns:
             None
         """
+        alt_dim = self.alt_dim
         variables = self.qc_vars
         for variable in variables:
             no_na = ds.dropna(dim="time", subset=[variable])[alt_dim].values
