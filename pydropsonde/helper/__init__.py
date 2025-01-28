@@ -297,7 +297,6 @@ def calc_rh_from_q(ds):
     w_s = mtf.partial_pressure_to_mixing_ratio(e_s, ds.p.values)
     w = physics.q2mr(ds.q.values)
     rh = w / w_s
-
     try:
         rh_attrs = ds.rh.attrs
         rh_attrs.update(
