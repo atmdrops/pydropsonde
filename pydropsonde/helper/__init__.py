@@ -310,7 +310,7 @@ def calc_rh_from_q(ds):
             standard_name="relative_humidity",
             long_name="relative humidity",
             units="1",
-            method=f"recalculated from q following {es_name} after interpolation",
+            method=f"recalculated from q following {es_name} after binning",
         )
     ds = ds.assign(rh=(ds.q.dims, rh, rh_attrs))
 
