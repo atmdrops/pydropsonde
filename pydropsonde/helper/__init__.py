@@ -405,7 +405,7 @@ def calc_T_from_theta(ds):
             units="K",
         )
 
-    t_attrs.update(dict(method="recalculated from theta and p after interpolation"))
+    t_attrs.update(dict(method="recalculated from theta and p after binning"))
     ds = ds.assign(ta=(ds.theta.dims, ta, t_attrs))
     return ds
 
