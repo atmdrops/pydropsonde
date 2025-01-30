@@ -450,7 +450,7 @@ class Sonde:
         """
 
         if qc_vars is None:
-            qc_vars = ["u", "v", "rh", "ta", "p"]
+            qc_vars = {"u": "m s-1", "v": "m s-1", "rh": "1", "ta": "K", "p": "Pa"}
         self.qc.set_qc_variables(qc_vars)
         return self
 
@@ -1531,20 +1531,33 @@ class Sonde:
             self: The instance with updated `interim_l3_ds` including quality control flags.
         """
         ds = self.interim_l3_ds
+
+        for var in ds.variables:
+            if var != "sonde_id":
+                ds[var].attrs.pop("ancillary_variables", None)
         if keep is None:
             keep = []
-        elif keep == "all":
-            keep = (
-                [f"{var}_qc" for var in list(self.qc.qc_by_var.keys())]
-                + list(self.qc.qc_details.keys())
-                + ["low_physics", "alt_near_gpsalt"]
-            )
         else:
-            for var in ds.variables:
-                if var != "sonde_id":
-                    ds[var].attrs.pop("ancillary_variables", None)
-            if keep is None:
-                keep = []
+            if keep == "all":
+                keep = (
+                    [f"{var}_qc" for var in list(self.qc.qc_by_var.keys())]
+                    + list(self.qc.qc_details.keys())
+                    + ["alt_near_gpsalt"]
+                )
+                for variable in self.qc.qc_vars:
+                    ds = self.qc.add_variable_flags_to_ds(ds, variable, details=True)
+                if (not np.isin("q", self.qc.qc_vars)) and np.isin(
+                    "rh", self.qc.qc_vars
+                ):
+                    ds = self.qc.add_variable_flags_to_ds(
+                        ds, "rh", add_to="q", details=True
+                    )
+                if (not np.isin("theta", self.qc.qc_vars)) and np.isin(
+                    "ta", self.qc.qc_vars
+                ):
+                    ds = self.qc.add_variable_flags_to_ds(
+                        ds, "ta", add_to="theta", details=True
+                    )
             elif keep == "var_flags":
                 keep = [f"{var}_qc" for var in list(self.qc.qc_by_var.keys())] + [
                     "sonde_qc"
