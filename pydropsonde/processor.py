@@ -406,7 +406,7 @@ class Sonde:
             return self
         else:
             if hasattr(self, "aspen_ds"):
-                landing_time = self.qc.get_is_floater(aspen_ds=self.aspen_ds)
+                landing_time = self.qc.get_is_floater()
                 self.landing_time = landing_time
             else:
                 raise ValueError(
@@ -429,9 +429,9 @@ class Sonde:
         """
         if hasattr(self.qc, "is_floater"):
             if self.qc.is_floater:
-                self.cropped_aspen_ds = self.aspen_ds.sel(
-                    time=slice(self.landing_time, None)
-                )
+                cropped_ds = self.aspen_ds.sel(time=slice(self.landing_time, None))
+                self.cropped_aspen_ds = cropped_ds
+                self.qc.set_qc_ds(cropped_ds)
 
         else:
             raise ValueError(
@@ -439,7 +439,47 @@ class Sonde:
             )
         return self
 
-    def set_qc_vars(self, qc_vars=None):
+    def create_interim_l2_ds(self):
+        """
+        Creates an interim L2 dataset from the aspen_ds or cropped_aspen_ds attribute.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        self : object
+            Returns the sonde object with the interim L2 dataset added as an attribute.
+        """
+        if self.qc.is_floater:
+            ds = self.cropped_aspen_ds
+        else:
+            ds = self.aspen_ds
+        self.interim_l2_ds = ds
+
+        return self
+
+    def below_aircraft_qc(self, max_alt=15000):
+        """
+        Remove measurements that are above the aircraft altitude or some threshold value if aircraft altitude is not given.
+
+        Parameters
+        ----------
+        max_alt :
+            maximum realistic meassured altitude
+
+        """
+        self.qc.set_qc_ds(self.interim_l2_ds)
+
+        aircraft_alt = self.flight_attrs.get(
+            "aircraft_geopotential_altitude_(m)", float(max_alt)
+        )
+        self.qc.alt_below_aircraft(aircraft_alt)
+
+        return self
+
+    def init_qc(self, qc_vars=None):
         """
         set the variables for which to run the quality control.
 
@@ -452,6 +492,7 @@ class Sonde:
         if qc_vars is None:
             qc_vars = ["u", "v", "rh", "ta", "p"]
         self.qc.set_qc_variables(qc_vars)
+        self.qc.set_qc_ds(self.aspen_ds)
         return self
 
     def get_qc(self, run_qc=None):
@@ -473,10 +514,9 @@ class Sonde:
             ]
         elif isinstance(run_qc, str):
             run_qc = run_qc.split(",")
-        ds = self.interim_l2_ds
         for fct in run_qc:
             qc_fct = getattr(self.qc, fct)
-            qc_fct(ds)
+            qc_fct()
         return self
 
     def remove_non_qc_sondes(self, used_flags=None, remove_ugly=True):
@@ -504,27 +544,6 @@ class Sonde:
                 f"Quality control returned False. Therefore, filtering this sonde ({self.serial_id}) out from L2"
             )
             return None
-
-    def create_interim_l2_ds(self):
-        """
-        Creates an interim L2 dataset from the aspen_ds or cropped_aspen_ds attribute.
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        self : object
-            Returns the sonde object with the interim L2 dataset added as an attribute.
-        """
-        if self.qc.is_floater:
-            ds = self.cropped_aspen_ds
-        else:
-            ds = self.aspen_ds
-        self.interim_l2_ds = ds
-
-        return self
 
     def convert_to_si(self, variables=["rh", "p", "ta"], skip=False):
         """
@@ -1001,6 +1020,17 @@ class Sonde:
             return self
         else:
             return self
+
+    def remove_above_aircraft(self, max_alt=15000):
+        """
+        remove measured values above aircraft
+        """
+        variables = ["lat", "lon", "gpsalt", "u", "v"]
+        maxalt = self.flight_attrs.get("aircraft_msl_altitude_(m)", float(max_alt))
+        self.interim_l3_ds = hx.remove_above_alt(
+            self.interim_l3_ds, variables, alt_dim=self.alt_dim, maxalt=maxalt
+        )
+        return self
 
     def add_q_and_theta_to_l2_ds(self):
         """
@@ -1537,7 +1567,12 @@ class Sonde:
             keep = (
                 [f"{var}_qc" for var in list(self.qc.qc_by_var.keys())]
                 + list(self.qc.qc_details.keys())
-                + ["low_physics", "alt_near_gpsalt"]
+                + [
+                    "low_physics",
+                    "alt_near_gpsalt",
+                    f"{self.alt_dim}_below_aircraft",
+                    f"{self.alt_dim}_values",
+                ]
             )
         else:
             for var in ds.variables:
