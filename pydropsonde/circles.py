@@ -224,7 +224,7 @@ class Circle:
         return self
 
     @staticmethod
-    def fit2d(x, y, u):
+    def fit2d(x, y, u, w):
         a = np.stack([np.ones_like(x), x, y], axis=-1)
 
         invalid = np.isnan(u) | np.isnan(x) | np.isnan(y)
@@ -232,22 +232,27 @@ class Circle:
         under_constraint = np.sum(~invalid, axis=-1) < 6
         u_cal = np.where(invalid, 0, u)
         a[invalid] = 0
+        w = np.sqrt(w)
+        a = np.einsum("...m,...mr->...mr", w, a)
+        u_cal = np.einsum("...m,...m->...m", w, u_cal)
 
         a_inv = np.linalg.pinv(a)
         intercept, dux, duy = np.einsum("...rm,...m->r...", a_inv, u_cal)
+
         intercept[under_constraint] = np.nan
         dux[under_constraint] = np.nan
         duy[under_constraint] = np.nan
-
         return intercept, dux, duy
 
-    def fit2d_xr(self, x, y, u, sonde_dim="sonde"):
+    def fit2d_xr(self, x, y, u, w, sonde_dim="sonde"):
         return xr.apply_ufunc(
             self.__class__.fit2d,  # Call the static method without passing `self`
             x,
             y,
             u,
+            w,
             input_core_dims=[
+                [sonde_dim],
                 [sonde_dim],
                 [sonde_dim],
                 [sonde_dim],
@@ -278,13 +283,22 @@ class Circle:
                 "derivative_of_" + standard_name + "_wrt_x",
                 "derivative_of_" + standard_name + "_wrt_y",
             ]
-
-            results = self.fit2d_xr(
-                x=self.circle_ds.x,
-                y=self.circle_ds.y,
-                u=self.circle_ds[par],
-                sonde_dim=self.sonde_dim,
-            )
+            try:
+                results = self.fit2d_xr(
+                    x=self.circle_ds.x,
+                    y=self.circle_ds.y,
+                    u=self.circle_ds[par],
+                    w=self.circle_ds[f"{par}_weights"],
+                    sonde_dim=self.sonde_dim,
+                )
+            except KeyError:
+                results = self.fit2d_xr(
+                    x=self.circle_ds.x,
+                    y=self.circle_ds.y,
+                    u=self.circle_ds[par],
+                    w=xr.ones_like(self.circle_ds[par]),
+                    sonde_dim=self.sonde_dim,
+                )
 
             for varname, result, long_name, use_name in zip(
                 varnames, results, long_names, use_names
