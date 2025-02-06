@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 import numpy as np
 import xarray as xr
-import tqdm
 import circle_fit as cf
 import pydropsonde.helper.physics as hp
 
@@ -47,7 +46,7 @@ class Circle:
 
     def get_xy_coords_for_circles(self):
         if self.circle_ds.lon.size == 0 or self.circle_ds.lat.size == 0:
-            print("Empty segment: 'lon' or 'lat' is empty.")
+            print(f"Empty segment {self.segment_id}: 'lon' or 'lat' is empty.")
             return None  # or some default value like [], np.array([]), etc.
 
         x_coor = (
@@ -141,10 +140,159 @@ class Circle:
             y=(["sonde_id", self.alt_dim], delta_y.values, delta_y_attrs),
         )
 
-        self.circle_ds = self.circle_ds.assign(new_vars)
+        self.circle_ds = self.circle_ds.assign(new_vars).transpose(
+            "sonde_id", self.alt_dim
+        )
+        return self
+
+    def broadcast_ds(self):
+        circle_ds = self.circle_ds
+
+        self.circle_ds = circle_ds.where(circle_ds.gps_N_qc)
+
+        return self
+
+    def remove_values(self, n_gap=3, keep_sfc=1000):
+        n_gap = int(n_gap)
+        ds = self.circle_ds
+
+        alt_mask = np.full(ds.u.shape, False)  # first sonde_id then alt_dim
+        alt_mask[:, ::n_gap] = True
+        if keep_sfc:
+            alt_mask[:, : int(keep_sfc / 10)] = True
+        self.circle_ds = ds.where(alt_mask)
+        return self
+
+    def one_gap_one_sonde(self, alt=1500, depth=500, sonde_id=2):
+        ds = self.circle_ds
+        alt_mask = np.full(ds.u.shape, True)
+        alt_mask[
+            int(sonde_id), int(int(alt) / 10) : int((int(alt) + int(depth)) / 10)
+        ] = False
+        self.circle_ds = ds.where(alt_mask)
+        return self
+
+    def remove_sonde(self, sonde_id=0):
+        ds = self.circle_ds
+        alt_mask = np.full(ds.u.shape, True)
+        alt_mask[int(sonde_id), :] = False
+        self.circle_ds = ds.where(alt_mask)
+        return self
+
+    def apply_interp_na(self, method="cubic", max_gap=1500, x_method="cubic"):
+        variables = ["u", "v", "q", "ta", "p"]
+        dss = {}
+        ds = self.circle_ds
+        max_gap = int(max_gap)
+        alt_dim = self.alt_dim
+        ds["p"] = np.log(ds["p"])
+        if method is not None:
+            ds_x = ds.x.interpolate_na(
+                dim=alt_dim,
+                method=x_method,
+                bounds_error=False,
+                fill_value=np.nan,
+                max_gap=max_gap,
+            )
+            ds_y = ds.y.interpolate_na(
+                dim=alt_dim,
+                method=x_method,
+                bounds_error=False,
+                fill_value=np.nan,
+                max_gap=max_gap,
+            )
+
+            for var in variables:
+                dss[var] = ds[var].interpolate_na(
+                    dim=alt_dim,
+                    method=method,
+                    bounds_error=False,
+                    fill_value=np.nan,
+                    max_gap=max_gap,
+                )
+
+            ds = ds.assign({**dss, "x": ds_x, "y": ds_y})
+        ds["p"] = np.exp(ds["p"])
+        self.circle_ds = ds
+        return self
+
+    def get_dist_to_nonan(self, variable, alt_dim="gpsalt"):
+        ds = self.circle_ds
+        masked_alt = ds.gpsalt.where(~np.isnan(ds[variable]))
+        masked_alt.name = "int_gpsalt"
+        int_masked = masked_alt.interpolate_na(
+            dim=alt_dim,
+            method="nearest",
+            fill_value="extrapolate",
+        )  # fill_value="extrapolate")
+        return np.abs(ds.gpsalt - int_masked)
+
+    def add_distances(self, alt_dim="gpsalt"):
+        res = {}
+        for var in ["u", "v", "p", "theta", "q"]:
+            res[var] = self.get_dist_to_nonan(variable=var)
+            res[var] = xr.where(res[var], res[var], 0)
+            res[var].name = f"{var}_dist"
+        distances = xr.merge(res.values(), join="exact")
+        self.circle_ds = xr.merge([self.circle_ds, distances], join="exact")
+        return self
+
+    def add_weights(self, path=None, method=None, variables=None):
+        if variables is None:
+            variables = ["u", "v", "q", "theta", "p"]
+        ds = self.circle_ds
+        if method == "autocorrelation":
+            autocorr = xr.open_dataset(path, engine="zarr")
+            autocorr = autocorr.squeeze("sonde_id").broadcast_like(ds)
+            weights = []
+            for var in variables:
+                weight = xr.where(
+                    ds[f"{var}_dist"] == 0,
+                    1,
+                    autocorr[f"autocorr_{var}"]
+                    .sel(gpsalt=ds[f"{var}_dist"], method="nearest")
+                    .values,
+                )
+                weight.name = f"{var}_weights"
+                weight = xr.where(weight < 0, 0, weight)
+                weight = xr.where(weight > 1, 1, weight)
+                weights.append(weight)
+            weights = xr.merge(weights)
+            ds = xr.merge(
+                [ds, weights],
+                join="exact",
+                compat="no_conflicts",
+                combine_attrs="override",
+            )
+        elif path is not None:
+            weights = xr.open_dataset(path, engine="zarr").sel(sonde_id=ds.sonde_id)
+            ds = xr.merge(
+                [ds, weights],
+                join="exact",
+                compat="no_conflicts",
+                combine_attrs="override",
+            )
+        else:
+            for par in variables:
+                ds = ds.assign({f"{par}_weights": xr.full_like(ds[par], 1)})
+        self.circle_ds = ds
         return self
 
     @staticmethod
+    def fit2d_w(x, y, u, w):
+        a = np.stack([np.ones_like(x), x, y], axis=-1)
+
+        invalid = np.isnan(u) | np.isnan(x) | np.isnan(y)
+        u_cal = np.where(invalid, 0, u)
+        a[invalid] = 0
+        w = np.sqrt(w)
+        a = np.einsum("...m,...mr->...mr", w, a)
+        u_cal = np.einsum("...m,...m->...m", w, u_cal)
+
+        a_inv = np.linalg.pinv(a)
+        intercept, dux, duy = np.einsum("...rm,...m->r...", a_inv, u_cal)
+        return intercept, dux, duy
+
     def fit2d(x, y, u):
         a = np.stack([np.ones_like(x), x, y], axis=-1)
 
@@ -157,19 +305,35 @@ class Circle:
 
         return intercept, dux, duy
 
-    def fit2d_xr(self, x, y, u, sonde_dim="sonde_id"):
-        return xr.apply_ufunc(
-            self.__class__.fit2d,  # Call the static method without passing `self`
-            x,
-            y,
-            u,
-            input_core_dims=[
-                [sonde_dim],
-                [sonde_dim],
-                [sonde_dim],
-            ],  # Specify input dims
-            output_core_dims=[(), (), ()],  # Output dimensions as scalars
-        )
+    def fit2d_xr(self, x, y, u, w=None, sonde_dim="sonde_id"):
+        if w is None:
+            return xr.apply_ufunc(
+                self.__class__.fit2d,  # Call the static method without passing `self`
+                x,
+                y,
+                u,
+                input_core_dims=[
+                    [sonde_dim],
+                    [sonde_dim],
+                    [sonde_dim],
+                ],  # Specify input dims
+                output_core_dims=[(), (), ()],  # Output dimensions as scalars
+            )
+        else:
+            return xr.apply_ufunc(
+                self.__class__.fit2d_w,  # Call the static method without passing `self`
+                x,
+                y,
+                u,
+                w,
+                input_core_dims=[
+                    [sonde_dim],
+                    [sonde_dim],
+                    [sonde_dim],
+                    [sonde_dim],
+                ],  # Specify input dims
+                output_core_dims=[(), (), ()],  # Output dimensions as scalars
+            )
 
     def apply_fit2d(self, variables=None):
         if variables is None:
@@ -179,7 +343,7 @@ class Circle:
 
         assign_dict = {}
 
-        for par in tqdm.tqdm(variables):
+        for par in variables:
             long_name = self.circle_ds[par].attrs.get("long_name")
             standard_name = self.circle_ds[par].attrs.get("standard_name")
             varnames = ["mean_" + par, "d" + par + "dx", "d" + par + "dy"]
@@ -194,13 +358,21 @@ class Circle:
                 "derivative_of_" + standard_name + "_wrt_x",
                 "derivative_of_" + standard_name + "_wrt_y",
             ]
-
-            results = self.fit2d_xr(
-                x=self.circle_ds.x,
-                y=self.circle_ds.y,
-                u=self.circle_ds[par],
-                sonde_dim="sonde_id",
-            )
+            try:
+                results = self.fit2d_xr(
+                    x=self.circle_ds.x,
+                    y=self.circle_ds.y,
+                    u=self.circle_ds[par],
+                    w=self.circle_ds[f"{par}_weights"],
+                    sonde_dim="sonde_id",
+                )
+            except KeyError:
+                results = self.fit2d_xr(
+                    x=self.circle_ds.x,
+                    y=self.circle_ds.y,
+                    u=self.circle_ds[par],
+                    sonde_dim="sonde_id",
+                )
 
             for varname, result, long_name, use_name in zip(
                 varnames, results, long_names, use_names
@@ -227,6 +399,23 @@ class Circle:
 
             ds = self.circle_ds.assign(assign_dict)
         ds[alt_var].attrs.update(alt_attrs)
+        ds = ds.set_coords("circle_time")
+
+        self.circle_ds = ds
+        return self
+
+    def remove_invalid(self, variables=None):
+        ds = self.circle_ds
+        if variables is None:
+            variables = ["u", "v", "q", "ta", "p", "density"]
+
+        for variable in variables:
+            for var in [
+                "mean_" + variable,
+                "d" + variable + "dx",
+                "d" + variable + "dy",
+            ]:
+                ds = ds.assign({var: ds[var].where(ds[var] != 0)})
         self.circle_ds = ds
         return self
 
@@ -324,7 +513,6 @@ class Circle:
             "long_name": "Area-averaged atmospheric pressure velocity (omega)",
             "units": "hPa hr-1",
         }
-        self.circle_ds = ds.assign(
-            dict(omega_p=(ds.div.dims, omega.values, omega_attrs))
-        )
+        omega = omega.broadcast_like(ds.div)
+        self.circle_ds = ds.assign(dict(omega=(ds.div.dims, omega.values, omega_attrs)))
         return self
