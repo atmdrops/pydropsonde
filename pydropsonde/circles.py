@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 import numpy as np
 import xarray as xr
-import tqdm
 import circle_fit as cf
 import pydropsonde.helper.physics as hp
 
@@ -141,7 +140,79 @@ class Circle:
             y=(["sonde_id", self.alt_dim], delta_y.values, delta_y_attrs),
         )
 
-        self.circle_ds = self.circle_ds.assign(new_vars)
+        self.circle_ds = self.circle_ds.assign(new_vars).transpose(
+            "sonde_id", self.alt_dim
+        )
+        return self
+
+    def filter_qc(self):
+        circle_ds = self.circle_ds
+
+        self.circle_ds = circle_ds.where(circle_ds.sonde_qc >= 0)
+
+        return self
+
+    def remove_values(self, n_gap=3, keep_sfc=1000):
+        n_gap = int(n_gap)
+        ds = self.circle_ds
+
+        alt_mask = np.full(ds.u.shape, False)  # first sonde_id then alt_dim
+        alt_mask[:, ::n_gap] = True
+        if keep_sfc:
+            alt_mask[:, : int(keep_sfc / 10)] = True
+        self.circle_ds = ds.where(alt_mask)
+        return self
+
+    def one_gap_one_sonde(self, alt=1500, depth=500, sonde_id=2):
+        ds = self.circle_ds
+        alt_mask = np.full(ds.u.shape, True)
+        alt_mask[
+            int(sonde_id), int(int(alt) / 10) : int((int(alt) + int(depth)) / 10)
+        ] = False
+        self.circle_ds = ds.where(alt_mask)
+        return self
+
+    def remove_sonde(self, sonde_id=0):
+        ds = self.circle_ds
+        alt_mask = np.full(ds.u.shape, True)
+        alt_mask[int(sonde_id), :] = False
+        self.circle_ds = ds.where(alt_mask)
+        return self
+
+    def apply_interp_na(self, method="cubic", max_gap=1500, x_method="cubic"):
+        variables = ["u", "v", "q", "ta", "p"]
+        dss = {}
+        ds = self.circle_ds
+        alt_dim = self.alt_dim
+        ds["p"] = np.log(ds["p"])
+        if method is not None:
+            ds_x = ds.x.interpolate_na(
+                dim=alt_dim,
+                method=x_method,
+                bounds_error=False,
+                fill_value=np.nan,
+                max_gap=max_gap,
+            )
+            ds_y = ds.y.interpolate_na(
+                dim=alt_dim,
+                method=x_method,
+                bounds_error=False,
+                fill_value=np.nan,
+                max_gap=max_gap,
+            )
+
+            for var in variables:
+                dss[var] = ds[var].interpolate_na(
+                    dim=alt_dim,
+                    method=method,
+                    bounds_error=False,
+                    fill_value=np.nan,
+                    max_gap=max_gap,
+                )
+
+            ds = ds.assign({**dss, "x": ds_x, "y": ds_y})
+        ds["p"] = np.exp(ds["p"])
+        self.circle_ds = ds
         return self
 
     @staticmethod
@@ -179,7 +250,7 @@ class Circle:
 
         assign_dict = {}
 
-        for par in tqdm.tqdm(variables):
+        for par in variables:
             long_name = self.circle_ds[par].attrs.get("long_name")
             standard_name = self.circle_ds[par].attrs.get("standard_name")
             varnames = ["mean_" + par, "d" + par + "dx", "d" + par + "dy"]
@@ -227,6 +298,21 @@ class Circle:
 
             ds = self.circle_ds.assign(assign_dict)
         ds[alt_var].attrs.update(alt_attrs)
+        self.circle_ds = ds
+        return self
+
+    def remove_invalid(self, variables=None):
+        ds = self.circle_ds
+        if variables is None:
+            variables = ["u", "v", "q", "ta", "p", "density"]
+
+        for variable in variables:
+            for var in [
+                "mean_" + variable,
+                "d" + variable + "dx",
+                "d" + variable + "dy",
+            ]:
+                ds = ds.assign({var: ds[var].where(ds[var] != 0)})
         self.circle_ds = ds
         return self
 
