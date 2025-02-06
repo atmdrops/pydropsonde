@@ -168,6 +168,23 @@ class Circle:
         )
         return self
 
+    def interpolate_na(self, method="cubic", max_gap=1500):
+        if method is not None:
+            ds = self.circle_ds
+            alt_dim = self.alt_dim
+            ds["p"] = np.log(ds["p"])
+            ds = ds.interpolate_na(
+                dim=alt_dim,
+                method=method,
+                bounds_error=False,
+                fill_value=np.nan,
+                max_gap=int(max_gap),
+            )
+            ds["p"] = np.exp(ds["p"])
+            self.circle_ds = ds
+
+        return self
+
     @staticmethod
     def fit2d(x, y, u):
         a = np.stack([np.ones_like(x), x, y], axis=-1)
