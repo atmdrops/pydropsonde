@@ -219,6 +219,44 @@ class Circle:
 
         return self
 
+    def remove_values(self, n_gap=3, keep_sfc=1000):
+        n_gap = int(n_gap)
+        ds = self.circle_ds
+
+        alt_mask = np.full(ds.u.shape, False)  # first sonde_id then alt_dim
+        alt_mask[:, ::n_gap] = True
+        if keep_sfc:
+            alt_mask[:, : int(keep_sfc / 10)] = True
+        for var in ["u", "v", "rh", "q", "ta", "theta", "x", "y"]:
+            self.circle_ds = self.circle_ds.assign(
+                {var: (ds[var].dims, ds[var].where(alt_mask).values, ds[var].attrs)}
+            )
+        return self
+
+    def one_gap_one_sonde(self, alt=1500, depth=500, sonde_id=2):
+        ds = self.circle_ds
+        alt_mask = np.full(ds.u.shape, True)
+        alt_mask[
+            int(sonde_id), int(int(alt) / 10) : int((int(alt) + int(depth)) / 10)
+        ] = False
+
+        for var in ["u", "v", "rh", "q", "ta", "theta", "x", "y"]:
+            self.circle_ds = self.circle_ds.assign(
+                {var: (ds[var].dims, ds[var].where(alt_mask).values, ds[var].attrs)}
+            )
+        return self
+
+    def remove_sonde(self, sonde_id=0):
+        ds = self.circle_ds
+        alt_mask = np.full(ds.u.shape, True)
+        alt_mask[int(sonde_id), :] = False
+
+        for var in ["u", "v", "rh", "q", "ta", "theta", "x", "y"]:
+            self.circle_ds = self.circle_ds.assign(
+                {var: (ds[var].dims, ds[var].where(alt_mask).values, ds[var].attrs)}
+            )
+        return self
+
     @staticmethod
     def fit2d(x, y, u):
         a = np.stack([np.ones_like(x), x, y], axis=-1)
