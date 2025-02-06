@@ -186,6 +186,39 @@ class Circle:
         )
         return self
 
+    def interpolate_na_sondes(self, method="cubic", max_gap=1500):
+        if method is not None:
+            ds = self.circle_ds.swap_dims({self.sonde_dim: "sonde_id"})
+            alt_dim = self.alt_dim
+            ds["p"] = np.log(ds["p"])
+            for var in [
+                var
+                for var in ds.variables
+                if set([alt_dim, "sonde_id"]).issubset(ds.variables[var].dims)
+            ]:
+                no_nan = ds[var].dropna(dim="sonde_id", thresh=4)
+                no_nan = no_nan
+                interp = no_nan.interpolate_na(
+                    dim=alt_dim,
+                    method=method,
+                    bounds_error=False,
+                    fill_value=np.nan,
+                    max_gap=int(max_gap),
+                )
+                ds = ds.assign(
+                    {
+                        var: (
+                            ds[var].dims,
+                            interp.broadcast_like(ds[var]).values,
+                            ds[var].attrs,
+                        )
+                    }
+                )
+            ds["p"] = np.exp(ds["p"])
+            self.circle_ds = ds.swap_dims({"sonde_id": self.sonde_dim})
+
+        return self
+
     @staticmethod
     def fit2d(x, y, u):
         a = np.stack([np.ones_like(x), x, y], axis=-1)
