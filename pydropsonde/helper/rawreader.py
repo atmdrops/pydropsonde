@@ -4,7 +4,7 @@ Module to read from raw files, mostly to gather metadata from A files
 
 from datetime import datetime
 import logging
-from typing import List
+from typing import List, Optional
 import os
 import fsspec
 import yaml
@@ -89,6 +89,17 @@ def get_sonde_id(a_file: "str") -> str:
     except UnboundLocalError:
         afile_base = os.path.basename(a_file)
         return afile_base.split(".")[0][1:]
+
+
+def get_sonde_rev(a_file: str) -> Optional[str]:
+    with open(a_file, "r") as f:
+        module_logger.debug(f"Opened File: {a_file=}")
+
+        for i, line in enumerate(f):
+            if "Sonde ID/Type/Rev" in line:
+                module_logger.debug(f'"Sonde ID/Type/Rev" found on line {i=}')
+                return line.split(":")[1].split(",")[2].lstrip()
+    return None
 
 
 def get_launch_time(a_file: "str") -> np.datetime64:

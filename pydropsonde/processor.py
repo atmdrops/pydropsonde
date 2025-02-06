@@ -43,6 +43,7 @@ class Sonde:
     cont: bool = True
     _: KW_ONLY
     _launch_time: Optional[Any] = None
+    sonde_rev: Optional[str] = None
 
     @property
     def flight_id(self):
@@ -79,6 +80,10 @@ class Sonde:
 
     def set_l2_ds(self, ds):
         self._l2_ds = ds
+
+    @property
+    def is_minisonde(self):
+        return self.sonde_rev == "N1"
 
     def __post_init__(self):
         """
@@ -241,21 +246,26 @@ class Sonde:
             if os.path.getsize(os.path.join(l0_dir, dname)) > 0:
                 os.makedirs(l1_dir, exist_ok=True)
 
+                command = [
+                    "docker",
+                    "run",
+                    "--rm",
+                    "--mount",
+                    f"type=bind,source={l0_dir},target=/input",
+                    "--mount",
+                    f"type=bind,source={l1_dir},target=/output",
+                    "ghcr.io/atmdrops/aspenqc:4.0.2",
+                    "-i",
+                    f"/input/{dname}",
+                    "-n",
+                    f"/output/{l1_name}",
+                ]
+
+                if self.is_minisonde:
+                    command += ["-1", "mini-dropsonde"]
+
                 subprocess.run(
-                    [
-                        "docker",
-                        "run",
-                        "--rm",
-                        "--mount",
-                        f"type=bind,source={l0_dir},target=/input",
-                        "--mount",
-                        f"type=bind,source={l1_dir},target=/output",
-                        "ghcr.io/atmdrops/aspenqc:4.0.2",
-                        "-i",
-                        f"/input/{dname}",
-                        "-n",
-                        f"/output/{l1_name}",
-                    ],
+                    command,
                     check=True,
                 )
             else:

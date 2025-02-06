@@ -169,6 +169,7 @@ class Flight:
                 launch_time = "UNKNOWN"
             Sondes[sonde_id] = Sonde(_serial_id=sonde_id, _launch_time=launch_time)
             Sondes[sonde_id].add_launch_detect(launch_detect)
+            Sondes[sonde_id].sonde_rev = rr.get_sonde_rev(a_file)
             Sondes[sonde_id].add_flight_id(
                 self.flight_id,
                 config.get(
