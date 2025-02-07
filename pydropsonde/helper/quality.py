@@ -293,7 +293,6 @@ class QualityControl:
 
     def low_physics(
         self,
-        ds,
         rh_min=0.3,
         ta_min=293.15,
         p_min=100500,
@@ -316,24 +315,23 @@ class QualityControl:
         -------
         None
         """
-        ds = self.qc_ds
-        ds_check = ds.where(ds[alt_dim] < 100, drop=True)
+        ds_check = self.qc_ds.sortby("time", ascending=False).dropna(dim="time")
         if ds_check.sizes["time"] == 0:
             self.qc_flags["rh_low_physics"] = False
             self.qc_flags["ta_low_physics"] = False
             self.qc_flags["p_low_physics"] = False
-            self.qc_details["rh_low_physics_min"] = np.nan
-            self.qc_details["ta_low_physics_min"] = np.nan
+            self.qc_details["rh_low_physics_sfc"] = np.nan
+            self.qc_details["ta_low_physics_sfc"] = np.nan
             self.qc_details["p_low_physics_sfc"] = np.nan
         else:
-            sfc_p = ds.p.sortby("time", ascending=False).dropna(dim="time").values[0]
-            self.qc_flags["ta_low_physics"] = ds_check.ta.min() > float(ta_min)
-            self.qc_flags["rh_low_physics"] = ds_check.rh.min() > float(rh_min)
+            sfc_p = ds_check.p.values[0]
+            self.qc_flags["ta_low_physics"] = ds_check.ta.values[0] > float(ta_min)
+            self.qc_flags["rh_low_physics"] = ds_check.rh.values[0] > float(rh_min)
             self.qc_flags["p_low_physics"] = (sfc_p > float(p_min)) and (
                 sfc_p < float(p_max)
             )
-            self.qc_details["rh_low_physics_min"] = ds_check.rh.min().values
-            self.qc_details["ta_low_physics_min"] = ds_check.ta.min().values
+            self.qc_details["rh_low_physics_sfc"] = ds_check.rh.values[0]
+            self.qc_details["ta_low_physics_sfc"] = ds_check.ta.values[0]
             self.qc_details["p_low_physics_sfc"] = sfc_p
 
     def check_qc(self, used_flags=None, check_ugly=True):
