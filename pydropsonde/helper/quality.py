@@ -99,10 +99,10 @@ class QualityControl:
         """
         alt_dim = self.alt_dim
         ds = self.qc_ds
-        self.qc_flags[f"{alt_dim}_below_aircraft"] = (
+        self.qc_flags["altitude_below_aircraft"] = (
             np.nanmax(ds[alt_dim].values) < maxalt
         )
-        if not self.qc_flags[f"{alt_dim}_below_aircraft"]:
+        if not self.qc_flags["altitude_below_aircraft"]:
             variables = ["lat", "lon", "gpsalt", "u", "v"]
 
             self.set_qc_ds(
@@ -246,6 +246,10 @@ class QualityControl:
             )
 
         for variable in self.qc_vars.keys():
+            if variable in ["u", "v"]:
+                alt_dim = "gpsalt"
+            else:
+                alt_dim = "alt"
             dataset = ds.where(
                 (ds[alt_dim] > alt_bounds[0]) & (ds[alt_dim] < alt_bounds[1]), drop=True
             )
@@ -287,7 +291,14 @@ class QualityControl:
             self.qc_flags["alt_near_gpsalt"] = False
         self.qc_details["alt_near_gpsalt_max_diff"] = max_diff.values
 
-    def low_physics(self, rh_min=0.3, ta_min=293.15, alt_dim="gpsalt"):
+    def low_physics(
+        self,
+        rh_min=0.3,
+        ta_min=293.15,
+        p_min=100500,
+        p_max=102000,
+        alt_dim="gpsalt",
+    ):
         """
         Checks that the temperature and relative humidity in the lowest 100m in a dataset
         are above a certain value
@@ -304,18 +315,24 @@ class QualityControl:
         -------
         None
         """
-        ds = self.qc_ds
-        ds_check = ds.where(ds[alt_dim] < 100, drop=True)
+        ds_check = self.qc_ds.sortby("time", ascending=False).dropna(dim="time")
         if ds_check.sizes["time"] == 0:
             self.qc_flags["rh_low_physics"] = False
             self.qc_flags["ta_low_physics"] = False
-            self.qc_details["rh_low_physics_min"] = np.nan
-            self.qc_details["ta_low_physics_min"] = np.nan
+            self.qc_flags["p_low_physics"] = False
+            self.qc_details["rh_low_physics_sfc"] = np.nan
+            self.qc_details["ta_low_physics_sfc"] = np.nan
+            self.qc_details["p_low_physics_sfc"] = np.nan
         else:
-            self.qc_flags["ta_low_physics"] = ds_check.ta.min() > float(ta_min)
-            self.qc_flags["rh_low_physics"] = ds_check.rh.min() > float(rh_min)
-            self.qc_details["rh_low_physics_min"] = ds_check.rh.min().values
-            self.qc_details["ta_low_physics_min"] = ds_check.ta.min().values
+            sfc_p = ds_check.p.values[0]
+            self.qc_flags["ta_low_physics"] = ds_check.ta.values[0] > float(ta_min)
+            self.qc_flags["rh_low_physics"] = ds_check.rh.values[0] > float(rh_min)
+            self.qc_flags["p_low_physics"] = (sfc_p > float(p_min)) and (
+                sfc_p < float(p_max)
+            )
+            self.qc_details["rh_low_physics_sfc"] = ds_check.rh.values[0]
+            self.qc_details["ta_low_physics_sfc"] = ds_check.ta.values[0]
+            self.qc_details["p_low_physics_sfc"] = sfc_p
 
     def check_qc(self, used_flags=None, check_ugly=True):
         """
@@ -444,6 +461,7 @@ class QualityControl:
             (qc_name.endswith("diff"))
             or (qc_name.endswith("min"))
             or (qc_name.endswith("max"))
+            or (qc_name.endswith("sfc"))
         ):
             return var_unit
         elif (
@@ -532,7 +550,7 @@ class QualityControl:
             )
 
             ds = hx.add_ancillary_var(
-                ds, "alt", "alt_near_gpsalt alt_near_gpsalt_max_diff"
+                ds, "altitude", "alt_near_gpsalt alt_near_gpsalt_max_diff"
             )
         return ds
 
@@ -556,41 +574,10 @@ class QualityControl:
             )
         )
 
-        ds = hx.add_ancillary_var(ds, alt_dim, f"{alt_dim}_below_aircraft")
+        ds = hx.add_ancillary_var(ds, self.alt_dim, f"{alt_dim}_below_aircraft")
         return ds
 
-    def replace_alt_var(self, ds, alt_var):
-        """
-        Replace the altitude variable in a dataset with its counterpart.
-
-        This method swaps the values of the specified altitude variable with its counterpart
-        in the dataset. If `alt_var` is "alt", it will be replaced with "gpsalt", and vice versa.
-        If `alt_var` is neither "alt" nor "gpsalt", a ValueError is raised.
-
-        Parameters:
-        - ds: The dataset containing the altitude variables.
-        - alt_var: A string specifying the altitude variable to be replaced.
-                It must be either "alt" or "gpsalt".
-
-        Returns:
-        - A new dataset with the specified altitude variable replaced by its counterpart.
-
-        Raises:
-        - ValueError: If `alt_var` is not "alt" or "gpsalt".
-        """
-        if alt_var == "alt":
-            replace_var = "gpsalt"
-        elif alt_var == "gpsalt":
-            replace_var = "alt"
-        else:
-            raise ValueError(f"{alt_var} is no known altitude variable.")
-
-        ds_out = ds.assign({alt_var: ds[replace_var]})
-        self.qc_flags.update({f"{alt_var}_values": False})
-
-        return ds_out
-
-    def add_replace_alt_var_to_ds(self, ds):
+    def add_alt_source_to_ds(self, ds):
         """
         Adds  an ancillary variable in the dataset for the altitude dimension.
 
@@ -607,21 +594,16 @@ class QualityControl:
         - The updated dataset with the ancillary variable added or replaced.
         """
         ds = ds.assign(
-            {
-                f"{self.alt_dim}_values": np.byte(
-                    (not self.qc_flags.get(f"{self.alt_dim}_values", True))
-                )
-            }
+            {f"{self.alt_dim}_source": self.qc_flags.get(f"{self.alt_dim}_source")}
         )
-        ds[f"{self.alt_dim}_values"].attrs.update(
+        ds[f"{self.alt_dim}_source"].attrs.update(
             dict(
-                long_name=f"Values for {self.alt_dim} are present in raw data",
-                flag_values="0 1 ",
-                flag_meaning="GOOD BAD",
+                long_name=f"raw data dimension {self.alt_dim} is derived from",
+                flag_values="alt gpsalt",
             )
         )
 
-        ds = hx.add_ancillary_var(ds, self.alt_dim, f"{self.alt_dim}_values")
+        ds = hx.add_ancillary_var(ds, self.alt_dim, f"{self.alt_dim}_source")
         return ds
 
     def add_non_var_qc_to_ds(self, ds):
@@ -630,7 +612,7 @@ class QualityControl:
 
         This method performs the following operations on the input dataset `ds`:
         1. Adds altitude near GPS altitude to the dataset using the `add_alt_near_gpsalt_to_ds` method.
-        2. Replaces altitude variable in the dataset using the `add_replace_alt_var_to_ds` method.
+        2. Replaces altitude variable in the dataset using the `add_alt_source_to_ds` method.
 
         Parameters:
         - ds: The input dataset to which non-variable QC data will be added.
@@ -639,7 +621,7 @@ class QualityControl:
         - ds_out: The output dataset with added non-variable QC data.
         """
         ds_out = self.add_alt_near_gpsalt_to_ds(ds)
-        ds_out = self.add_replace_alt_var_to_ds(ds_out)
+        ds_out = self.add_alt_source_to_ds(ds_out)
         ds_out = self.add_below_aircraft_to_ds(ds_out)
 
         return ds_out
