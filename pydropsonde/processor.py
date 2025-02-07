@@ -1615,7 +1615,7 @@ class Sonde:
                 keep = (
                     [f"{var}_qc" for var in list(self.qc.qc_by_var.keys())]
                     + list(self.qc.qc_details.keys())
-                    + ["alt_near_gpsalt"]
+                    + ["alt_near_gpsalt", "altitude_source"]
                 )
                 for variable in self.qc.qc_vars:
                     ds = self.qc.add_variable_flags_to_ds(ds, variable, details=True)
@@ -1631,6 +1631,7 @@ class Sonde:
                     ds = self.qc.add_variable_flags_to_ds(
                         ds, "ta", add_to="theta", details=True
                     )
+                ds = self.qc.add_non_var_qc_to_ds(ds)
             elif keep == "var_flags":
                 keep = [f"{var}_qc" for var in list(self.qc.qc_by_var.keys())] + [
                     "sonde_qc"
