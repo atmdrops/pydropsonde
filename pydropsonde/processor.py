@@ -937,6 +937,12 @@ class Sonde:
                     {"comment": self.broken_sondes[self.serial_id]["error"]}
                 )
 
+        ds.attrs.update(
+            dict(
+                title=ds.attrs.get("title", "Dropsonde Data")
+                + f" Level 2, Sonde {self.serial_id}",
+            )
+        )
         hx.write_ds(
             ds=ds,
             dir=l2_dir,
@@ -1953,7 +1959,12 @@ class Gridded:
             + f" level3 concatenation with pydropsonde {__version__} \n"
         )
         self.history = history
-        ds.attrs.update({"history": history})
+        ds.attrs.update(
+            {
+                "history": history,
+                "title": ds.attrs.get("title", "Dropsonde Data") + " Level 3",
+            }
+        )
 
         if hasattr(self, "broken_sondes"):
             ds.attrs.update({"broken_sondes": list(self.broken_sondes.keys())})
