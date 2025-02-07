@@ -99,10 +99,10 @@ class QualityControl:
         """
         alt_dim = self.alt_dim
         ds = self.qc_ds
-        self.qc_flags[f"{alt_dim}_below_aircraft"] = (
+        self.qc_flags["altitude_below_aircraft"] = (
             np.nanmax(ds[alt_dim].values) < maxalt
         )
-        if not self.qc_flags[f"{alt_dim}_below_aircraft"]:
+        if not self.qc_flags["altitude_below_aircraft"]:
             variables = ["lat", "lon", "gpsalt", "u", "v"]
 
             self.set_qc_ds(
@@ -246,6 +246,10 @@ class QualityControl:
             )
 
         for variable in self.qc_vars.keys():
+            if variable in ["u", "v"]:
+                alt_dim = "gpsalt"
+            else:
+                alt_dim = "alt"
             dataset = ds.where(
                 (ds[alt_dim] > alt_bounds[0]) & (ds[alt_dim] < alt_bounds[1]), drop=True
             )
@@ -548,7 +552,7 @@ class QualityControl:
             )
 
             ds = hx.add_ancillary_var(
-                ds, "alt", "alt_near_gpsalt alt_near_gpsalt_max_diff"
+                ds, "altitude", "alt_near_gpsalt alt_near_gpsalt_max_diff"
             )
         return ds
 
@@ -572,39 +576,8 @@ class QualityControl:
             )
         )
 
-        ds = hx.add_ancillary_var(ds, alt_dim, f"{alt_dim}_below_aircraft")
+        ds = hx.add_ancillary_var(ds, self.alt_dim, f"{alt_dim}_below_aircraft")
         return ds
-
-    def replace_alt_var(self, ds, alt_var):
-        """
-        Replace the altitude variable in a dataset with its counterpart.
-
-        This method swaps the values of the specified altitude variable with its counterpart
-        in the dataset. If `alt_var` is "alt", it will be replaced with "gpsalt", and vice versa.
-        If `alt_var` is neither "alt" nor "gpsalt", a ValueError is raised.
-
-        Parameters:
-        - ds: The dataset containing the altitude variables.
-        - alt_var: A string specifying the altitude variable to be replaced.
-                It must be either "alt" or "gpsalt".
-
-        Returns:
-        - A new dataset with the specified altitude variable replaced by its counterpart.
-
-        Raises:
-        - ValueError: If `alt_var` is not "alt" or "gpsalt".
-        """
-        if alt_var == "alt":
-            replace_var = "gpsalt"
-        elif alt_var == "gpsalt":
-            replace_var = "alt"
-        else:
-            raise ValueError(f"{alt_var} is no known altitude variable.")
-
-        ds_out = ds.assign({alt_var: ds[replace_var]})
-        self.qc_flags.update({f"{alt_var}_values": False})
-
-        return ds_out
 
     def add_replace_alt_var_to_ds(self, ds):
         """
@@ -623,17 +596,12 @@ class QualityControl:
         - The updated dataset with the ancillary variable added or replaced.
         """
         ds = ds.assign(
-            {
-                f"{self.alt_dim}_values": np.byte(
-                    (not self.qc_flags.get(f"{self.alt_dim}_values", True))
-                )
-            }
+            {f"{self.alt_dim}_values": self.qc_flags.get(f"{self.alt_dim}_values")}
         )
         ds[f"{self.alt_dim}_values"].attrs.update(
             dict(
-                long_name=f"Values for {self.alt_dim} are present in raw data",
-                flag_values="0 1 ",
-                flag_meaning="GOOD BAD",
+                long_name=f"raw data dimension {self.alt_dim} is derived from",
+                flag_values="alt gpsalt",
             )
         )
 
