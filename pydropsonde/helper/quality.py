@@ -577,7 +577,7 @@ class QualityControl:
         ds = hx.add_ancillary_var(ds, self.alt_dim, f"{alt_dim}_below_aircraft")
         return ds
 
-    def add_replace_alt_var_to_ds(self, ds):
+    def add_alt_source_to_ds(self, ds):
         """
         Adds  an ancillary variable in the dataset for the altitude dimension.
 
@@ -594,16 +594,16 @@ class QualityControl:
         - The updated dataset with the ancillary variable added or replaced.
         """
         ds = ds.assign(
-            {f"{self.alt_dim}_values": self.qc_flags.get(f"{self.alt_dim}_values")}
+            {f"{self.alt_dim}_source": self.qc_flags.get(f"{self.alt_dim}_source")}
         )
-        ds[f"{self.alt_dim}_values"].attrs.update(
+        ds[f"{self.alt_dim}_source"].attrs.update(
             dict(
                 long_name=f"raw data dimension {self.alt_dim} is derived from",
                 flag_values="alt gpsalt",
             )
         )
 
-        ds = hx.add_ancillary_var(ds, self.alt_dim, f"{self.alt_dim}_values")
+        ds = hx.add_ancillary_var(ds, self.alt_dim, f"{self.alt_dim}_source")
         return ds
 
     def add_non_var_qc_to_ds(self, ds):
@@ -612,7 +612,7 @@ class QualityControl:
 
         This method performs the following operations on the input dataset `ds`:
         1. Adds altitude near GPS altitude to the dataset using the `add_alt_near_gpsalt_to_ds` method.
-        2. Replaces altitude variable in the dataset using the `add_replace_alt_var_to_ds` method.
+        2. Replaces altitude variable in the dataset using the `add_alt_source_to_ds` method.
 
         Parameters:
         - ds: The input dataset to which non-variable QC data will be added.
@@ -621,7 +621,7 @@ class QualityControl:
         - ds_out: The output dataset with added non-variable QC data.
         """
         ds_out = self.add_alt_near_gpsalt_to_ds(ds)
-        ds_out = self.add_replace_alt_var_to_ds(ds_out)
+        ds_out = self.add_alt_source_to_ds(ds_out)
         ds_out = self.add_below_aircraft_to_ds(ds_out)
 
         return ds_out

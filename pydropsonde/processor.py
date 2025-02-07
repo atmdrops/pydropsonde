@@ -1035,7 +1035,7 @@ class Sonde:
         """
         remove measured values above aircraft
         """
-        variables = ["lat", "lon", "gpsalt", "u", "v"]
+        variables = ["lat", "lon", self.alt_dim, "u", "v"]
         maxalt = self.flight_attrs.get("aircraft_msl_altitude_(m)", float(max_alt))
         self.interim_l3_ds = hx.remove_above_alt(
             self.interim_l3_ds, variables, alt_dim=self.alt_dim, maxalt=maxalt
@@ -1097,7 +1097,9 @@ class Sonde:
         self : object
             Returns the sonde object with integrated water vapour added to the interim l3 dataset.
         """
-        self.interim_l3_ds = hh.calc_iwv(self.interim_l3_ds, qc_var=["rh_qc", "ta_qc"])
+        self.interim_l3_ds = hh.calc_iwv(
+            self.interim_l3_ds, qc_var=["rh_qc", "ta_qc"], alt_dim=self.alt_dim
+        )
 
         return self
 
@@ -1154,42 +1156,52 @@ class Sonde:
 
     def replace_alt_dim(self, drop_nan=True):
         """
-        Replaces the altitude dimension in the dataset if all altitude values are NaN.
+        Replaces the altitude dimension in the dataset if one altitude coordinate is worse than the other
 
-        This function loads the interim level 2 dataset and checks the altitude variable for NaN values.
-        If all values are NaN, it attempts to replace the altitude variable with the other (alt and gpsalt)
-        Depending on the `drop_nan` parameter, it either drops sonde from the dictionary or sets the qc values.
-        If the altitude values remain NaN after replacement, the dataset is dropped.
+        -> if no gpsalt values are present and the sonde probably didn't reach the ground it is dropped
+        -> if the sonde did not reach the ground, but gpsalt is available, gpsalt is used
+        -> if gpsalt does not go until the surface, but pressure measurements suggest that the sonde reached the surface, alt is used
 
-        Parameters:
-        - drop_nan (bool): Determines whether to drop the dataset if altitude values are NaN.
-        If True, the dataset is dropped; otherwise, it attempts to switch the altitude variable.
 
         Returns:
         - self: Returns the object itself if the altitude dimension is successfully replaced or remains valid.
         - None: Returns None if the dataset is dropped due to NaN altitude values.
         """
         alt_dim = self.alt_dim
-        ds = self.interim_l2_ds.load()
-        alt = ds[alt_dim]
-        if np.all(np.isnan(alt)):
-            ds = self.qc.replace_alt_var(ds, alt_dim)
-            if hh.get_bool(drop_nan):
-                print(
-                    f"No {alt_dim} values.  Sonde {self.serial_id} from {self.flight_id} is dropped"
-                )
-                return None
-            else:
-                print(
-                    f"No {alt_dim} values.  Sonde {self.serial_id} from {self.flight_id} altitude is switched"
-                )
-                alt = ds[alt_dim]
-                if np.all(np.isnan(alt)):
-                    print(
-                        f"No altitude values. Sonde {self.serial_id} from {self.flight_id} is dropped"
-                    )
-                    return None
-                self.interim_l2_ds = ds
+        ds = self.interim_l2_ds
+        if (not self.qc.qc_flags["p_low_physics"]) and (np.all(np.isnan(ds["gpsalt"]))):
+            print(
+                f"No gpsalt values and no reliable alt values.  Sonde {self.serial_id} from {self.flight_id} is dropped"
+            )
+            return None
+        elif alt_dim == "alt":
+            self.qc.qc_flags.update({"altitude_source": "alt"})
+            if not self.qc.qc_flags["p_low_physics"]:
+                for var in ["rh", "ta", "p"]:
+                    self.qc.qc_flags[f"{var}_near_surface"] = False
+                    self.qc.qc_details[f"{var}_near_surface_count"] = np.nan
+
+                ds = ds.assign({"alt": ds["gpsalt"]})
+                self.qc.qc_flags.update({"altitude_source": "gpsalt"})
+            ds = ds.rename({"alt": "altitude"}).drop_vars(["gpsalt"])
+
+        elif alt_dim == "gpsalt":
+            self.qc.qc_flags.update({"altitude_source": "gpsalt"})
+            if (not self.qc.qc_flags["u_near_surface"]) and (
+                self.qc.qc_flags["p_low_physics"]
+            ):
+                ds = ds.assign({alt_dim: ds["alt"]})
+                self.qc.qc_flags.update({"altitude_source": "alt"})
+            elif not self.qc.qc_flags["p_low_physics"]:
+                for var in ["rh", "ta", "p"]:
+                    self.qc.qc_flags[f"{var}_near_surface"] = False
+                    self.qc.qc_details[f"{var}_near_surface_count"] = np.nan
+            ds = ds.rename({"gpsalt": "altitude"}).drop_vars(["alt"])
+        else:
+            self.qc.qc_flags.update({"altitude_source": self.alt_dim})
+        self.alt_dim = "altitude"
+        self.qc.alt_dim = "altitude"
+        self.interim_l2_ds = ds
         return self
 
     def swap_alt_dimension(self):

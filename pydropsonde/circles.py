@@ -116,7 +116,7 @@ class Circle:
         circle_altitude_attrs = {
             "long_name": "circle_altitude",
             "description": "Mean altitude of the aircraft during the circle",
-            "units": self.circle_ds.alt.attrs["units"],
+            "units": self.circle_ds[self.alt_dim].attrs["units"],
         }
         circle_time_attrs = {
             "long_name": "circle_time",
