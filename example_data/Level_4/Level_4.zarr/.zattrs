@@ -1,6 +1,0 @@
-{
-    "example_attr": "this is a test",
-    "featureType": "trajectoryProfile",
-    "history": "ASPEN processing with Aspen V4.0.2 \nquality control with pydropsonde 0.0.0.post526.dev0+07a296b \nLevel 3 processing with pydropsonde 0.0.0.post526.dev0+07a296b \n2025-02-10T10:33:52.738221+00:00 level3 concatenation with pydropsonde 0.0.0.post526.dev0+07a296b \n2025-02-10T10:33:53.277537+00:00 level4 concatenation with pydropsonde 0.0.0.post526.dev0+07a296b \n",
-    "sample_dimension": "sonde"
-}

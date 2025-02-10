@@ -1,9 +1,0 @@
-{
-    "_ARRAY_DIMENSIONS": [
-        "circle",
-        "alt"
-    ],
-    "coordinates": "circle_time count",
-    "long_name": "circle mean of u component of winds",
-    "units": "m s-1"
-}

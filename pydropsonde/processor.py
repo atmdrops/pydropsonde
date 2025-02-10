@@ -1919,67 +1919,8 @@ class Gridded:
         Add a dictionary of circles to the Gridded object.
         """
         self.circles = circles
+        print(self.circles)
         return self
-
-    # def concat_circles(self, sortby=None):
-    #     count = []
-    #     data = []
-    #     circle_ids = []
-    #     circle_indices = np.full(len(self.circles), np.nan)
-
-    #     if sortby is None:
-    #         sortby = list(hh.l4_coords.keys())[0]
-
-    #     for circle_index, (circle_id, circle) in enumerate(self.circles.items()):
-    #         circle_ds = circle.circle_ds
-
-    #         if "launch_time" in circle_ds:
-    #             circle_ds = circle_ds.rename({"launch_time": "sonde_time"})
-    #         else:
-    #             raise ValueError(
-    #                 f"Coordinate 'launch_time' not found in circle {circle_id}."
-    #             )
-
-    #         circle_ds_sorted = circle_ds.sortby("sonde_time")
-    #         sonde = np.arange(1, len(circle_ds_sorted.sonde_id) + 1)
-
-    #         circle_ds_sorted = circle_ds_sorted.assign_coords(sonde=("sonde_id", sonde))
-    #         circle_ds_sorted = circle_ds_sorted.swap_dims({"sonde_id": "sonde"})
-
-    #         print("circle ds", circle_ds_sorted)
-    #         print()
-
-    #         count.append(len(circle_ds_sorted.sonde))
-    #         data.append(circle_ds_sorted)
-    #         circle_ids.append(circle_id)
-    #         circle_indices[circle_index] = int(circle_index + 1)
-
-    #     concatenated_ds = xr.concat(data, dim="circle_id")
-    #     circle_ds_sorted = circle_ds_sorted.assign_coords(circle=("circle_id", circle_indices))
-    #     circle_ds_sorted = circle_ds_sorted.swap_dims({"circle_id": "circle"})
-    #     print("concatenated")
-    #     print(circle_ds_sorted)
-
-    #     concatenated_ds = concatenated_ds.assign_coords(
-    #         circle_id=("circle", circle_ids), count=("circle", np.array(count))
-    #     )
-    #     concatenated_ds.attrs["sample_dimension"] = "sonde"
-
-    #     vars_to_drop_circle_id = [
-    #         var
-    #         for var in concatenated_ds.variables
-    #         if ({"sonde", "alt"} <= set(concatenated_ds[var].dims))
-    #         or ({"circle", "sonde"} <= set(concatenated_ds[var].dims))
-    #     ]
-
-    #     for var in vars_to_drop_circle_id:
-    #         print(var, concatenated_ds[var])
-    #         concatenated_ds[var] = concatenated_ds[var].isel(circle=0, drop=True)
-
-    #     self._interim_l4_ds = concatenated_ds
-    #     print("concat", concatenated_ds)
-
-    #     return self
 
     def concat_circles(self, sortby=None):
         count = []

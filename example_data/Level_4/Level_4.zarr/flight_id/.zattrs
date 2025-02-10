@@ -1,7 +1,0 @@
-{
-    "_ARRAY_DIMENSIONS": [
-        "sonde"
-    ],
-    "description": "unique flight ID",
-    "long_name": "flight identifier"
-}

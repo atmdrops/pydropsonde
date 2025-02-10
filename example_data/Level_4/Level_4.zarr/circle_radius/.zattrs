@@ -1,9 +1,0 @@
-{
-    "_ARRAY_DIMENSIONS": [
-        "circle"
-    ],
-    "coordinates": "circle_time count",
-    "description": "Radius of circle from flight segmentation",
-    "long_name": "circle_radius",
-    "units": "m"
-}

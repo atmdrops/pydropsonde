@@ -1,9 +1,0 @@
-{
-    "_ARRAY_DIMENSIONS": [
-        "circle"
-    ],
-    "coordinates": "circle_time count",
-    "description": "Mean altitude of the aircraft during the circle",
-    "long_name": "circle_altitude",
-    "units": "m"
-}

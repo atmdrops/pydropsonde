@@ -1,9 +1,0 @@
-{
-    "_ARRAY_DIMENSIONS": [
-        "sonde"
-    ],
-    "calendar": "proleptic_gregorian",
-    "long_name": "dropsonde launch time",
-    "time_zone": "UTC",
-    "units": "nanoseconds since 2000-01-01"
-}

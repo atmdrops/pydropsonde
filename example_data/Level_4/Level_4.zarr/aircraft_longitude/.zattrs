@@ -1,7 +1,0 @@
-{
-    "_ARRAY_DIMENSIONS": [
-        "sonde"
-    ],
-    "long_name": "aircraft longitude at launch",
-    "units": "deg_E"
-}

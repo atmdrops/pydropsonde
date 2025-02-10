@@ -1,7 +1,0 @@
-{
-    "_ARRAY_DIMENSIONS": [
-        "sonde"
-    ],
-    "description": "unique platform ID",
-    "long_name": "platform identifier"
-}
