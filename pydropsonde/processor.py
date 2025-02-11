@@ -1954,6 +1954,8 @@ class Gridded:
             circle_index += 1
 
         concatenated_ds = xr.concat(data, dim="circle_id")
+        concatenated_ds = concatenated_ds.sortby(sortby)
+        circle_indices = np.arange(1, len(concatenated_ds.circle_time) + 1)
         concatenated_ds = concatenated_ds.assign_coords(
             circle_id=("circle_id", circle_ids),
             circle=("circle_id", circle_indices),
@@ -1982,6 +1984,7 @@ class Gridded:
             concatenated_ds[var] = concatenated_ds[var].isel(circle=0, drop=True)
 
         self._interim_l4_ds = concatenated_ds
+        print(concatenated_ds)
 
         return self
 
