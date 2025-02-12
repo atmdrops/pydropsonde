@@ -1926,65 +1926,66 @@ class Gridded:
         count = []
         data = []
         circle_ids = []
-        circle_indices = []
 
         if sortby is None:
             sortby = list(hh.l4_coords.keys())[0]
 
-        circle_index = 1
         for circle_id, circle in self.circles.items():
             circle_ds = circle.circle_ds
 
             if "launch_time" in circle_ds:
                 circle_ds = circle_ds.swap_dims({"sonde_id": "launch_time"})
-                circle_ds_sorted = circle_ds.sortby("launch_time")
-                circle_ds_sorted = circle_ds_sorted.rename(
-                    {"launch_time": "sonde_time"}
-                )
-
+                circle_ds = circle_ds.rename({"launch_time": "sonde_time"})
             else:
                 raise ValueError(
                     f"Coordinate 'launch_time' not found in circle_id {circle_id}."
                 )
 
-            count.append(len(circle_ds_sorted.sonde_time))
-            data.append(circle_ds_sorted)
+            vars_sonde_dim = []
+            vars_circle_dim = []
+
+            for var in circle_ds.data_vars:
+                if {"sonde_time"} <= set(circle_ds[var].dims):
+                    vars_sonde_dim.append(var)
+                else:
+                    vars_circle_dim.append(var)
+
+            count.append(len(circle_ds.sonde_time))
+            data.append(circle_ds)
             circle_ids.append(circle_id)
-            circle_indices.append(circle_index)
-            circle_index += 1
 
-        concatenated_ds = xr.concat(data, dim="circle_id")
-        concatenated_ds = concatenated_ds.sortby(sortby)
-        circle_indices = np.arange(1, len(concatenated_ds.circle_time) + 1)
-        concatenated_ds = concatenated_ds.assign_coords(
-            circle_id=("circle_id", circle_ids),
-            circle=("circle_id", circle_indices),
-            count=("circle_id", np.array(count)),
+        concatenated_sonde_ds = xr.concat(
+            data,
+            dim="sonde_time",
+            data_vars=vars_sonde_dim,
+            coords="all",
+            compat="override",
         )
-        concatenated_ds = concatenated_ds.swap_dims({"circle_id": "circle"})
-        concatenated_ds = concatenated_ds.reset_coords(["circle_id"])
-
-        sonde_indices = np.arange(1, len(concatenated_ds.sonde_time) + 1)
-        concatenated_ds = concatenated_ds.assign_coords(
+        concatenated_sonde_ds = concatenated_sonde_ds.sortby("sonde_time")
+        sonde_indices = np.arange(1, len(concatenated_sonde_ds.sonde_time) + 1)
+        concatenated_sonde_ds = concatenated_sonde_ds.assign_coords(
             sonde=("sonde_time", sonde_indices)
         )
-        concatenated_ds = concatenated_ds.swap_dims({"sonde_time": "sonde"})
-        concatenated_ds = concatenated_ds.reset_coords(["sonde_id"])
+        concatenated_sonde_ds = concatenated_sonde_ds.swap_dims({"sonde_time": "sonde"})
+        concatenated_sonde_ds = concatenated_sonde_ds.reset_coords(["sonde_id"])
 
-        concatenated_ds.attrs["sample_dimension"] = "sonde"
+        concatenated_circle_ds = xr.concat(
+            data,
+            dim="circle",
+            data_vars=vars_circle_dim,
+            coords="all",
+            compat="override",
+        )
+        concatenated_circle_ds = concatenated_circle_ds.sortby("circle_time")
 
-        vars_to_drop_circle_id = [
-            var
-            for var in concatenated_ds.variables
-            if ({"sonde", "alt"} <= set(concatenated_ds[var].dims))
-            or ({"circle", "sonde"} <= set(concatenated_ds[var].dims))
-        ]
+        sonde_ds_filtered = concatenated_sonde_ds[vars_sonde_dim]
+        circle_ds_filtered = concatenated_circle_ds[vars_circle_dim]
 
-        for var in vars_to_drop_circle_id:
-            concatenated_ds[var] = concatenated_ds[var].isel(circle=0, drop=True)
+        concatenated_ds = xr.merge(
+            [sonde_ds_filtered, circle_ds_filtered], compat="override", join="outer"
+        )
 
         self._interim_l4_ds = concatenated_ds
-        print(concatenated_ds)
 
         return self
 
