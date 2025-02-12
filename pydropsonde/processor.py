@@ -1976,7 +1976,7 @@ class Gridded:
             coords="all",
             compat="override",
         )
-        concatenated_circle_ds = concatenated_circle_ds.sortby("circle_time")
+        concatenated_circle_ds = concatenated_circle_ds.sortby(sortby)
 
         sonde_ds_filtered = concatenated_sonde_ds[vars_sonde_dim]
         circle_ds_filtered = concatenated_circle_ds[vars_circle_dim]
@@ -1984,6 +1984,14 @@ class Gridded:
         concatenated_ds = xr.merge(
             [sonde_ds_filtered, circle_ds_filtered], compat="override", join="outer"
         )
+
+        concatenated_ds = concatenated_ds.assign_coords(
+            sondes_per_circle=("circle", count)
+        )
+        concatenated_ds.sondes_per_circle.attrs["sample_dimension"] = "sonde"
+
+        concatenated_ds = concatenated_ds.drop_vars("sonde")
+        concatenated_ds = concatenated_ds.reset_coords(["platform_id", "flight_id"])
 
         self._interim_l4_ds = concatenated_ds
 
