@@ -33,25 +33,29 @@ def remove_above_alt(ds, variables, alt_dim, maxalt):
 
 
 # encode and write files
-def get_chunks(ds, var, object_dim=("sonde_id", "circle"), alt_dim="alt"):
+def get_chunks(ds, var, object_dims=("sonde_id", "circle"), alt_dim="alt"):
     """
     Get standard chunks for one object_dim (like sonde_id or circle) and one height dimension
     """
-    if object_dim not in ds[var].dims:
+    chunks = {}
+    if all(object_dim not in ds[var].dims for object_dim in object_dims):
         chunks = {
-            object_dim: 1,
             alt_dim: ds[alt_dim].size,
         }
+
     elif alt_dim not in ds[var].dims:
-        chunks = {
-            object_dim: ds[object_dim].size,
-            alt_dim: 1,
-        }
+        chunks = {object_dim: ds[object_dim].size for object_dim in object_dims}
+
     else:
         chunks = {
-            object_dim: min(750, ds[object_dim].size),
-            alt_dim: min(750, ds[alt_dim].size),
+            object_dim: min(750, ds[object_dim].size) for object_dim in object_dims
         }
+        chunks.update(
+            {
+                alt_dim: min(750, ds[alt_dim].size),
+            }
+        )
+
     return tuple((chunks[d] for d in ds[var].dims))
 
 

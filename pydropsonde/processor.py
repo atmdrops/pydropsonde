@@ -948,7 +948,7 @@ class Sonde:
             ds=ds,
             dir=l2_dir,
             filename=self.l2_filename,
-            object_dim=self.sonde_dim,
+            object_dims=(self.sonde_dim,),
             alt_dim="time",
         )
         return self
@@ -1705,7 +1705,7 @@ class Sonde:
             ds=ds,
             dir=self.interim_l3_dir,
             filename=self.interim_l3_filename,
-            object_dim=self.sonde_dim,
+            object_dims=(self.sonde_dim,),
             alt_dim=self.alt_dim,
         )
 
@@ -1933,19 +1933,11 @@ class Gridded:
         for circle_id, circle in self.circles.items():
             circle_ds = circle.circle_ds
 
-            if "launch_time" in circle_ds:
-                circle_ds = circle_ds.swap_dims({"sonde_id": "launch_time"})
-                circle_ds = circle_ds.rename({"launch_time": "sonde_time"})
-            else:
-                raise ValueError(
-                    f"Coordinate 'launch_time' not found in circle_id {circle_id}."
-                )
-
             vars_sonde_dim = []
             vars_circle_dim = []
 
             for var in circle_ds.data_vars:
-                if {"sonde_time"} <= set(circle_ds[var].dims):
+                if {"sonde"} <= set(circle_ds[var].dims):
                     vars_sonde_dim.append(var)
                 else:
                     vars_circle_dim.append(var)
@@ -1956,18 +1948,12 @@ class Gridded:
 
         concatenated_sonde_ds = xr.concat(
             data,
-            dim="sonde_time",
+            dim="sonde",
             data_vars=vars_sonde_dim,
             coords="all",
             compat="override",
         )
         concatenated_sonde_ds = concatenated_sonde_ds.sortby("sonde_time")
-        sonde_indices = np.arange(1, len(concatenated_sonde_ds.sonde_time) + 1)
-        concatenated_sonde_ds = concatenated_sonde_ds.assign_coords(
-            sonde=("sonde_time", sonde_indices)
-        )
-        concatenated_sonde_ds = concatenated_sonde_ds.swap_dims({"sonde_time": "sonde"})
-        concatenated_sonde_ds = concatenated_sonde_ds.reset_coords(["sonde_id"])
 
         concatenated_circle_ds = xr.concat(
             data,
@@ -1989,9 +1975,6 @@ class Gridded:
             sondes_per_circle=("circle", count)
         )
         concatenated_ds.sondes_per_circle.attrs["sample_dimension"] = "sonde"
-
-        concatenated_ds = concatenated_ds.drop_vars("sonde")
-        concatenated_ds = concatenated_ds.reset_coords(["platform_id", "flight_id"])
 
         self._interim_l4_ds = concatenated_ds
 
@@ -2106,7 +2089,7 @@ class Gridded:
             ds=self.concat_sonde_ds,
             dir=l3_dir,
             filename=self.l3_filename,
-            object_dim=self.sonde_dim,
+            object_dims=(self.sonde_dim,),
             alt_dim=self.alt_dim,
         )
         return self
@@ -2224,6 +2207,6 @@ class Gridded:
             dir=l4_dir,
             filename=self.l4_filename,
             object_dims=("sonde", "circle"),
-            alt_dim="alt",
+            alt_dim=self.alt_dim,
         )
         return self

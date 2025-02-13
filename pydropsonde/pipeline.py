@@ -385,8 +385,7 @@ def iterate_Circle_method_over_dict_of_Circle_objects(
 
 def sondes_to_gridded(sondes: dict, config: configparser.ConfigParser):
     global_attrs = get_global_attrs_from_config(config)
-    gridded = Gridded(sondes=sondes, circles=None, global_attrs=global_attrs)
-    gridded.concat_sondes()
+    gridded = Gridded(sondes, global_attrs=global_attrs)
     return gridded
 
 
