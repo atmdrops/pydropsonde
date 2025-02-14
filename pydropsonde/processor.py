@@ -1947,7 +1947,7 @@ class Gridded:
             circle_ids.append(circle_id)
 
         concatenated_sonde_ds = xr.concat(
-            data,
+            [ds[vars_sonde_dim] for ds in data],
             dim="sonde",
             data_vars=vars_sonde_dim,
             coords="all",
@@ -1956,7 +1956,7 @@ class Gridded:
         concatenated_sonde_ds = concatenated_sonde_ds.sortby("sonde_time")
 
         concatenated_circle_ds = xr.concat(
-            data,
+            [ds[vars_circle_dim] for ds in data],
             dim="circle",
             data_vars=vars_circle_dim,
             coords="all",
