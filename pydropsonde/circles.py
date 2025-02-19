@@ -219,7 +219,7 @@ class Circle:
 
     def apply_fit2d(self, variables=None):
         if variables is None:
-            variables = ["u", "v", "q", "ta", "p", "density"]
+            variables = ["u", "v", "q", "ta", "p", "rh", "theta"]
         alt_var = self.alt_dim
         alt_attrs = self.circle_ds[alt_var].attrs
 
