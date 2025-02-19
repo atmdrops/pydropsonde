@@ -255,15 +255,15 @@ def create_and_populate_circle_object(
     """
 
     circles = {}
-
+    ds = gridded.interim_l4_ds
     for segment in gridded.segments:
-        extra_sondes = gridded.l3_ds.where(
-            gridded.l3_ds["sonde_id"].isin(segment.get("extra_sondes")), drop=True
+        extra_sondes = ds.where(
+            ds["sonde_id"].isin(segment.get("extra_sondes")), drop=True
         )
 
-        circle_ds = gridded.l3_ds.where(
-            (gridded.l3_ds["sonde_time"] > np.datetime64(segment["start"]))
-            & (gridded.l3_ds["sonde_time"] < np.datetime64(segment["end"])),
+        circle_ds = ds.where(
+            (ds["sonde_time"] > np.datetime64(segment["start"]))
+            & (ds["sonde_time"] < np.datetime64(segment["end"])),
             drop=True,
         )
         circle_ds = xr.concat(
