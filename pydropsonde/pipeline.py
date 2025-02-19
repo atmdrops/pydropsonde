@@ -616,6 +616,7 @@ pipeline = {
             "add_omega",
             "add_wvel",
             "drop_vars",
+            "add_circle_variables_to_ds",
         ],
         "output": "gridded",
         "comment": "calculate circle products",
