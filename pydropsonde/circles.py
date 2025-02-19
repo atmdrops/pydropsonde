@@ -24,7 +24,7 @@ class Circle:
     alt_dim: str
     sonde_dim: str
 
-    def drop_m_N_vars(self):
+    def drop_vars(self, variables=["bin_average_time"]):
         """
         drop m and N variables from level 3 from circle dataset
         """
@@ -40,6 +40,14 @@ class Circle:
             )
             .drop_vars(
                 ["gps_m_qc", "gps_N_qc", "gpspos_N_qc", "gpspos_m_qc"], errors="ignore"
+            )
+            .drop_vars(
+                [f"{var}_qc" for var in ["u", "v", "ta", "p", "rh"]],
+                errors="ignore",
+            )
+            .drop_vars(
+                variables,
+                errors="ignore",
             )
         )
         self.circle_ds = ds

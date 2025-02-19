@@ -602,7 +602,6 @@ pipeline = {
         "intake": "gridded",
         "apply": iterate_Circle_method_over_dict_of_Circle_objects,
         "functions": [
-            "drop_m_N_vars",
             "get_xy_coords_for_circles",
             "add_circle_variables_to_ds",
         ],
@@ -634,6 +633,7 @@ pipeline = {
         "intake": "gridded",
         "apply": apply_method_to_dataset,
         "functions": [
+            "drop_vars",
             "get_l4_dir",
             "get_l4_filename",
             "write_l4",
