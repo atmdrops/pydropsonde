@@ -1359,11 +1359,13 @@ class Sonde:
                 interp_ds = interp_ds.rename({f"{alt_dim}_bin": alt_dim})
             interp_ds[alt_dim].attrs.update(ds[alt_dim].attrs)
             time_type = ds["time"].values.dtype
+            time_attrs = interp_ds.time.attrs
+            time_attrs.update({"long_name": f"time after binning in {alt_dim}"})
             interp_ds = interp_ds.assign(
-                interp_time=(
+                bin_average_time=(
                     interp_ds.time.dims,
                     interp_ds.time.astype(time_type).values,
-                    interp_ds.time.attrs,
+                    time_attrs,
                 )
             ).drop_vars("time")
 

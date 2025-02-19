@@ -148,7 +148,7 @@ class TestGroup:
             "data_vars": {
                 "q": {"dims": ("alt"), "data": expected["q"]},
                 "p": {"dims": ("alt"), "data": expected["p"]},
-                "interp_time": {"dims": ("alt"), "data": expected["time"]},
+                "bin_average_time": {"dims": ("alt"), "data": expected["time"]},
             },
         }
         result_ds = xr.Dataset.from_dict(res_dict)
