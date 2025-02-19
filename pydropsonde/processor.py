@@ -16,6 +16,7 @@ from pydropsonde.helper.quality import QualityControl
 import pydropsonde.helper.xarray_helper as hx
 import pydropsonde.helper.rawreader as rr
 from importlib.metadata import version
+from pathlib import Path
 
 __version__ = version("pydropsonde")
 
@@ -2111,6 +2112,57 @@ class Gridded:
     def create_interim_l4(self):
         self.interim_l4_ds = self.l3_ds
 
+        return self
+
+    @staticmethod
+    def get_autocorr_np(da, tau, alt_dim="altitude"):
+        vals = (da - da.mean(alt_dim)).values
+        gh = vals[:, :-tau] * vals[:, tau:]
+        axis = 1
+        c0 = vals**2
+        return (
+            np.nansum(gh, axis=axis) / np.count_nonzero(~np.isnan(gh), axis=axis)
+        ) / (np.nansum(c0, axis=axis) / np.count_nonzero(~np.isnan(c0), axis=axis))
+
+    def add_autocorrelation(
+        self,
+        autocorr_dir=None,
+        filename="autocorrelation.zarr",
+        maxalt=10000,
+        variables=None,
+    ):
+        if autocorr_dir is None:
+            autocorr_dir = self.l3_dir
+        try:
+            self.autocorrelation = hx.open_dataset(Path(autocorr_dir, filename))
+
+        except FileNotFoundError:
+            ds = self.l3_ds
+            alt_dim = self.alt_dim
+            if variables is None:
+                variables = ["u", "v", "p", "theta", "q", "rh", "ta"]
+
+            taus = ds[alt_dim].where(ds[alt_dim] < maxalt, drop=True).values[1:] / 10
+            autocorr = {alt_dim: {"dims": (alt_dim), "data": taus * 10}}
+
+            for var in variables:
+                autocorr[f"{var}_autocorr"] = {
+                    "dims": (alt_dim),
+                }
+                res = [self.get_autocorr_np(ds[var], int(tau)) for tau in taus]
+                autocorr[f"{var}_autocorr"]["data"] = [np.nanmean(corr) for corr in res]
+                autocorr[f"{var}_std_autocorr"] = {
+                    "dims": (alt_dim),
+                    "data": [np.nanstd(corr) for corr in res],
+                }
+            self.autocorrelation = xr.Dataset.from_dict(autocorr)
+            hx.write_ds(
+                self.autocorrelation,
+                dir=autocorr_dir,
+                filename=filename,
+                alt_dim=alt_dim,
+                object_dims=("sonde",),
+            )
         return self
 
     def get_simple_circle_times_from_yaml(self, yaml_file: str = None):
