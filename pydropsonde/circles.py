@@ -47,6 +47,10 @@ class Circle:
         return self
 
     def get_xy_coords_for_circles(self):
+        """
+        Calculate x and y from lat and lon relative to circle center.
+        """
+
         if self.circle_ds.lon.size == 0 or self.circle_ds.lat.size == 0:
             print(f"Empty segment {self.segment_id}: 'lon' or 'lat' is empty.")
             return None  # or some default value like [], np.array([]), etc.
@@ -79,9 +83,9 @@ class Circle:
             )
 
             self.crad = np.nanmean(c_r)
-            attr_descr = "fitted circle for all regressed sondes in circle (mean)"
+            self.method = "fitted circle for all regressed sondes in circle (mean)"
         else:
-            attr_descr = "circle from flight segmentation"
+            self.method = "circle from flight segmentation"
 
         yc = self.clat * 110.54 * 1000
         xc = self.clon * (111.32 * np.cos(np.radians(self.clat)) * 1000)
@@ -99,19 +103,33 @@ class Circle:
             "description": "Distance of sonde latitude to mean circle latitude",
             "units": "m",
         }
+
+        self.circle_ds = self.circle_ds.assign(
+            dict(
+                x=([self.sonde_dim, self.alt_dim], delta_x.values, delta_x_attrs),
+                y=([self.sonde_dim, self.alt_dim], delta_y.values, delta_y_attrs),
+            )
+        )
+
+        return self
+
+    def add_circle_variables_to_ds(self):
+        """
+        Add circle metadata to the circle dataset.
+        """
         circle_radius_attrs = {
             "long_name": "circle_radius",
-            "description": f"Radius of {attr_descr}",
+            "description": f"Radius of {self.method}",
             "units": "m",
         }
         circle_lon_attrs = {
             "long_name": "circle_lon",
-            "description": f"Longitude of {attr_descr}",
+            "description": f"Longitude of {self.method}",
             "units": self.circle_ds.lon.attrs["units"],
         }
         circle_lat_attrs = {
             "long_name": "circle_lat",
-            "description": f"Latitude of {attr_descr}",
+            "description": f"Latitude of {self.method}",
             "units": self.circle_ds.lat.attrs["units"],
         }
         circle_altitude_attrs = {
@@ -123,27 +141,23 @@ class Circle:
             "long_name": "circle_time",
             "description": "Mean launch time of all sondes in circle",
         }
-
-        new_vars = dict(
-            circle_altitude=(
-                [],
-                self.circle_ds["aircraft_msl_altitude"].mean().values,
-                circle_altitude_attrs,
-            ),
-            circle_time=(
-                [],
-                self.circle_ds["sonde_time"].mean().values,
-                circle_time_attrs,
-            ),
-            circle_lon=([], self.clon, circle_lon_attrs),
-            circle_lat=([], self.clat, circle_lat_attrs),
-            circle_radius=([], self.crad, circle_radius_attrs),
-            x=([self.sonde_dim, self.alt_dim], delta_x.values, delta_x_attrs),
-            y=([self.sonde_dim, self.alt_dim], delta_y.values, delta_y_attrs),
+        self.circle_ds = self.circle_ds.assign(
+            dict(
+                circle_altitude=(
+                    [],
+                    self.circle_ds["aircraft_msl_altitude"].mean().values,
+                    circle_altitude_attrs,
+                ),
+                circle_time=(
+                    [],
+                    self.circle_ds["sonde_time"].mean().values,
+                    circle_time_attrs,
+                ),
+                circle_lon=([], self.clon, circle_lon_attrs),
+                circle_lat=([], self.clat, circle_lat_attrs),
+                circle_radius=([], self.crad, circle_radius_attrs),
+            )
         )
-
-        self.circle_ds = self.circle_ds.assign(new_vars)
-
         return self
 
     @staticmethod
