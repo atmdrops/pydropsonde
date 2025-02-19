@@ -165,7 +165,7 @@ class Circle:
         }
         circle_time_attrs = {
             "long_name": "circle_time",
-            "description": "Mean launch time of all sondes in circle",
+            "description": "Mean launch time of first and last sonde in circle",
         }
         self.circle_ds = self.circle_ds.assign(
             dict(
@@ -176,7 +176,7 @@ class Circle:
                 ),
                 circle_time=(
                     [],
-                    self.circle_ds["sonde_time"].mean().values,
+                    self.circle_ds["sonde_time"].isel(sonde=[0, -1]).mean().values,
                     circle_time_attrs,
                 ),
                 circle_lon=([], self.clon, circle_lon_attrs),
