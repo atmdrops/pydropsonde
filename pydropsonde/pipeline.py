@@ -634,6 +634,7 @@ pipeline = {
         "intake": "gridded",
         "apply": apply_method_to_dataset,
         "functions": [
+            "drop_vars",
             "get_l4_dir",
             "get_l4_filename",
             "write_l4",
