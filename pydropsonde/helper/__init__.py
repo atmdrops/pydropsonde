@@ -279,7 +279,7 @@ def calc_q_from_rh(ds):
     return ds
 
 
-def calc_rh_from_q(ds):
+def calc_rh_from_q(ds, alt_dim="altitude"):
     """
     Input :
 
@@ -308,7 +308,7 @@ def calc_rh_from_q(ds):
             standard_name="relative_humidity",
             long_name="relative humidity",
             units="1",
-            method=f"recalculated from q following {es_name} after binning",
+            method=f"recalculated from q following {es_name} after binning in {alt_dim}",
         )
     ds = ds.assign(rh=(ds.q.dims, rh, rh_attrs))
 
@@ -385,7 +385,7 @@ def calc_theta_from_T(ds):
     return ds
 
 
-def calc_T_from_theta(ds):
+def calc_T_from_theta(ds, alt_dim="altitude"):
     """
     Input :
 
@@ -409,7 +409,9 @@ def calc_T_from_theta(ds):
             units="K",
         )
 
-    t_attrs.update(dict(method="recalculated from theta and p after binning"))
+    t_attrs.update(
+        dict(method=f"recalculated from theta and p after binning in {alt_dim}")
+    )
     ds = ds.assign(ta=(ds.theta.dims, ta, t_attrs))
     return ds
 
