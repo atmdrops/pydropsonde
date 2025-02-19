@@ -2165,6 +2165,29 @@ class Gridded:
             )
         return self
 
+    def get_dist_to_nonan(self, variable):
+        ds = self.interim_l4_ds
+        alt_dim = self.alt_dim
+        masked_alt = ds[alt_dim].where(~np.isnan(ds[variable]))
+        masked_alt.name = "int_alt"
+        int_masked = masked_alt.interpolate_na(
+            dim=alt_dim,
+            method="nearest",
+            fill_value="extrapolate",
+        )
+        return np.abs(ds[alt_dim] - int_masked)
+
+    def add_distances(self):
+        res = {}
+        for var in ["u", "v", "p", "theta", "q", "rh", "ta"]:
+            res[var] = self.get_dist_to_nonan(variable=var)
+            res[var] = xr.where(res[var], res[var], 0)
+            res[var].name = f"{var}_dist"
+        self.distances = xr.merge(res.values(), join="exact").transpose(
+            self.sonde_dim, self.alt_dim
+        )
+        return self
+
     def get_simple_circle_times_from_yaml(self, yaml_file: str = None):
         """
         Extracts circle times and related information from a simplified YAML file.
