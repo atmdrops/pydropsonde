@@ -2131,7 +2131,7 @@ class Gridded:
         variables=None,
     ):
         if autocorr_dir is None:
-            autocorr_dir = self.l3_dir
+            autocorr_dir = ""
         try:
             self.autocorrelation = hx.open_dataset(Path(autocorr_dir, filename))
 
@@ -2155,13 +2155,14 @@ class Gridded:
                     "data": [np.nanstd(corr) for corr in res],
                 }
             self.autocorrelation = xr.Dataset.from_dict(autocorr)
-            hx.write_ds(
-                self.autocorrelation,
-                dir=autocorr_dir,
-                filename=filename,
-                alt_dim=alt_dim,
-                object_dims=("sonde",),
-            )
+            if autocorr_dir:
+                hx.write_ds(
+                    self.autocorrelation,
+                    dir=autocorr_dir,
+                    filename=filename,
+                    alt_dim=alt_dim,
+                    object_dims=("sonde",),
+                )
         return self
 
     def get_dist_to_nonan(self, variable):
