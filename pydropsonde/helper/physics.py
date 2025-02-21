@@ -91,7 +91,7 @@ def integrate_water_vapor(p, q, T=None, z=None, axis=0):
     if T is None and z is None:
         # Calculate IWV assuming hydrostatic equilibrium.
         g = constants.gravity_earth
-        return -integrate_column(q, p, axis=axis) / g
+        return integrate_column(q, p, axis=axis) / g
     elif T is None or z is None:
         raise ValueError(
             "Pass both `T` and `z` for non-hydrostatic calculation of the IWV."
