@@ -273,7 +273,7 @@ def create_and_populate_circle_object(
         )
         if circle_ds.sonde_id.size > 0:
             circle = Circle(
-                circle_ds=circle_ds,
+                circle_ds=circle_ds.sortby("sonde_time"),
                 flight_id=segment["flight_id"],
                 platform_id=segment["platform_id"],
                 segment_id=segment["segment_id"],
@@ -615,7 +615,8 @@ pipeline = {
             "add_vorticity",
             "add_omega",
             "add_wvel",
-            "drop_vars",
+            "add_circle_variables_to_ds",
+            "add_regression_stderr",
         ],
         "output": "gridded",
         "comment": "calculate circle products",

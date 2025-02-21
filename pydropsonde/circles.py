@@ -3,6 +3,7 @@ import numpy as np
 import xarray as xr
 import circle_fit as cf
 import pydropsonde.helper.physics as hp
+import pydropsonde.helper.xarray_helper as hx
 
 _no_default = object()
 
@@ -73,8 +74,12 @@ class Circle:
         return self
 
     def get_xy_coords_for_circles(self):
-        if self.circle_ds.lon.size == 0 or self.circle_ds.lat.size == 0:
-            print(f"Empty segment {self.segment_id}: 'lon' or 'lat' is empty.")
+        """
+        Calculate x and y from lat and lon relative to circle center.
+        """
+
+        if self.circle_ds[self.sonde_dim].size == 0:
+            print(f"Empty segment {self.segment_id}:  No sondes in circle.")
             return None  # or some default value like [], np.array([]), etc.
 
         x_coor = (
@@ -105,9 +110,9 @@ class Circle:
             )
 
             self.crad = np.nanmean(c_r)
-            attr_descr = "fitted circle for all regressed sondes in circle (mean)"
+            self.method = "circle with central coordinate calculated as average from all sondes in circle."
         else:
-            attr_descr = "circle from flight segmentation"
+            self.method = "circle from flight segmentation"
 
         yc = self.clat * 110.54 * 1000
         xc = self.clon * (111.32 * np.cos(np.radians(self.clat)) * 1000)
@@ -125,19 +130,33 @@ class Circle:
             "description": "Distance of sonde latitude to mean circle latitude",
             "units": "m",
         }
+
+        self.circle_ds = self.circle_ds.assign(
+            dict(
+                x=([self.sonde_dim, self.alt_dim], delta_x.values, delta_x_attrs),
+                y=([self.sonde_dim, self.alt_dim], delta_y.values, delta_y_attrs),
+            )
+        )
+
+        return self
+
+    def add_circle_variables_to_ds(self):
+        """
+        Add circle metadata to the circle dataset.
+        """
         circle_radius_attrs = {
             "long_name": "circle_radius",
-            "description": f"Radius of {attr_descr}",
+            "description": f"Radius of {self.method}",
             "units": "m",
         }
         circle_lon_attrs = {
             "long_name": "circle_lon",
-            "description": f"Longitude of {attr_descr}",
+            "description": f"Longitude of {self.method}",
             "units": self.circle_ds.lon.attrs["units"],
         }
         circle_lat_attrs = {
             "long_name": "circle_lat",
-            "description": f"Latitude of {attr_descr}",
+            "description": f"Latitude of {self.method}",
             "units": self.circle_ds.lat.attrs["units"],
         }
         circle_altitude_attrs = {
@@ -147,29 +166,25 @@ class Circle:
         }
         circle_time_attrs = {
             "long_name": "circle_time",
-            "description": "Mean launch time of all sondes in circle",
+            "description": "Mean launch time of first and last sonde in circle",
         }
-
-        new_vars = dict(
-            circle_altitude=(
-                [],
-                self.circle_ds["aircraft_msl_altitude"].mean().values,
-                circle_altitude_attrs,
-            ),
-            circle_time=(
-                [],
-                self.circle_ds["sonde_time"].mean().values,
-                circle_time_attrs,
-            ),
-            circle_lon=([], self.clon, circle_lon_attrs),
-            circle_lat=([], self.clat, circle_lat_attrs),
-            circle_radius=([], self.crad, circle_radius_attrs),
-            x=([self.sonde_dim, self.alt_dim], delta_x.values, delta_x_attrs),
-            y=([self.sonde_dim, self.alt_dim], delta_y.values, delta_y_attrs),
+        self.circle_ds = self.circle_ds.assign(
+            dict(
+                circle_altitude=(
+                    [],
+                    self.circle_ds["aircraft_msl_altitude"].mean().values,
+                    circle_altitude_attrs,
+                ),
+                circle_time=(
+                    [],
+                    self.circle_ds["sonde_time"].isel(sonde=[0, -1]).mean().values,
+                    circle_time_attrs,
+                ),
+                circle_lon=([], self.clon, circle_lon_attrs),
+                circle_lat=([], self.clat, circle_lat_attrs),
+                circle_radius=([], self.crad, circle_radius_attrs),
+            )
         )
-
-        self.circle_ds = self.circle_ds.assign(new_vars)
-
         return self
 
     @staticmethod
@@ -260,7 +275,127 @@ class Circle:
 
             ds = self.circle_ds.assign(assign_dict)
         ds[alt_var].attrs.update(alt_attrs)
-        ds = ds.set_coords("circle_time")
+
+        self.circle_ds = ds
+        return self
+
+    def add_regression_stderr(self, variables=None):
+        """
+        Calculation of regression standard error, following Lenschow, Donald H and Savic-Jovcic,Verica and Stevens, Bjorn 2007
+
+        """
+        alt_dim = self.alt_dim
+        sonde_dim = self.sonde_dim
+        if variables is None:
+            variables = ["u", "v", "q", "ta", "p"]
+        ds = self.circle_ds
+
+        dx_denominator = ((ds.x - ds.x.mean(dim=sonde_dim)) ** 2).sum(dim=sonde_dim)
+        dy_denominator = ((ds.y - ds.y.mean(dim=sonde_dim)) ** 2).sum(dim=sonde_dim)
+
+        for var in variables:
+            var_err = (
+                ds[var]
+                - (ds[f"mean_{var}"] + ds[f"d{var}dx"] * ds.x + ds[f"d{var}dy"] * ds.y)
+            ) ** 2
+            nominator = (var_err.sum(dim=sonde_dim)) / (
+                var_err.count(dim=sonde_dim) - 3
+            )
+
+            se_x = np.sqrt(nominator / dx_denominator)
+            se_y = np.sqrt(nominator / dy_denominator)
+
+            dvardx_std_name = ds[f"d{var}dx"].attrs.get(
+                "standard_name", f"derivative_of_{var}_wrt_x"
+            )
+            unit = ds[f"d{var}dx"].attrs.get("units", "")
+            dvardy_std_name = ds[f"d{var}dy"].attrs.get(
+                "standard_name", f"derivative_of_{var}_wrt_y"
+            )
+
+            ds = ds.assign(
+                {
+                    f"se_d{var}dx": (
+                        [alt_dim],
+                        (se_x.where(~np.isnan(ds[f"d{var}dx"])).values),
+                        dict(
+                            standard_name=f"{dvardx_std_name} standard_error",
+                            units=unit,
+                        ),
+                    ),
+                    f"se_d{var}dy": (
+                        [alt_dim],
+                        (se_y.where(~np.isnan(ds[f"d{var}dy"])).values),
+                        dict(
+                            standard_name=f"{dvardy_std_name} standard_error",
+                            units=unit,
+                        ),
+                    ),
+                }
+            )
+            ds = hx.add_ancillary_var(ds, f"d{var}dx", f"se_d{var}dx")
+            ds = hx.add_ancillary_var(ds, f"d{var}dy", f"se_d{var}dy")
+
+        div_std_name = ds["div"].attrs.get("standard_name", "divergence_of_wind")
+        ds = ds.assign(
+            {
+                "se_div": (
+                    [alt_dim],
+                    np.sqrt(ds.se_dudx**2 + ds.se_dudy**2).values,
+                    dict(standard_name=f"{div_std_name} standard_error", units=unit),
+                )
+            }
+        )
+
+        ds = hx.add_ancillary_var(ds, "div", "se_div")
+        ds = hx.add_ancillary_var(ds, "vor", "se_div")
+        se_div_nona = ds.se_div.dropna(dim=alt_dim)
+        wvel_std_name = ds["wvel"].attrs.get("standard_name", "upward_air_velocity")
+        ds = ds.assign(
+            {
+                "se_wvel": (
+                    ds.se_div.dims,
+                    (
+                        np.sqrt((se_div_nona**2).cumsum(dim=alt_dim))
+                        * se_div_nona[alt_dim].diff(dim=alt_dim)
+                    )
+                    .broadcast_like(ds.se_div)
+                    .values,
+                    dict(
+                        standard_name=f"{wvel_std_name} standard_error",
+                        units=ds["wvel"].attrs.get("units", "m s-1"),
+                    ),
+                )
+            }
+        )
+        ds = hx.add_ancillary_var(ds, "wvel", "se_wvel")
+
+        omega_std_name = ds["omega"].attrs.get(
+            "standard_name", "vertical_air_velocity_expressed_as_tendency_of_pressure"
+        )
+
+        ds = ds.assign(
+            {
+                "se_omega": (
+                    ds.se_div.dims,
+                    (
+                        np.sqrt((se_div_nona**2).cumsum(dim=alt_dim))
+                        * ds.mean_p.sel({alt_dim: se_div_nona[alt_dim]}).diff(
+                            dim=alt_dim
+                        )
+                    )
+                    .broadcast_like(ds.se_div)
+                    .values
+                    * 0.01
+                    * 60**2,
+                    dict(
+                        standard_name=f"{omega_std_name} standard_error",
+                        units=ds["omega"].attrs.get("units", "hPa hr-1"),
+                    ),
+                )
+            }
+        )
+        ds = hx.add_ancillary_var(ds, "omega", "se_omega")
 
         self.circle_ds = ds
         return self

@@ -1938,7 +1938,6 @@ class Gridded:
         for circle_id, circle in self.circles.items():
             circle_ds = circle.circle_ds
             circle_ds = circle_ds.sortby("sonde_time")
-            circle_ds = circle_ds.reset_coords("circle_time")
 
             vars_sonde_dim = []
             vars_circle_dim = []
@@ -1978,7 +1977,7 @@ class Gridded:
         concatenated_ds = concatenated_ds.assign(circle_id=("circle", circle_ids))
 
         concatenated_ds = concatenated_ds.set_coords(
-            ["circle_time", "circle_lon", "circle_lat", "circle_radius"]
+            ["circle_time", "circle_lon", "circle_lat"]
         )
         concatenated_ds = concatenated_ds.reset_coords(
             ["aircraft_latitude", "aircraft_longitude", "aircraft_msl_altitude"]
