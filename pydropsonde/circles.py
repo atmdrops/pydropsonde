@@ -77,8 +77,8 @@ class Circle:
         Calculate x and y from lat and lon relative to circle center.
         """
 
-        if self.circle_ds.lon.size == 0 or self.circle_ds.lat.size == 0:
-            print(f"Empty segment {self.segment_id}: 'lon' or 'lat' is empty.")
+        if self.circle_ds[self.sonde_dim].size == 0:
+            print(f"Empty segment {self.segment_id}:  No sondes in circle.")
             return None  # or some default value like [], np.array([]), etc.
 
         x_coor = (
