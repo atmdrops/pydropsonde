@@ -98,6 +98,6 @@ def integrate_water_vapor(p, q, T=None, z=None, axis=0):
         )
     else:
         # Integrate the water vapor mass density for non-hydrostatic cases.
-        rho = density(p, T, constants.Rv)  # water vapor density
-        vmr = q2vmr(q)
-        return integrate_column(vmr * rho, z, axis=axis)
+        rho = density(p, T, q2mr(q))  # water vapor density
+        mr = q2mr(q)
+        return integrate_column(mr * rho, z, axis=axis)
