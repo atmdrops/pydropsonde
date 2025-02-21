@@ -1977,7 +1977,7 @@ class Gridded:
         concatenated_ds = concatenated_ds.assign(circle_id=("circle", circle_ids))
 
         concatenated_ds = concatenated_ds.set_coords(
-            ["circle_time", "circle_lon", "circle_lat", "circle_radius"]
+            ["circle_time", "circle_lon", "circle_lat"]
         )
         concatenated_ds = concatenated_ds.reset_coords(
             ["aircraft_latitude", "aircraft_longitude", "aircraft_msl_altitude"]
