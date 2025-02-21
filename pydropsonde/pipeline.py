@@ -255,15 +255,15 @@ def create_and_populate_circle_object(
     """
 
     circles = {}
-
+    ds = gridded.interim_l4_ds
     for segment in gridded.segments:
-        extra_sondes = gridded.l3_ds.where(
-            gridded.l3_ds["sonde_id"].isin(segment.get("extra_sondes")), drop=True
+        extra_sondes = ds.where(
+            ds["sonde_id"].isin(segment.get("extra_sondes")), drop=True
         )
 
-        circle_ds = gridded.l3_ds.where(
-            (gridded.l3_ds["sonde_time"] > np.datetime64(segment["start"]))
-            & (gridded.l3_ds["sonde_time"] < np.datetime64(segment["end"])),
+        circle_ds = ds.where(
+            (ds["sonde_time"] > np.datetime64(segment["start"]))
+            & (ds["sonde_time"] < np.datetime64(segment["end"])),
             drop=True,
         )
         circle_ds = xr.concat(
@@ -274,7 +274,7 @@ def create_and_populate_circle_object(
         )
         if circle_ds.sonde_id.size > 0:
             circle = Circle(
-                circle_ds=circle_ds,
+                circle_ds=circle_ds.sortby("sonde_time"),
                 flight_id=segment["flight_id"],
                 platform_id=segment["platform_id"],
                 segment_id=segment["segment_id"],
@@ -585,10 +585,23 @@ pipeline = {
         "output": "gridded",
         "comment": "This step creates the L3 dataset after adding additional products.",
     },
+    "get_weights": {
+        "intake": "gridded",
+        "apply": apply_method_to_dataset,
+        "functions": [
+            "add_l3_ds",
+            "create_interim_l4",
+            "add_autocorrelation",
+            "add_distances",
+            "add_weights",
+        ],
+        "output": "gridded",
+        "comment": "get circle times and add to gridded",
+    },
     "get_circles": {
         "intake": "gridded",
         "apply": apply_method_to_dataset,
-        "functions": ["add_l3_ds", "get_circle_times_from_segmentation"],
+        "functions": ["get_circle_times_from_segmentation"],
         "output": "gridded",
         "comment": "get circle times and add to gridded",
     },
@@ -601,7 +614,11 @@ pipeline = {
     "prepare_circle_dataset": {
         "intake": "gridded",
         "apply": iterate_Circle_method_over_dict_of_Circle_objects,
-        "functions": ["get_xy_coords_for_circles"],
+        "functions": [
+            "get_xy_coords_for_circles",
+            "drop_vars",
+            "interpolate_na_sondes",
+        ],
         "output": "gridded",
         "comment": "prepare circle dataset for calculation",
     },
@@ -609,13 +626,12 @@ pipeline = {
         "intake": "gridded",
         "apply": iterate_Circle_method_over_dict_of_Circle_objects,
         "functions": [
-            "add_density",
             "apply_fit2d",
             "add_divergence",
             "add_vorticity",
             "add_omega",
             "add_wvel",
-            "drop_vars",
+            "add_circle_variables_to_ds",
         ],
         "output": "gridded",
         "comment": "calculate circle products",

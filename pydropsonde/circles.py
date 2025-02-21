@@ -73,8 +73,12 @@ class Circle:
         return self
 
     def get_xy_coords_for_circles(self):
-        if self.circle_ds.lon.size == 0 or self.circle_ds.lat.size == 0:
-            print(f"Empty segment {self.segment_id}: 'lon' or 'lat' is empty.")
+        """
+        Calculate x and y from lat and lon relative to circle center.
+        """
+
+        if self.circle_ds[self.sonde_dim].size == 0:
+            print(f"Empty segment {self.segment_id}:  No sondes in circle.")
             return None  # or some default value like [], np.array([]), etc.
 
         x_coor = (
@@ -105,9 +109,9 @@ class Circle:
             )
 
             self.crad = np.nanmean(c_r)
-            attr_descr = "fitted circle for all regressed sondes in circle (mean)"
+            self.method = "circle with central coordinate calculated as average from all sondes in circle."
         else:
-            attr_descr = "circle from flight segmentation"
+            self.method = "circle from flight segmentation"
 
         yc = self.clat * 110.54 * 1000
         xc = self.clon * (111.32 * np.cos(np.radians(self.clat)) * 1000)
@@ -125,19 +129,33 @@ class Circle:
             "description": "Distance of sonde latitude to mean circle latitude",
             "units": "m",
         }
+
+        self.circle_ds = self.circle_ds.assign(
+            dict(
+                x=([self.sonde_dim, self.alt_dim], delta_x.values, delta_x_attrs),
+                y=([self.sonde_dim, self.alt_dim], delta_y.values, delta_y_attrs),
+            )
+        )
+
+        return self
+
+    def add_circle_variables_to_ds(self):
+        """
+        Add circle metadata to the circle dataset.
+        """
         circle_radius_attrs = {
             "long_name": "circle_radius",
-            "description": f"Radius of {attr_descr}",
+            "description": f"Radius of {self.method}",
             "units": "m",
         }
         circle_lon_attrs = {
             "long_name": "circle_lon",
-            "description": f"Longitude of {attr_descr}",
+            "description": f"Longitude of {self.method}",
             "units": self.circle_ds.lon.attrs["units"],
         }
         circle_lat_attrs = {
             "long_name": "circle_lat",
-            "description": f"Latitude of {attr_descr}",
+            "description": f"Latitude of {self.method}",
             "units": self.circle_ds.lat.attrs["units"],
         }
         circle_altitude_attrs = {
@@ -149,31 +167,98 @@ class Circle:
             "long_name": "circle_time",
             "description": "Mean launch time of all sondes in circle",
         }
-
-        new_vars = dict(
-            circle_altitude=(
-                [],
-                self.circle_ds["aircraft_msl_altitude"].mean().values,
-                circle_altitude_attrs,
-            ),
-            circle_time=(
-                [],
-                self.circle_ds["sonde_time"].mean().values,
-                circle_time_attrs,
-            ),
-            circle_lon=([], self.clon, circle_lon_attrs),
-            circle_lat=([], self.clat, circle_lat_attrs),
-            circle_radius=([], self.crad, circle_radius_attrs),
-            x=([self.sonde_dim, self.alt_dim], delta_x.values, delta_x_attrs),
-            y=([self.sonde_dim, self.alt_dim], delta_y.values, delta_y_attrs),
+        self.circle_ds = self.circle_ds.assign(
+            dict(
+                circle_altitude=(
+                    [],
+                    self.circle_ds["aircraft_msl_altitude"].mean().values,
+                    circle_altitude_attrs,
+                ),
+                circle_time=(
+                    [],
+                    self.circle_ds["sonde_time"].isel(sonde=[0, -1]).mean().values,
+                    circle_time_attrs,
+                ),
+                circle_lon=([], self.clon, circle_lon_attrs),
+                circle_lat=([], self.clat, circle_lat_attrs),
+                circle_radius=([], self.crad, circle_radius_attrs),
+            )
         )
+        return self
 
-        self.circle_ds = self.circle_ds.assign(new_vars)
+    def interpolate_na_sondes(self, method="cubic", max_gap=1500):
+        if method is not None:
+            ds = self.circle_ds.swap_dims({self.sonde_dim: "sonde_id"})
+            alt_dim = self.alt_dim
+            ds["p"] = np.log(ds["p"])
+            for var in [
+                var
+                for var in ds.variables
+                if set([alt_dim, "sonde_id"]).issubset(ds.variables[var].dims)
+            ]:
+                no_nan = ds[var].dropna(dim="sonde_id", thresh=4)
+                no_nan = no_nan
+                interp = no_nan.interpolate_na(
+                    dim=alt_dim,
+                    method=method,
+                    bounds_error=False,
+                    fill_value=np.nan,
+                    max_gap=int(max_gap),
+                )
+                ds = ds.assign(
+                    {
+                        var: (
+                            ds[var].dims,
+                            interp.broadcast_like(ds[var]).values,
+                            ds[var].attrs,
+                        )
+                    }
+                )
+            ds["p"] = np.exp(ds["p"])
+            self.circle_ds = ds.swap_dims({"sonde_id": self.sonde_dim})
 
         return self
 
+    def remove_values(self, n_gap=3, keep_sfc=1000):
+        n_gap = int(n_gap)
+        ds = self.circle_ds
+
+        alt_mask = np.full(ds.u.shape, False)  # first sonde_id then alt_dim
+        alt_mask[:, ::n_gap] = True
+        if keep_sfc:
+            alt_mask[:, : int(keep_sfc / 10)] = True
+        for var in ["u", "v", "rh", "q", "ta", "theta", "x", "y"]:
+            self.circle_ds = self.circle_ds.assign(
+                {var: (ds[var].dims, ds[var].where(alt_mask).values, ds[var].attrs)}
+            )
+        return self
+
+    def one_gap_one_sonde(self, alt=1500, depth=500, sonde_id=2):
+        ds = self.circle_ds
+        alt_mask = np.full(ds.u.shape, True)
+        alt_mask[
+            int(sonde_id), int(int(alt) / 10) : int((int(alt) + int(depth)) / 10)
+        ] = False
+
+        for var in ["u", "v", "rh", "q", "ta", "theta", "x", "y"]:
+            self.circle_ds = self.circle_ds.assign(
+                {var: (ds[var].dims, ds[var].where(alt_mask).values, ds[var].attrs)}
+            )
+        return self
+
+    def remove_sonde(self, sonde_id=0):
+        ds = self.circle_ds
+        alt_mask = np.full(ds.u.shape, True)
+        alt_mask[int(sonde_id), :] = False
+
+        for var in ["u", "v", "rh", "q", "ta", "theta", "x", "y"]:
+            self.circle_ds = self.circle_ds.assign(
+                {var: (ds[var].dims, ds[var].where(alt_mask).values, ds[var].attrs)}
+            )
+        return self
+
     @staticmethod
-    def fit2d(x, y, u):
+    def fit2d(x, y, u, w):
         a = np.stack([np.ones_like(x), x, y], axis=-1)
 
         invalid = np.isnan(u) | np.isnan(x) | np.isnan(y)
@@ -181,22 +266,27 @@ class Circle:
         under_constraint = np.sum(~invalid, axis=-1) < 6
         u_cal = np.where(invalid, 0, u)
         a[invalid] = 0
+        w = np.sqrt(w)
+        a = np.einsum("...m,...mr->...mr", w, a)
+        u_cal = np.einsum("...m,...m->...m", w, u_cal)
 
         a_inv = np.linalg.pinv(a)
         intercept, dux, duy = np.einsum("...rm,...m->r...", a_inv, u_cal)
+
         intercept[under_constraint] = np.nan
         dux[under_constraint] = np.nan
         duy[under_constraint] = np.nan
-
         return intercept, dux, duy
 
-    def fit2d_xr(self, x, y, u, sonde_dim="sonde"):
+    def fit2d_xr(self, x, y, u, w, sonde_dim="sonde"):
         return xr.apply_ufunc(
             self.__class__.fit2d,  # Call the static method without passing `self`
             x,
             y,
             u,
+            w,
             input_core_dims=[
+                [sonde_dim],
                 [sonde_dim],
                 [sonde_dim],
                 [sonde_dim],
@@ -206,7 +296,7 @@ class Circle:
 
     def apply_fit2d(self, variables=None):
         if variables is None:
-            variables = ["u", "v", "q", "ta", "p", "density"]
+            variables = ["u", "v", "q", "ta", "p", "rh", "theta"]
         alt_var = self.alt_dim
         alt_attrs = self.circle_ds[alt_var].attrs
 
@@ -227,13 +317,22 @@ class Circle:
                 "derivative_of_" + standard_name + "_wrt_x",
                 "derivative_of_" + standard_name + "_wrt_y",
             ]
-
-            results = self.fit2d_xr(
-                x=self.circle_ds.x,
-                y=self.circle_ds.y,
-                u=self.circle_ds[par],
-                sonde_dim=self.sonde_dim,
-            )
+            try:
+                results = self.fit2d_xr(
+                    x=self.circle_ds.x,
+                    y=self.circle_ds.y,
+                    u=self.circle_ds[par],
+                    w=self.circle_ds[f"{par}_weights"],
+                    sonde_dim=self.sonde_dim,
+                )
+            except KeyError:
+                results = self.fit2d_xr(
+                    x=self.circle_ds.x,
+                    y=self.circle_ds.y,
+                    u=self.circle_ds[par],
+                    w=xr.ones_like(self.circle_ds[par]),
+                    sonde_dim=self.sonde_dim,
+                )
 
             for varname, result, long_name, use_name in zip(
                 varnames, results, long_names, use_names
@@ -260,7 +359,6 @@ class Circle:
 
             ds = self.circle_ds.assign(assign_dict)
         ds[alt_var].attrs.update(alt_attrs)
-        ds = ds.set_coords("circle_time")
 
         self.circle_ds = ds
         return self
