@@ -632,6 +632,8 @@ pipeline = {
             "add_vorticity",
             "add_omega",
             "add_wvel",
+            "calc_remove_sonde_vals",
+            "add_remove_sonde_errors",
             "add_circle_variables_to_ds",
         ],
         "output": "gridded",
