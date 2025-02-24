@@ -361,6 +361,28 @@ class Circle:
         self.circle_ds = ds
         return self
 
+    def remove_sonde_qc(self):
+        ds = self.circle_ds.copy()
+        remove_sonde_err = {
+            "div": [],
+            "vor": [],
+            "omega": [],
+            "wvel": [],
+        }
+        for sonde_id in ds.sonde:
+            self.remove_sonde(sonde_id=sonde_id)
+            self.apply_fit2d()
+            self.add_divergence()
+            self.add_vorticity()
+            self.add_omega()
+            self.add_wvel
+            for var in ["div", "vor", "omega", "wvel"]:
+                remove_sonde_err[var].append((self.circle_ds[var] - ds[var]))
+
+            self.circle_ds = ds.copy()
+        self.errors = remove_sonde_err
+        return self
+
     def add_density(self):
         """
         Calculate and add the density to the circle dataset.
