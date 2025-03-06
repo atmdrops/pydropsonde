@@ -254,15 +254,15 @@ def create_and_populate_circle_object(
     """
 
     circles = {}
-
+    ds = gridded.interim_l4_ds
     for segment in gridded.segments:
-        extra_sondes = gridded.l3_ds.where(
-            gridded.l3_ds["sonde_id"].isin(segment.get("extra_sondes")), drop=True
+        extra_sondes = ds.where(
+            ds["sonde_id"].isin(segment.get("extra_sondes")), drop=True
         )
 
-        circle_ds = gridded.l3_ds.where(
-            (gridded.l3_ds["sonde_time"] > np.datetime64(segment["start"]))
-            & (gridded.l3_ds["sonde_time"] < np.datetime64(segment["end"])),
+        circle_ds = ds.where(
+            (ds["sonde_time"] > np.datetime64(segment["start"]))
+            & (ds["sonde_time"] < np.datetime64(segment["end"])),
             drop=True,
         )
         circle_ds = xr.concat(
@@ -586,10 +586,23 @@ pipeline = {
         "output": "gridded",
         "comment": "This step creates the L3 dataset after adding additional products.",
     },
+    "get_weights": {
+        "intake": "gridded",
+        "apply": apply_method_to_dataset,
+        "functions": [
+            "add_l3_ds",
+            "create_interim_l4",
+            "add_autocorrelation",
+            "add_distances",
+            "add_weights",
+        ],
+        "output": "gridded",
+        "comment": "get circle times and add to gridded",
+    },
     "get_circles": {
         "intake": "gridded",
         "apply": apply_method_to_dataset,
-        "functions": ["add_l3_ds", "get_circle_times_from_segmentation"],
+        "functions": ["get_circle_times_from_segmentation"],
         "output": "gridded",
         "comment": "get circle times and add to gridded",
     },
@@ -619,6 +632,8 @@ pipeline = {
             "add_vorticity",
             "add_omega",
             "add_wvel",
+            "calc_remove_sonde_vals",
+            "add_remove_sonde_errors",
             "add_circle_variables_to_ds",
         ],
         "output": "gridded",

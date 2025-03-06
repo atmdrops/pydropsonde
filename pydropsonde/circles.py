@@ -3,6 +3,7 @@ import numpy as np
 import xarray as xr
 import circle_fit as cf
 import pydropsonde.helper.physics as hp
+import pydropsonde.helper.xarray_helper as hx
 
 _no_default = object()
 
@@ -217,8 +218,46 @@ class Circle:
 
         return self
 
+    def remove_values(self, n_gap=3, keep_sfc=1000):
+        n_gap = int(n_gap)
+        ds = self.circle_ds
+
+        alt_mask = np.full(ds.u.shape, False)  # first sonde_id then alt_dim
+        alt_mask[:, ::n_gap] = True
+        if keep_sfc:
+            alt_mask[:, : int(keep_sfc / 10)] = True
+        for var in ["u", "v", "rh", "q", "ta", "theta", "x", "y"]:
+            self.circle_ds = self.circle_ds.assign(
+                {var: (ds[var].dims, ds[var].where(alt_mask).values, ds[var].attrs)}
+            )
+        return self
+
+    def one_gap_one_sonde(self, alt=1500, depth=500, sonde_id=2):
+        ds = self.circle_ds
+        alt_mask = np.full(ds.u.shape, True)
+        alt_mask[
+            int(sonde_id), int(int(alt) / 10) : int((int(alt) + int(depth)) / 10)
+        ] = False
+
+        for var in ["u", "v", "rh", "q", "ta", "theta", "x", "y"]:
+            self.circle_ds = self.circle_ds.assign(
+                {var: (ds[var].dims, ds[var].where(alt_mask).values, ds[var].attrs)}
+            )
+        return self
+
+    def remove_sonde(self, sonde_id=0):
+        ds = self.circle_ds
+        alt_mask = np.full(ds.u.shape, True)
+        alt_mask[int(sonde_id), :] = False
+
+        for var in ["u", "v", "rh", "q", "ta", "theta", "x", "y"]:
+            self.circle_ds = self.circle_ds.assign(
+                {var: (ds[var].dims, ds[var].where(alt_mask).values, ds[var].attrs)}
+            )
+        return self
+
     @staticmethod
-    def fit2d(x, y, u):
+    def fit2d(x, y, u, w):
         a = np.stack([np.ones_like(x), x, y], axis=-1)
 
         invalid = np.isnan(u) | np.isnan(x) | np.isnan(y)
@@ -226,22 +265,27 @@ class Circle:
         under_constraint = np.sum(~invalid, axis=-1) < 6
         u_cal = np.where(invalid, 0, u)
         a[invalid] = 0
+        w = np.sqrt(w)
+        a = np.einsum("...m,...mr->...mr", w, a)
+        u_cal = np.einsum("...m,...m->...m", w, u_cal)
 
         a_inv = np.linalg.pinv(a)
         intercept, dux, duy = np.einsum("...rm,...m->r...", a_inv, u_cal)
+
         intercept[under_constraint] = np.nan
         dux[under_constraint] = np.nan
         duy[under_constraint] = np.nan
-
         return intercept, dux, duy
 
-    def fit2d_xr(self, x, y, u, sonde_dim="sonde"):
+    def fit2d_xr(self, x, y, u, w, sonde_dim="sonde"):
         return xr.apply_ufunc(
             self.__class__.fit2d,  # Call the static method without passing `self`
             x,
             y,
             u,
+            w,
             input_core_dims=[
+                [sonde_dim],
                 [sonde_dim],
                 [sonde_dim],
                 [sonde_dim],
@@ -272,13 +316,22 @@ class Circle:
                 "derivative_of_" + standard_name + "_wrt_x",
                 "derivative_of_" + standard_name + "_wrt_y",
             ]
-
-            results = self.fit2d_xr(
-                x=self.circle_ds.x,
-                y=self.circle_ds.y,
-                u=self.circle_ds[par],
-                sonde_dim=self.sonde_dim,
-            )
+            try:
+                results = self.fit2d_xr(
+                    x=self.circle_ds.x,
+                    y=self.circle_ds.y,
+                    u=self.circle_ds[par],
+                    w=self.circle_ds[f"{par}_weights"],
+                    sonde_dim=self.sonde_dim,
+                )
+            except KeyError:
+                results = self.fit2d_xr(
+                    x=self.circle_ds.x,
+                    y=self.circle_ds.y,
+                    u=self.circle_ds[par],
+                    w=xr.ones_like(self.circle_ds[par]),
+                    sonde_dim=self.sonde_dim,
+                )
 
             for varname, result, long_name, use_name in zip(
                 varnames, results, long_names, use_names
@@ -306,6 +359,55 @@ class Circle:
             ds = self.circle_ds.assign(assign_dict)
         ds[alt_var].attrs.update(alt_attrs)
 
+        self.circle_ds = ds
+        return self
+
+    def calc_remove_sonde_vals(self):
+        ds = self.circle_ds.copy()
+        remove_sonde_vals = {
+            "div": [],
+            "vor": [],
+            "omega": [],
+            "wvel": [],
+        }
+        for sonde_id in ds.sonde:
+            self.get_xy_coords_for_circles()
+            self.drop_vars()
+            self.remove_sonde(sonde_id=sonde_id)
+            self.interpolate_na_sondes()
+            self.apply_fit2d()
+            self.add_divergence()
+            self.add_vorticity()
+            self.add_omega()
+            self.add_wvel()
+            for var in ["div", "vor", "omega", "wvel"]:
+                remove_sonde_vals[var].append(self.circle_ds[var])
+
+            self.circle_ds = ds.copy()
+        self.remove_sonde_ds = remove_sonde_vals
+        return self
+
+    def add_remove_sonde_errors(self):
+        ds = self.circle_ds
+        for var in ["div", "vor", "omega", "wvel"]:
+            var_err = xr.concat(
+                [remove_ds - ds[var] for remove_ds in self.remove_sonde_ds[var]],
+                dim="sonde",
+            )
+            var_attr = dict(
+                long_name=f"helper variable for {var}",
+                description="Maximum difference if one sonde is removed from circle before calculation",
+            )
+            ds = ds.assign(
+                {
+                    f"{var}_remove_sonde_qc": (
+                        (self.sonde_dim, self.alt_dim),
+                        var_err.values,
+                        var_attr,
+                    )
+                }
+            )
+            ds = hx.add_ancillary_var(ds, var, f"{var}_remove_sonde_qc")
         self.circle_ds = ds
         return self
 

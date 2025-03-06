@@ -16,6 +16,7 @@ from pydropsonde.helper.quality import QualityControl
 import pydropsonde.helper.xarray_helper as hx
 import pydropsonde.helper.rawreader as rr
 from importlib.metadata import version
+from pathlib import Path
 
 __version__ = version("pydropsonde")
 
@@ -2144,6 +2145,122 @@ class Gridded:
             self.set_l3_ds(self.concat_sonde_ds.copy())
         else:
             self.set_l3_ds(hx.open_dataset(l3_dir))
+        return self
+
+    def create_interim_l4(self):
+        self.interim_l4_ds = self.l3_ds
+
+        return self
+
+    @staticmethod
+    def get_autocorr_np(da, tau, alt_dim="altitude"):
+        vals = (da - da.mean(alt_dim)).values
+        gh = vals[:, :-tau] * vals[:, tau:]
+        axis = 1
+        c0 = vals**2
+        return (
+            np.nansum(gh, axis=axis) / np.count_nonzero(~np.isnan(gh), axis=axis)
+        ) / (np.nansum(c0, axis=axis) / np.count_nonzero(~np.isnan(c0), axis=axis))
+
+    def add_autocorrelation(
+        self,
+        autocorr_dir=None,
+        filename="autocorrelation.zarr",
+        maxalt=10000,
+        variables=None,
+    ):
+        if autocorr_dir is None:
+            autocorr_dir = ""
+        try:
+            self.autocorrelation = hx.open_dataset(Path(autocorr_dir, filename))
+
+        except FileNotFoundError:
+            ds = self.l3_ds
+            alt_dim = self.alt_dim
+            if variables is None:
+                variables = ["u", "v", "p", "theta", "q", "rh", "ta"]
+
+            taus = ds[alt_dim].where(ds[alt_dim] < maxalt, drop=True).values[1:] / 10
+            autocorr = {alt_dim: {"dims": (alt_dim), "data": taus * 10}}
+
+            for var in variables:
+                autocorr[f"{var}_autocorr"] = {
+                    "dims": (alt_dim),
+                }
+                res = [self.get_autocorr_np(ds[var], int(tau)) for tau in taus]
+                autocorr[f"{var}_autocorr"]["data"] = [np.nanmean(corr) for corr in res]
+                autocorr[f"{var}_std_autocorr"] = {
+                    "dims": (alt_dim),
+                    "data": [np.nanstd(corr) for corr in res],
+                }
+            self.autocorrelation = xr.Dataset.from_dict(autocorr)
+            if autocorr_dir:
+                hx.write_ds(
+                    self.autocorrelation,
+                    dir=autocorr_dir,
+                    filename=filename,
+                    alt_dim=alt_dim,
+                    object_dims=("sonde",),
+                )
+        return self
+
+    def get_dist_to_nonan(self, variable):
+        ds = self.interim_l4_ds
+        alt_dim = self.alt_dim
+        masked_alt = ds[alt_dim].where(~np.isnan(ds[variable]))
+        masked_alt.name = "int_alt"
+        int_masked = masked_alt.interpolate_na(
+            dim=alt_dim,
+            method="nearest",
+            fill_value="extrapolate",
+        )
+        return np.abs(ds[alt_dim] - int_masked)
+
+    def add_distances(self):
+        res = {}
+        for var in ["u", "v", "p", "theta", "q", "rh", "ta"]:
+            res[var] = self.get_dist_to_nonan(variable=var)
+            res[var] = xr.where(res[var], res[var], 0)
+            res[var].name = f"{var}_dist"
+        self.distances = xr.merge(res.values(), join="exact").transpose(
+            self.sonde_dim, self.alt_dim
+        )
+        return self
+
+    def get_autocorrelation_weight(self, variable):
+        autocorrelation = self.autocorrelation
+        dist = xr.where(self.distances, self.distances, 0)
+        return xr.where(
+            dist[f"{variable}_dist"] == 0,
+            1,
+            autocorrelation[f"{variable}_autocorr"]
+            .sel(altitude=dist[f"{variable}_dist"], method="nearest")
+            .values,
+        )
+
+    def get_no_change_weights(self, variable):
+        one_array = xr.ones_like(self.interim_l4_ds[variable])
+        one_array.name = f"{variable}_weights"
+        return one_array
+
+    def add_weights(self, method="autocorrelation"):
+        w = []
+        for var in ["u", "v", "p", "theta", "q", "rh", "ta"]:
+            if method == "autocorrelation":
+                weights = self.get_autocorrelation_weight(variable=var).transpose(
+                    self.sonde_dim, self.alt_dim
+                )
+            elif method == "no_weights":
+                weights = self.get_no_change_weights(variable=var)
+            weights = xr.where(weights < 0, 0, weights)
+            weights = xr.where(weights > 1, 1, weights)
+            weights.name = f"{var}_weights"
+            w.append(weights)
+
+        self.weights = xr.merge(w, join="exact", compat="no_conflicts")
+        self.interim_l4_ds = xr.merge(
+            [self.interim_l4_ds, self.weights], join="exact", compat="no_conflicts"
+        )
         return self
 
     def get_simple_circle_times_from_yaml(self, yaml_file: str = None):

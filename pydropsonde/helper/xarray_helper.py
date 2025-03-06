@@ -139,9 +139,11 @@ def open_dataset(path):
     """
     open an xr.dataset from path depending on filetype
     """
-    if ".nc" in path:
+    if isinstance(path, str):
+        path = Path(path)
+    if ".nc" in path.suffixes:
         return xr.open_dataset(path)
-    elif ".zarr" in path:
+    elif ".zarr" in path.suffixes:
         return xr.open_dataset(path, engine="zarr")
     else:
         raise ValueError(f"Could not open: unrecognized filetype for {path}")
