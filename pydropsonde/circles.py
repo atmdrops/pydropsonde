@@ -84,7 +84,7 @@ class Circle:
         x_coor = (
             self.circle_ds.lon * 111.32 * np.cos(np.radians(self.circle_ds.lat)) * 1000
         )
-        y_coor = self.circle_ds.lat * 110.54 * 1000
+        y_coor = self.circle_ds.lat * 110.574 * 1000
 
         # converting from lat, lon to coordinates in metre from (0,0).
         if self.clat is None:
@@ -103,7 +103,7 @@ class Circle:
                         ]
                     )
 
-            self.clat = np.nanmean(c_yc) / (110.54 * 1000)
+            self.clat = np.nanmean(c_yc) / (110.574 * 1000)
             self.clon = np.nanmean(c_xc) / (
                 111.32 * np.cos(np.radians(self.clat)) * 1000
             )
@@ -113,7 +113,7 @@ class Circle:
         else:
             self.method = "circle from flight segmentation"
 
-        yc = self.clat * 110.54 * 1000
+        yc = self.clat * 110.574 * 1000
         xc = self.clon * (111.32 * np.cos(np.radians(self.clat)) * 1000)
 
         delta_x = x_coor - xc
@@ -184,6 +184,17 @@ class Circle:
                 circle_radius=([], self.crad, circle_radius_attrs),
             )
         )
+        return self
+
+    def add_circle_id_variable(self):
+        ds = self.circle_ds
+        attrs = {
+            "descripion": "unique circle ID from flight segmentation",
+            "long_name": "circle identifier",
+        }
+        ds = ds.assign({"circle_id": self.segment_id})
+        ds["circle_id"] = ds["circle_id"].assign_attrs(attrs)
+        self.circle_ds = ds
         return self
 
     def interpolate_na_sondes(self, method="akima", max_gap=1500, thresh=4):
