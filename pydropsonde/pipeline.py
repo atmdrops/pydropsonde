@@ -650,6 +650,7 @@ pipeline = {
             "add_vorticity",
             "add_omega",
             "add_wvel",
+            "add_circle_id_variable",
             "add_circle_variables_to_ds",
             "add_regression_stderr",
         ],
