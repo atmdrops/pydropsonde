@@ -1671,58 +1671,16 @@ class Sonde:
             self: The instance with updated `interim_l3_ds` including quality control flags.
         """
         ds = self.interim_l3_ds
+        keep = self.qc.get_all_qc_names() + ["sonde_qc"]
+        for variable in self.qc.qc_vars:
+            ds = self.qc.add_variable_flags_to_ds(ds, variable, details=True)
 
-        for var in ds.variables:
-            if (var != self.sonde_dim) and (var != "sonde_id"):
-                ds[var].attrs.pop("ancillary_variables", None)
-        if keep is None:
-            keep = []
-        else:
-            if keep == "all":
-                keep = (
-                    [f"{var}_qc" for var in list(self.qc.qc_by_var.keys())]
-                    + list(self.qc.qc_details.keys())
-                    + ["alt_near_gpsalt"]
-                )
-                for variable in self.qc.qc_vars:
-                    ds = self.qc.add_variable_flags_to_ds(ds, variable, details=True)
-                if (not np.isin("q", self.qc.qc_vars)) and np.isin(
-                    "rh", self.qc.qc_vars
-                ):
-                    ds = self.qc.add_variable_flags_to_ds(
-                        ds, "rh", add_to="q", details=True
-                    )
-                if (not np.isin("theta", self.qc.qc_vars)) and np.isin(
-                    "ta", self.qc.qc_vars
-                ):
-                    ds = self.qc.add_variable_flags_to_ds(
-                        ds, "ta", add_to="theta", details=True
-                    )
-                ds = self.qc.add_non_var_qc_to_ds(ds)
-            elif keep == "var_flags":
-                keep = [f"{var}_qc" for var in list(self.qc.qc_by_var.keys())] + [
-                    "sonde_qc"
-                ]
-                for var in self.qc.qc_by_var.keys():
-                    ds = hx.add_ancillary_var(ds, var, var + "_qc")
-                if (not np.isin("q", self.qc.qc_vars)) and np.isin(
-                    "rh", self.qc.qc_vars
-                ):
-                    ds = hx.add_ancillary_var(ds, "q", "rh_qc")
-                if (not np.isin("theta", self.qc.qc_vars)) and np.isin(
-                    "ta", self.qc.qc_vars
-                ):
-                    ds = hx.add_ancillary_var(ds, "theta", "ta_qc")
-
-            else:
-                warnings.warn(
-                    "your keep argument for the qc flags in level 3 is not valid, no qc added"
-                )
-                keep = []
-        keep = keep + ["sonde_qc"]
-
+        ds = self.qc.add_non_var_qc_to_ds(ds)
         ds = self.qc.add_alt_source_to_ds(ds)
-        ds_qc = self.interim_l2_ds[keep]  # .expand_dims(self.sonde_dim)
+        ds_qc = self.interim_l2_ds[
+            [var for var in keep if var in self.interim_l2_ds.variables]
+        ]
+
         assert np.all(np.isin(ds.rh_qc - ds_qc.rh_qc, [0, 4]))
         assert np.all(np.isin(ds.p_qc - ds_qc.p_qc, [0, 4]))
         assert np.all(np.isin(ds.ta_qc - ds_qc.ta_qc, [0, 4]))
@@ -2031,6 +1989,50 @@ class Gridded:
 
         self._interim_l4_ds = concatenated_ds
 
+        return self
+
+    def remove_qc_from_l3(self, remove=True, filename=None, variables=None):
+        ds = self.concat_sonde_ds
+        if variables is None:
+            variables = [
+                "rh",
+                "q",
+                "p",
+                "ta",
+                "theta",
+                "u",
+                "v",
+                "altitude",
+                "alt",
+                "gps",
+                "gpspos",
+            ]
+        qc_vars = []
+        if remove:
+            for var in variables:
+                try:
+                    ds[var].attrs.pop("ancillary_variables", None)
+                except KeyError:
+                    pass
+                qc_vars = qc_vars + [
+                    qcvar
+                    for qcvar in ds.variables
+                    if (f"{var}_" in qcvar) & ~(qcvar == f"{var}_qc")
+                ]
+            for var in ["rh", "p", "ta", "u", "v"]:
+                ds = hx.add_ancillary_var(ds, var, f"{var}_qc")
+            ds = hx.add_ancillary_var(ds, "q", "rh_qc")
+            ds = hx.add_ancillary_var(ds, "theta", "ta_qc")
+
+        self.concat_sonde_ds = ds.drop_vars(qc_vars)
+        if filename is not None:
+            hx.write_ds(
+                ds[qc_vars],
+                dir=self.l3_dir,
+                filename=filename,
+                object_dims=(self.sonde_dim,),
+                alt_dim=self.alt_dim,
+            )
         return self
 
     def get_l3_dir(self, l3_dir: str = None):
