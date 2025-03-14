@@ -218,6 +218,17 @@ class Circle:
 
         return self
 
+    def mask_sonde(self, sonde_id=0):
+        ds = self.circle_ds
+        alt_mask = np.full(ds.u.shape, True)
+        alt_mask[int(sonde_id), :] = False
+
+        for var in ["u", "v", "rh", "q", "ta", "theta", "x", "y"]:
+            self.circle_ds = self.circle_ds.assign(
+                {var: (ds[var].dims, ds[var].where(alt_mask).values, ds[var].attrs)}
+            )
+        return self
+
     @staticmethod
     def fit2d(x, y, u, weight=1):
         weight = np.asarray(weight)
@@ -438,6 +449,55 @@ class Circle:
         )
         ds = hx.add_ancillary_var(ds, "omega", "se_omega")
 
+        self.circle_ds = ds
+        return self
+
+    def calc_remove_sonde_manipulation(self):
+        ds = self.circle_ds.copy()
+        remove_sonde_vals = {
+            "div": [],
+            "vor": [],
+            "omega": [],
+            "wvel": [],
+        }
+        for sonde_id in ds.sonde:
+            self.get_xy_coords_for_circles()
+            self.drop_vars()
+            self.mask_sonde(sonde_id=sonde_id)
+            self.interpolate_na_sondes()
+            self.apply_fit2d()
+            self.add_divergence()
+            self.add_vorticity()
+            self.add_omega()
+            self.add_wvel()
+            for var in ["div", "vor", "omega", "wvel"]:
+                remove_sonde_vals[var].append(self.circle_ds[var])
+
+            self.circle_ds = ds.copy()
+        self.remove_sonde_ds = remove_sonde_vals
+        return self
+
+    def add_sonde_relevance_to_ds(self):
+        ds = self.circle_ds
+        for var in ["div", "vor", "omega", "wvel"]:
+            var_err = xr.concat(
+                [remove_ds - ds[var] for remove_ds in self.remove_sonde_ds[var]],
+                dim="sonde",
+            )
+            var_attr = dict(
+                long_name=f"helper variable for {var}",
+                description=f"Difference in {var} if this sonde is removed from circle before calculation",
+            )
+            ds = ds.assign(
+                {
+                    f"{var}_sonde_relevance": (
+                        (self.sonde_dim, self.alt_dim),
+                        var_err.values,
+                        var_attr,
+                    )
+                }
+            )
+            ds = hx.add_ancillary_var(ds, var, f"{var}_sonde_relevance")
         self.circle_ds = ds
         return self
 
