@@ -29,12 +29,17 @@ class Circle:
         """
         drop m and N variables from level 3 from circle dataset
         """
+        data_vars = ["u", "v", "ta", "p", "rh", "theta", "q", "altitude"]
         if variables is None:
             variables = [
                 "bin_average_time",
                 "alt_near_gpsalt",
                 "alt_source",
                 "alt_near_gpsalt_max_diff",
+                "altitude_below_aircraft",
+                "altitude_source",
+                "lat",
+                "lon",
             ]
         ds = self.circle_ds
         ds = (
@@ -50,7 +55,7 @@ class Circle:
                 ["gps_m_qc", "gps_N_qc", "gpspos_N_qc", "gpspos_m_qc"], errors="ignore"
             )
             .drop_vars(
-                [f"{var}_qc" for var in ["u", "v", "ta", "p", "rh"]],
+                [f"{var}_qc" for var in data_vars],
                 errors="ignore",
             )
             .drop_vars(
@@ -58,6 +63,7 @@ class Circle:
                 errors="ignore",
             )
         )
+
         for qc_details in [
             "sfc_physics_val",
             "near_surface_count",
@@ -65,12 +71,20 @@ class Circle:
             "profile_sparsity_fraction",
         ]:
             ds = ds.drop_vars(
-                [f"{var}_{qc_details}" for var in ["u", "v", "ta", "p", "rh"]],
+                [f"{var}_{qc_details}" for var in data_vars],
                 errors="ignore",
             )
-
+        for var in data_vars:
+            del ds[var].attrs["ancillary_variables"]
         self.circle_ds = ds
 
+        return self
+
+    def get_circle_flight_id(self):
+        flight_id = self.circle_ds.flight_id.sel({self.sonde_dim: 0})
+        self.circle_ds = self.circle_ds.drop_vars(["flight_id"]).assign(
+            flight_id=flight_id
+        )
         return self
 
     def get_xy_coords_for_circles(self):
@@ -85,7 +99,7 @@ class Circle:
         x_coor = (
             self.circle_ds.lon * 111.32 * np.cos(np.radians(self.circle_ds.lat)) * 1000
         )
-        y_coor = self.circle_ds.lat * 110.54 * 1000
+        y_coor = self.circle_ds.lat * 110.574 * 1000
 
         # converting from lat, lon to coordinates in metre from (0,0).
         if self.clat is None:
@@ -104,7 +118,7 @@ class Circle:
                         ]
                     )
 
-            self.clat = np.nanmean(c_yc) / (110.54 * 1000)
+            self.clat = np.nanmean(c_yc) / (110.574 * 1000)
             self.clon = np.nanmean(c_xc) / (
                 111.32 * np.cos(np.radians(self.clat)) * 1000
             )
@@ -114,7 +128,7 @@ class Circle:
         else:
             self.method = "circle from flight segmentation"
 
-        yc = self.clat * 110.54 * 1000
+        yc = self.clat * 110.574 * 1000
         xc = self.clon * (111.32 * np.cos(np.radians(self.clat)) * 1000)
 
         delta_x = x_coor - xc
@@ -152,12 +166,12 @@ class Circle:
         circle_lon_attrs = {
             "long_name": "circle_lon",
             "description": f"Longitude of {self.method}",
-            "units": self.circle_ds.lon.attrs["units"],
+            "units": "degrees_east",
         }
         circle_lat_attrs = {
             "long_name": "circle_lat",
             "description": f"Latitude of {self.method}",
-            "units": self.circle_ds.lat.attrs["units"],
+            "units": "degrees_north",
         }
         circle_altitude_attrs = {
             "long_name": "circle_altitude",
@@ -166,6 +180,7 @@ class Circle:
         }
         circle_time_attrs = {
             "long_name": "circle_time",
+            "time_zone": "UTC",
             "description": "Mean launch time of first and last sonde in circle",
         }
         self.circle_ds = self.circle_ds.assign(
@@ -185,6 +200,17 @@ class Circle:
                 circle_radius=([], self.crad, circle_radius_attrs),
             )
         )
+        return self
+
+    def add_circle_id_variable(self):
+        ds = self.circle_ds
+        attrs = {
+            "descripion": "unique circle ID from flight segmentation",
+            "long_name": "circle identifier",
+        }
+        ds = ds.assign({"circle_id": self.segment_id})
+        ds["circle_id"] = ds["circle_id"].assign_attrs(attrs)
+        self.circle_ds = ds
         return self
 
     def interpolate_na_sondes(self, method="akima", max_gap=1500, thresh=4):
@@ -257,64 +283,83 @@ class Circle:
 
     def apply_fit2d(self, variables=None):
         if variables is None:
-            variables = ["u", "v", "q", "ta", "p", "rh", "theta"]
+            variables = [
+                "u",
+                "v",
+                "q",
+                "ta",
+                "p",
+                "rh",
+                "theta",
+                "w_dir",
+                "w_spd",
+                "iwv",
+            ]
         alt_var = self.alt_dim
         alt_attrs = self.circle_ds[alt_var].attrs
 
         assign_dict = {}
 
         for par in variables:
-            long_name = self.circle_ds[par].attrs.get("long_name")
-            standard_name = self.circle_ds[par].attrs.get("standard_name")
-            varnames = ["mean_" + par, "d" + par + "dx", "d" + par + "dy"]
-            var_units = self.circle_ds[par].attrs.get("units", None)
-            long_names = [
-                "circle mean of " + long_name,
-                "zonal gradient of " + long_name,
-                "meridional gradient of " + long_name,
-            ]
-            use_names = [
-                standard_name + "_circle_mean",
-                "derivative_of_" + standard_name + "_wrt_x",
-                "derivative_of_" + standard_name + "_wrt_y",
-            ]
             try:
-                weight = self.circle_ds[f"{par}_weights"]
+                long_name = self.circle_ds[par].attrs.get("long_name")
             except KeyError:
-                weight = xr.ones_like(self.circle_ds[par])
+                pass
+            else:
+                standard_name = self.circle_ds[par].attrs.get("standard_name")
+                varnames = [
+                    par + "_mean",
+                    par + "_d" + par + "dx",
+                    par + "_d" + par + "dy",
+                ]
+                var_units = self.circle_ds[par].attrs.get("units", None)
+                long_names = [
+                    "circle mean of " + long_name,
+                    "zonal gradient of " + long_name,
+                    "meridional gradient of " + long_name,
+                ]
+                use_names = [
+                    standard_name + "_circle_mean",
+                    "derivative_of_" + standard_name + "_wrt_x",
+                    "derivative_of_" + standard_name + "_wrt_y",
+                ]
+                try:
+                    weight = self.circle_ds[f"{par}_weights"]
+                except KeyError:
+                    weight = xr.ones_like(self.circle_ds[par])
 
-            results = self.fit2d_xr(
-                x=self.circle_ds.x,
-                y=self.circle_ds.y,
-                u=self.circle_ds[par],
-                weight=weight,
-                sonde_dim=self.sonde_dim,
-            )
+                results = self.fit2d_xr(
+                    x=self.circle_ds.x,
+                    y=self.circle_ds.y,
+                    u=self.circle_ds[par],
+                    weight=weight,
+                    sonde_dim=self.sonde_dim,
+                )
 
-            for varname, result, long_name, use_name in zip(
-                varnames, results, long_names, use_names
-            ):
-                if "mean" in varname:
-                    assign_dict[varname] = (
-                        [alt_var],
-                        result.data,
-                        {
-                            "long_name": long_name,
-                            "units": var_units,
-                        },
-                    )
-                else:
-                    assign_dict[varname] = (
-                        [alt_var],
-                        result.data,
-                        {
-                            "standard_name": use_name,
-                            "long_name": long_name,
-                            "units": f"{var_units} m-1",
-                        },
-                    )
+                for varname, result, long_name, use_name in zip(
+                    varnames, results, long_names, use_names
+                ):
+                    if "mean" in varname:
+                        assign_dict[varname] = (
+                            [alt_var],
+                            result.data,
+                            {
+                                "long_name": long_name,
+                                "units": var_units,
+                            },
+                        )
+                    else:
+                        assign_dict[varname] = (
+                            [alt_var],
+                            result.data,
+                            {
+                                "standard_name": use_name,
+                                "long_name": long_name,
+                                "units": f"{var_units} m-1",
+                            },
+                        )
 
-            ds = self.circle_ds.assign(assign_dict)
+                ds = self.circle_ds.assign(assign_dict)
         ds[alt_var].attrs.update(alt_attrs)
 
         self.circle_ds = ds
@@ -328,45 +373,47 @@ class Circle:
         alt_dim = self.alt_dim
         sonde_dim = self.sonde_dim
         if variables is None:
-            variables = ["u", "v", "q", "ta", "p"]
+            variables = ["u", "v"]
         ds = self.circle_ds
 
         dx_denominator = ((ds.x - ds.x.mean(dim=sonde_dim)) ** 2).sum(dim=sonde_dim)
         dy_denominator = ((ds.y - ds.y.mean(dim=sonde_dim)) ** 2).sum(dim=sonde_dim)
 
         for var in variables:
+            dvardx_name = f"{var}_d{var}dx"
+            dvardy_name = f"{var}_d{var}dy"
+
             var_err = (
                 ds[var]
-                - (ds[f"mean_{var}"] + ds[f"d{var}dx"] * ds.x + ds[f"d{var}dy"] * ds.y)
+                - (ds[f"{var}_mean"] + ds[dvardx_name] * ds.x + ds[dvardy_name] * ds.y)
             ) ** 2
             nominator = (var_err.sum(dim=sonde_dim)) / (
                 var_err.count(dim=sonde_dim) - 3
             )
-
             se_x = np.sqrt(nominator / dx_denominator)
             se_y = np.sqrt(nominator / dy_denominator)
 
-            dvardx_std_name = ds[f"d{var}dx"].attrs.get(
+            dvardx_std_name = ds[dvardx_name].attrs.get(
                 "standard_name", f"derivative_of_{var}_wrt_x"
             )
-            unit = ds[f"d{var}dx"].attrs.get("units", "")
-            dvardy_std_name = ds[f"d{var}dy"].attrs.get(
+            unit = ds[dvardx_name].attrs.get("units", "")
+            dvardy_std_name = ds[dvardy_name].attrs.get(
                 "standard_name", f"derivative_of_{var}_wrt_y"
             )
 
             ds = ds.assign(
                 {
-                    f"se_d{var}dx": (
+                    f"{dvardx_name}_std_error": (
                         [alt_dim],
-                        (se_x.where(~np.isnan(ds[f"d{var}dx"])).values),
+                        (se_x.where(~np.isnan(ds[dvardx_name])).values),
                         dict(
                             standard_name=f"{dvardx_std_name} standard_error",
                             units=unit,
                         ),
                     ),
-                    f"se_d{var}dy": (
+                    f"{dvardy_name}_std_error": (
                         [alt_dim],
-                        (se_y.where(~np.isnan(ds[f"d{var}dy"])).values),
+                        (se_y.where(~np.isnan(ds[dvardy_name])).values),
                         dict(
                             standard_name=f"{dvardy_std_name} standard_error",
                             units=unit,
@@ -374,33 +421,51 @@ class Circle:
                     ),
                 }
             )
-            ds = hx.add_ancillary_var(ds, f"d{var}dx", f"se_d{var}dx")
-            ds = hx.add_ancillary_var(ds, f"d{var}dy", f"se_d{var}dy")
-
+            ds = hx.add_ancillary_var(ds, dvardx_name, f"{dvardx_name}_std_error")
+            ds = hx.add_ancillary_var(ds, dvardy_name, f"{dvardy_name}_std_error")
+        div_error_name = "div_std_error"
         div_std_name = ds["div"].attrs.get("standard_name", "divergence_of_wind")
         ds = ds.assign(
             {
-                "se_div": (
+                div_error_name: (
                     [alt_dim],
-                    np.sqrt(ds.se_dudx**2 + ds.se_dudy**2).values,
-                    dict(standard_name=f"{div_std_name} standard_error", units=unit),
+                    np.sqrt(ds.u_dudx_std_error**2 + ds.v_dvdy_std_error**2).values,
+                    dict(
+                        standard_name=f"{div_std_name} standard_error",
+                        units=ds.div.attrs.get("units", "s-1"),
+                    ),
+                )
+            }
+        )
+        vor_std_name = ds["vor"].attrs.get(
+            "standard_name", "atmosphere_relative_vorticity"
+        )
+        ds = ds.assign(
+            {
+                "vor_std_error": (
+                    [alt_dim],
+                    np.sqrt(ds.u_dudy_std_error**2 + ds.v_dvdx_std_error**2).values,
+                    dict(
+                        standard_name=f"{vor_std_name} standard_error",
+                        units=ds.vor.attrs.get("units", "s-1"),
+                    ),
                 )
             }
         )
 
-        ds = hx.add_ancillary_var(ds, "div", "se_div")
-        ds = hx.add_ancillary_var(ds, "vor", "se_div")
-        se_div_nona = ds.se_div.dropna(dim=alt_dim)
+        ds = hx.add_ancillary_var(ds, "div", "div_std_error")
+        ds = hx.add_ancillary_var(ds, "vor", "vor_std_error")
+        se_div_nona = ds[div_error_name].dropna(dim=alt_dim)
         wvel_std_name = ds["wvel"].attrs.get("standard_name", "upward_air_velocity")
         ds = ds.assign(
             {
-                "se_wvel": (
-                    ds.se_div.dims,
+                "wvel_std_error": (
+                    ds[div_error_name].dims,
                     (
                         np.sqrt((se_div_nona**2).cumsum(dim=alt_dim))
                         * se_div_nona[alt_dim].diff(dim=alt_dim)
                     )
-                    .broadcast_like(ds.se_div)
+                    .broadcast_like(ds[div_error_name])
                     .values,
                     dict(
                         standard_name=f"{wvel_std_name} standard_error",
@@ -409,7 +474,7 @@ class Circle:
                 )
             }
         )
-        ds = hx.add_ancillary_var(ds, "wvel", "se_wvel")
+        ds = hx.add_ancillary_var(ds, "wvel", "wvel_std_error")
 
         omega_std_name = ds["omega"].attrs.get(
             "standard_name", "vertical_air_velocity_expressed_as_tendency_of_pressure"
@@ -417,15 +482,15 @@ class Circle:
 
         ds = ds.assign(
             {
-                "se_omega": (
-                    ds.se_div.dims,
+                "omega_std_error": (
+                    ds[div_error_name].dims,
                     (
                         np.sqrt((se_div_nona**2).cumsum(dim=alt_dim))
-                        * ds.mean_p.sel({alt_dim: se_div_nona[alt_dim]}).diff(
+                        * ds.p_mean.sel({alt_dim: se_div_nona[alt_dim]}).diff(
                             dim=alt_dim
                         )
                     )
-                    .broadcast_like(ds.se_div)
+                    .broadcast_like(ds[div_error_name])
                     .values
                     * 0.01
                     * 60**2,
@@ -436,9 +501,21 @@ class Circle:
                 )
             }
         )
-        ds = hx.add_ancillary_var(ds, "omega", "se_omega")
+        ds = hx.add_ancillary_var(ds, "omega", "omega_std_error")
 
         self.circle_ds = ds
+        return self
+
+    def drop_dvardxy(self, variables=None):
+        if variables is None:
+            variables = ["iwv", "p", "rh", "q", "ta", "theta", "w_spd", "w_dir"]
+        self.circle_ds = self.circle_ds.drop_vars(
+            [f"{var}_d{var}dx" for var in variables],
+            errors="ignore",
+        ).drop_vars(
+            [f"{var}_d{var}dy" for var in variables],
+            errors="ignore",
+        )
         return self
 
     def add_density(self):
@@ -482,13 +559,13 @@ class Circle:
             self: circle object with updated circle_ds
         """
         ds = self.circle_ds
-        D = ds.dudx + ds.dvdy
+        D = ds.u_dudx + ds.v_dvdy
         D_attrs = {
             "standard_name": "divergence_of_wind",
             "long_name": "Area-averaged horizontal mass divergence",
             "units": "s-1",
         }
-        self.circle_ds = ds.assign(div=(ds.dudx.dims, D.values, D_attrs))
+        self.circle_ds = ds.assign(div=(ds.u_dudx.dims, D.values, D_attrs))
         return self
 
     def add_vorticity(self):
@@ -502,13 +579,13 @@ class Circle:
             self: circle object with updated circle_ds
         """
         ds = self.circle_ds
-        vor = ds.dvdx - ds.dudy
+        vor = ds.v_dvdx - ds.u_dudy
         vor_attrs = {
             "standard_name": "atmosphere_relative_vorticity",
             "long_name": "Area-averaged horizontal relative vorticity",
             "units": "s-1",
         }
-        self.circle_ds = ds.assign(vor=(ds.dudx.dims, vor.values, vor_attrs))
+        self.circle_ds = ds.assign(vor=(ds.u_dudx.dims, vor.values, vor_attrs))
         return self
 
     def add_omega(self):
@@ -525,7 +602,7 @@ class Circle:
         ds = self.circle_ds
         alt_dim = self.alt_dim
         div = ds.div.where(~np.isnan(ds.div), drop=True).sortby(alt_dim)
-        p = ds.mean_p.where(~np.isnan(ds.div), drop=True).sortby(alt_dim)
+        p = ds.p_mean.where(~np.isnan(ds.div), drop=True).sortby(alt_dim)
         zero_vel = xr.DataArray(data=[0], dims=alt_dim, coords={alt_dim: [0]})
         pres_diff = xr.concat([zero_vel, p.diff(dim=alt_dim)], dim=alt_dim)
         del_omega = -div * pres_diff.values

@@ -354,7 +354,7 @@ class Sonde:
         history = (
             history
             + aspen_time.isoformat()
-            + f" ASPEN processing with {aspen_version} \n"
+            + f" Level 1 ASPEN processing with {aspen_version} \n"
         )
         self.history = history
         return self
@@ -740,11 +740,16 @@ class Sonde:
             ds = self.interim_l2_ds
         else:
             ds = self.aspen_ds
+
         attrs = {
             "descripion": "unique sonde ID",
             "long_name": "sonde identifier",
-            "cf_role": "trajectory_id",
+            "cf_role": "profile_id",
         }
+        if self.global_attrs["l2"].get("featureType") == "trajectoryProfile":
+            attrs.update(cf_role="trajectory_id")
+        elif self.global_attrs["l2"].get("featureType") == "profile":
+            attrs.update(cf_role="profile_id")
         ds = ds.assign({variable_name: self.serial_id})
         ds[variable_name] = ds[variable_name].assign_attrs(attrs)
         self.interim_l2_ds = ds
@@ -813,7 +818,7 @@ class Sonde:
         history = (
             history
             + datetime.now(timezone.utc).isoformat()
-            + f" quality control with pydropsonde {__version__} \n"
+            + f" Level 2 quality control with pydropsonde {__version__} \n"
         )
         self.history = history
         return self
@@ -951,7 +956,7 @@ class Sonde:
                 history=self.history,
                 title=self.global_attrs["l2"].get(
                     "title",
-                    self.global_attrs.get("title", "Dropsonde Data") + " Level_2",
+                    self.global_attrs.get("title", "Dropsonde Data") + " Level 2",
                 )
                 + f", {self.serial_id}",
             )
@@ -1255,7 +1260,7 @@ class Sonde:
             )
         alt_attrs["long_name"] = "altitude"
         alt_attrs["description"] = (
-            "derived from either gpsalt or alt in Level 2. See alt_source"
+            "Best estimate from either GPS or pressure measurements. See details for each sonde in respective Level 2 dataset."
         )
         ds.altitude.attrs.update(alt_attrs)
         self.alt_dim = "altitude"
@@ -1578,12 +1583,20 @@ class Sonde:
         """
         ds = self.interim_l3_ds
         source_ds = self.l2_ds
+
+        sonde_attrs = source_ds.sonde_id.attrs
+
+        if self.global_attrs["l3"].get("featureType") == "trajectoryProfile":
+            sonde_attrs.update(cf_role="trajectory_id")
+        elif self.global_attrs["l3"].get("featureType") == "profile":
+            sonde_attrs.update(cf_role="profile_id")
+
         self.interim_l3_ds = ds.assign(
             {
                 "sonde_id": (
                     self.sonde_dim,
                     [source_ds.sonde_id.values],
-                    source_ds.sonde_id.attrs,
+                    sonde_attrs,
                 ),
                 "platform_id": (
                     self.sonde_dim,
@@ -1679,10 +1692,10 @@ class Sonde:
             keep = []
         else:
             if keep == "all":
-                keep = (
-                    [f"{var}_qc" for var in list(self.qc.qc_by_var.keys())]
-                    + list(self.qc.qc_details.keys())
-                    + ["alt_near_gpsalt"]
+                keep = [f"{var}_qc" for var in list(self.qc.qc_by_var.keys())] + list(
+                    var
+                    for var in self.qc.qc_details.keys()
+                    if var in self.interim_l2_ds
                 )
                 for variable in self.qc.qc_vars:
                     ds = self.qc.add_variable_flags_to_ds(ds, variable, details=True)
@@ -1763,7 +1776,7 @@ class Sonde:
                 history=self.history,
                 title=self.global_attrs["l3"].get(
                     "title",
-                    self.global_attrs.get("title", "Dropsonde Data") + " Level_3",
+                    self.global_attrs.get("title", "Dropsonde Data") + " Level 3",
                 ),
             )
         )
@@ -1893,9 +1906,11 @@ class Gridded:
                 datetime.fromisoformat(split_line[0])
             except ValueError:
                 warnings.warn(
-                    f"The first part of line {line_nb} in the history is not a date. It was removed from the attribute"
+                    f"The first part of line {line_nb} in the history is not a date"
                 )
-            new_hist += split_line[1] + "\n"
+                new_hist += line + "\n"
+            else:
+                new_hist += split_line[1] + "\n"
         self.history = new_hist
         return self
 
@@ -1974,9 +1989,7 @@ class Gridded:
     def concat_circles(self):
         count = []
         data = []
-        circle_ids = []
-
-        for circle_id, circle in self.circles.items():
+        for circle in self.circles.values():
             circle_ds = circle.circle_ds
             circle_ds = circle_ds.sortby("sonde_time")
 
@@ -1991,7 +2004,6 @@ class Gridded:
 
             count.append(len(circle_ds.sonde_time))
             data.append(circle_ds)
-            circle_ids.append(circle_id)
 
         concatenated_sonde_ds = xr.concat(
             [ds[vars_sonde_dim] for ds in data],
@@ -2015,19 +2027,27 @@ class Gridded:
         concatenated_ds = xr.merge(
             [sonde_ds_filtered, circle_ds_filtered], compat="override", join="outer"
         )
-        concatenated_ds = concatenated_ds.assign(circle_id=("circle", circle_ids))
 
         concatenated_ds = concatenated_ds.set_coords(
             ["circle_time", "circle_lon", "circle_lat"]
         )
         concatenated_ds = concatenated_ds.reset_coords(
-            ["aircraft_latitude", "aircraft_longitude", "aircraft_msl_altitude"]
-        )
-        concatenated_ds = concatenated_ds.assign_coords(
-            sondes_per_circle=("circle", count)
+            [
+                "aircraft_latitude",
+                "aircraft_longitude",
+                "aircraft_msl_altitude",
+                "sonde_id",
+            ]
         )
 
-        concatenated_ds.sondes_per_circle.attrs["sample_dimension"] = "sonde"
+        sondes_per_circle_attrs = dict(
+            sample_dimension="sonde",
+            description="Number of sondes per circle. Count variable for dimension sonde.",
+        )
+
+        concatenated_ds = concatenated_ds.assign_coords(
+            sondes_per_circle=("circle", count, sondes_per_circle_attrs)
+        )
 
         self._interim_l4_ds = concatenated_ds
 
@@ -2090,11 +2110,7 @@ class Gridded:
 
     def update_history_concat_l3(self):
         history = getattr(self, "history", "")
-        history = (
-            history
-            + datetime.now(timezone.utc).isoformat()
-            + f" level3 concatenation with pydropsonde {__version__} \n"
-        )
+        history = history + f"Level 3 concatenation with pydropsonde {__version__} \n"
         self.history = history
         return self
 
@@ -2310,11 +2326,7 @@ class Gridded:
 
     def update_history_l4(self):
         history = getattr(self, "history", "")
-        history = (
-            history
-            + datetime.now(timezone.utc).isoformat()
-            + f" level4 computation with pydropsonde {__version__} \n"
-        )
+        history = history + f"Level 4 computation with pydropsonde {__version__} \n"
         self.history = history
         return self
 
@@ -2334,7 +2346,7 @@ class Gridded:
                 history=self.history,
                 title=self.global_attrs["l4"].get(
                     "title",
-                    self.global_attrs.get("title", "Dropsonde Data") + " Level_4",
+                    self.global_attrs.get("title", "Dropsonde Data") + " Level 4",
                 ),
             )
         )

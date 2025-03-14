@@ -129,16 +129,6 @@ l3_coords = dict(
     },
 )
 
-l4_coords = dict(
-    circle_time={
-        "long_name": "mean launch time of all sondes in circle",
-        "time_zone": "UTC",
-    },
-    circle_lon={"long_name": "longitude of circle center"},
-    circle_lat={"long_name": "latitude of circle center"},
-    aircraft_msl_altitude={"long_name": "aircraft altitude at launch", "units": "m"},
-)
-
 
 path_to_flight_ids = "{platform}/Level_0"
 path_to_l0_files = "{platform}/Level_0/{flight_id}"
@@ -163,7 +153,6 @@ def get_global_attrs_from_config(config):
     try:
         global_attrs = dict(config.items("GLOBAL_ATTRS"))
     except NoSectionError:
-        print("No global attributes in config")
         global_attrs = {}
     global_attrs.update(
         dict(
@@ -183,7 +172,6 @@ def get_level_specific_attrs_from_config(config):
         try:
             attrs[f"l{i}"] = dict(config.items(f"L{i}_ATTRS"))
         except NoSectionError:
-            print(f"No L{i} attributes in config")
             attrs[f"l{i}"] = {}
     return attrs
 
@@ -370,8 +358,8 @@ def calc_iwv(ds, sonde_dim="sonde_id", alt_dim="alt", qc_var=None):
     ds_iwv.attrs = dict(
         standard_name="atmosphere_mass_content_of_water_vapor",
         units="kg m-2",
-        long_name="integrated water vapour",
-        description="vertically integrated water vapour up to aircraft altitude",
+        long_name="integrated water vapor",
+        description="vertically integrated water vapor up to aircraft altitude",
     )
     ds = xr.merge([ds, ds_iwv])
     return ds
