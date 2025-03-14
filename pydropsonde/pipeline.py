@@ -601,6 +601,7 @@ pipeline = {
             "concat_sondes",
             "get_l3_dir",
             "get_l3_filename",
+            "remove_qc_from_l3",
             "update_history_concat_l3",
             "write_l3",
         ],
