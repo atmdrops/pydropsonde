@@ -111,7 +111,7 @@ l2_flight_attributes_map = {
 }
 
 l3_coords = dict(
-    sonde_time={"long_name": "dropsonde launch time", "time_zone": "UTC"},
+    launch_time={"long_name": "dropsonde launch time", "time_zone": "UTC"},
     aircraft_longitude={
         "long_name": "aircraft longitude at launch",
         "units": "degrees_east",
@@ -471,7 +471,7 @@ def calc_wind_dir_and_speed(ds):
     w_spd = np.sqrt(ds.u.values**2 + ds.v.values**2)
 
     ds = ds.assign(
-        w_dir=(
+        wdir=(
             ds.u.dims,
             w_dir,
             dict(
@@ -483,7 +483,7 @@ def calc_wind_dir_and_speed(ds):
     )
 
     ds = ds.assign(
-        w_spd=(
+        wspd=(
             ds.u.dims,
             w_spd,
             dict(

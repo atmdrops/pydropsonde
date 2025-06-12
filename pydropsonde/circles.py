@@ -195,7 +195,7 @@ class Circle:
                 ),
                 circle_time=(
                     [],
-                    self.circle_ds["sonde_time"].isel(sonde=[0, -1]).mean().values,
+                    self.circle_ds["launch_time"].isel(sonde=[0, -1]).mean().values,
                     circle_time_attrs,
                 ),
                 circle_lon=([], self.clon, circle_lon_attrs),
@@ -294,8 +294,8 @@ class Circle:
                 "p",
                 "rh",
                 "theta",
-                "w_dir",
-                "w_spd",
+                "wdir",
+                "wspd",
                 "iwv",
             ]
         alt_var = self.alt_dim
@@ -376,7 +376,7 @@ class Circle:
         alt_dim = self.alt_dim
         sonde_dim = self.sonde_dim
         if variables is None:
-            variables = ["u", "v"]
+            variables = ["u", "v", "q", "ta", "p", "rh", "theta"]
         ds = self.circle_ds
 
         dx_denominator = ((ds.x - ds.x.mean(dim=sonde_dim)) ** 2).sum(dim=sonde_dim)
@@ -511,7 +511,7 @@ class Circle:
 
     def drop_dvardxy(self, variables=None):
         if variables is None:
-            variables = ["iwv", "p", "rh", "q", "ta", "theta", "w_spd", "w_dir"]
+            variables = ["iwv", "wspd", "wdir"]
         self.circle_ds = self.circle_ds.drop_vars(
             [f"{var}_d{var}dx" for var in variables],
             errors="ignore",
