@@ -1963,6 +1963,11 @@ class Gridded:
         return self
 
     def concat_circles(self):
+        if not self.circles:
+            raise ValueError("no circles to concatenate/ are empty")
+        else:
+            print("self.circles is not empty, proceeding with concatenating")
+            
         count = []
         data = []
         for circle in self.circles.values():
