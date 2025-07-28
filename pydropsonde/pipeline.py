@@ -306,7 +306,23 @@ def create_and_populate_circle_object(
             print(f"No data for segment {segment['segment_id']}")
 
     gridded.circles = circles
-    print(gridded)
+    print(type(gridded.circles))
+    print(gridded.circles.keys())
+    key1 = list(gridded.circles.keys())[0]
+    print(gridded.circles[key1])
+    ds = gridded.circles[key]
+
+    # Save as NetCDF (.nc) file
+    ds.to_netcdf("/Users/chitvansingh/ResearchProj/gridded_data/debug_one.nc", mode="w")
+
+    store = "/Users/chitvansingh/ResearchProj/gridded_data/first_circle_gridded.zarr"
+    for key, ds in gridded.circles.items():
+
+        print(f"Attempting to write group: '{key}'")
+        print(f"  Type: {type(ds)}")
+        print(f"  Dataset summary:\n{ds}")
+        ds.to_zarr(store, group=key, mode="a")
+
     return gridded
 
 

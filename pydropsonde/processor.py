@@ -1967,7 +1967,7 @@ class Gridded:
             raise ValueError("no circles to concatenate/ are empty")
         else:
             print("self.circles is not empty, proceeding with concatenating")
-            
+
         count = []
         data = []
         for circle in self.circles.values():
@@ -2354,8 +2354,9 @@ class Gridded:
                 if "circle" in s["kinds"]
             ],
             key=lambda s: s["start"],
+            
         )
-
+        print(self.segments[0])
         return self
 
     def get_l4_dir(self, l4_dir: str = None):
