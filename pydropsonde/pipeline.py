@@ -313,7 +313,7 @@ def create_and_populate_circle_object(
     ds = gridded.circles[key1]
 
     # Save as NetCDF (.nc) file
-    ds.to_netcdf("/Users/chitvansingh/ResearchProj/gridded_data/debug_one.nc", mode="w")
+    #ds.to_netcdf("/Users/chitvansingh/ResearchProj/gridded_data/debug_one.nc", mode="w")
 
     # store = "/Users/chitvansingh/ResearchProj/gridded_data/first_circle_gridded.zarr"
     # for key, ds in gridded.circles.items():
