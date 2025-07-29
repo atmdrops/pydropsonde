@@ -2333,6 +2333,16 @@ class Gridded:
         return self
 
     def get_circle_times_from_segmentation(self, yaml_file: str = None):
+        '''
+        The method gets flight ids and platform ids from level 3 data. it also makes the segmentation.yaml file a 
+        dictionary using get_flight_segmentation method which has flight_id and platform id as nested keys. then it 
+        applies these keys on flight segmentation dictionary and selects only those segments for a given flight id and 
+        platform id, which have the 'kind' = circle. 
+
+        The function is right now edited for EUREC4A data, where the flight id structure of EUREC4A is different from
+        one assumend by pydropsonde library. it's '<Platform_id>-<MMDD>' while assumed is '<YYYYMMDD>'.
+        '''
+
         if yaml_file is None:
             warnings.warn("No segmentation file provided. No circle analysis done")
             return None
@@ -2348,15 +2358,21 @@ class Gridded:
                 }
                 for platform_id in platform_ids
                 for flight_id in flight_ids
+                for flight_id_seg in [f"HALO-{flight_id[4:]}"] 
                 for s in segmentation.get(platform_id, {})
-                .get(flight_id, {})
+                .get(flight_id_seg, {})
                 .get("segments", [])
                 if "circle" in s["kinds"]
             ],
             key=lambda s: s["start"],
             
         )
-        print(self.segments[0])
+
+        if self.segments:
+            print("First circle segment:", self.segments[0])
+        else:
+            print("No circle segments found")
+
         return self
 
     def get_l4_dir(self, l4_dir: str = None):
