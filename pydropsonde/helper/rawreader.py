@@ -22,6 +22,38 @@ def get_flight_segmentation(yaml_file: str):
     return meta
 
 
+# def check_launch_detect_in_afile(a_file: Optional[str]) -> Optional[bool]:
+#     """Returns bool value of launch detect for a given A-file
+
+#     Given the path for an A-file, the function parses through the lines
+#     till it encounters the phrase 'Launch Obs Done?' and returns the
+#     boolean value for the 1 or 0 found after the '=' sign in the line with
+#     the aforementioned phrase.
+
+#     Parameters
+#     ----------
+#     a_file : str
+#         Path to A-file
+
+#     Returns
+#     -------
+#     bool
+#         True if launch is detected (1), else False (0)
+#     """
+#     if a_file is None or not os.path.getsize(a_file) > 0:
+#         return None
+
+#     print(f"Reading A-file: {a_file}")
+#     with open(a_file, "r") as f:
+#         module_logger.debug(f"Opened File: {a_file=}")
+#         lines = f.readlines()
+
+#         for i, line in enumerate(lines):
+#             if "Launch Obs Done?" in line:
+#                 line_id = i
+#                 module_logger.debug(f'"Launch Obs Done?" found on line {line_id=}')
+#                 return bool(int(line.split("=")[1]))
+
 def check_launch_detect_in_afile(a_file: Optional[str]) -> Optional[bool]:
     """Returns bool value of launch detect for a given A-file
 
@@ -44,15 +76,24 @@ def check_launch_detect_in_afile(a_file: Optional[str]) -> Optional[bool]:
         return None
 
     print(f"Reading A-file: {a_file}")
-    with open(a_file, "r") as f:
-        module_logger.debug(f"Opened File: {a_file=}")
-        lines = f.readlines()
+    try:
+        with open(a_file, "r", encoding="utf-8") as f:
+            print(f"Reading file: {a_file}")
+            lines = f.readlines()
+    except UnicodeDecodeError:
+        print(f"⚠️  UnicodeDecodeError in {a_file}, retrying with errors='ignore'")
+        with open(a_file, "r", encoding="utf-8", errors="ignore") as f:
+            print(f"Reading file (with errors ignored): {a_file}")
+            lines = f.readlines()
 
-        for i, line in enumerate(lines):
-            if "Launch Obs Done?" in line:
-                line_id = i
-                module_logger.debug(f'"Launch Obs Done?" found on line {line_id=}')
-                return bool(int(line.split("=")[1]))
+    for i, line in enumerate(lines):
+        if "Launch Obs Done?" in line:
+            line_id = i
+            # Assuming module_logger is already defined in your module
+            module_logger.debug(f'"Launch Obs Done?" found on line {line_id=}')
+            return bool(int(line.split("=")[1]))
+
+    return None  # If phrase not found
 
 
 def get_serial_id(d_file: "str") -> str:
@@ -84,7 +125,7 @@ def get_sonde_rev(a_file: str | None) -> Optional[str]:
     if a_file is None or not os.path.getsize(a_file) > 0:
         return None
 
-    with open(a_file, "r") as f:
+    with open(a_file, "r",encoding="utf-8", errors="ignore") as f:
         module_logger.debug(f"Opened File: {a_file=}")
 
         for i, line in enumerate(f):
@@ -118,7 +159,7 @@ def get_launch_time(a_file: str | None) -> np.datetime64:
     if a_file is None or not os.path.getsize(a_file) > 0:
         return np.datetime64("NaT")
 
-    with open(a_file, "r") as f:
+    with open(a_file, "r", encoding="utf-8", errors="ignore") as f:
         module_logger.debug(f"Opened File: {a_file=}")
         lines = f.readlines()
 
