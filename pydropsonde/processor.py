@@ -2349,6 +2349,7 @@ class Gridded:
         segmentation = rr.get_flight_segmentation(yaml_file)
         platform_ids = set(self.l3_ds.platform_id.values)
         flight_ids = set(self.l3_ds.flight_id.values)
+        print(platform_ids, flight_ids)
         self.segments = sorted(
             [
                 {
@@ -2358,7 +2359,7 @@ class Gridded:
                 }
                 for platform_id in platform_ids
                 for flight_id in flight_ids
-                for flight_id_seg in [f"HALO-{flight_id[4:]}"] 
+                for flight_id_seg in [f"{platform_id}-{flight_id[4:]}"] 
                 for s in segmentation.get(platform_id, {})
                 .get(flight_id_seg, {})
                 .get("segments", [])

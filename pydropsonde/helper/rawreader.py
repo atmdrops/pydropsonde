@@ -43,6 +43,7 @@ def check_launch_detect_in_afile(a_file: Optional[str]) -> Optional[bool]:
     if a_file is None or not os.path.getsize(a_file) > 0:
         return None
 
+    print(f"Reading A-file: {a_file}")
     with open(a_file, "r") as f:
         module_logger.debug(f"Opened File: {a_file=}")
         lines = f.readlines()
