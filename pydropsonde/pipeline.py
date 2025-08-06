@@ -306,11 +306,11 @@ def create_and_populate_circle_object(
             print(f"No data for segment {segment['segment_id']}")
 
     gridded.circles = circles
-    key1 = list(gridded.circles.keys())[0]
-    print(type(gridded.circles))
-    print(gridded.circles.keys())
-    print(gridded.circles[key1])
-    ds = gridded.circles[key1]
+    # key1 = list(gridded.circles.keys())[0]
+    # print(type(gridded.circles))
+    # print(gridded.circles.keys())
+    # print(gridded.circles[key1])
+    # ds = gridded.circles[key1]
 
     # Save as NetCDF (.nc) file
     #ds.to_netcdf("/Users/chitvansingh/ResearchProj/gridded_data/debug_one.nc", mode="w")

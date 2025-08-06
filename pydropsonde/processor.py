@@ -1963,10 +1963,10 @@ class Gridded:
         return self
 
     def concat_circles(self):
-        if not self.circles:
-            raise ValueError("no circles to concatenate/ are empty")
-        else:
-            print("self.circles is not empty, proceeding with concatenating")
+        # if not self.circles:
+        #     raise ValueError("no circles to concatenate/ are empty")
+        # else:
+        #     print("self.circles is not empty, proceeding with concatenating")
 
         count = []
         data = []
@@ -2349,7 +2349,7 @@ class Gridded:
         segmentation = rr.get_flight_segmentation(yaml_file)
         platform_ids = set(self.l3_ds.platform_id.values)
         flight_ids = set(self.l3_ds.flight_id.values)
-        print(platform_ids, flight_ids)
+        # print(platform_ids, flight_ids)
         self.segments = sorted(
             [
                 {
@@ -2369,10 +2369,10 @@ class Gridded:
             
         )
 
-        if self.segments:
-            print("First circle segment:", self.segments[0])
-        else:
-            print("No circle segments found")
+        # if self.segments:
+        #     print("First circle segment:", self.segments[0])
+        # else:
+        #     print("No circle segments found")
 
         return self
 
