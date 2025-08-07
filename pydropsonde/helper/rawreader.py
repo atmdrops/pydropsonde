@@ -22,6 +22,39 @@ def get_flight_segmentation(yaml_file: str):
     return meta
 
 
+def find_line_in_afile(
+    a_file: str, search_phrase: str, end_char="\n", number_of_records=1
+) -> Optional[str]:
+    if a_file is None or not os.path.getsize(a_file) > 0:
+        return None
+
+    with open(a_file, "rb") as f:
+        module_logger.debug(f"Opened File: {a_file=}")
+
+        content = f.read()
+        pos = content.find(bytes(search_phrase, encoding="ascii"))
+        if pos == -1:
+            module_logger.debug(f"{search_phrase} not found in file")
+            return None
+        end_pos = pos + len(search_phrase) - 1
+        for _ in range(number_of_records):
+            end_pos = content.find(bytes(end_char, encoding="ascii"), end_pos + 1)
+            if end_pos == -1:
+                break
+        if end_pos == -1:
+            module_logger.debug(f"End of line not found after {search_phrase}")
+            return None
+        module_logger.debug(f"{search_phrase} found")
+        try:
+            res = content[pos:end_pos].decode("ascii").strip()
+        except UnicodeDecodeError:
+            module_logger.warning(
+                f"Could not decode line with {search_phrase} in {a_file}"
+            )
+            return None
+        return res
+
+
 def check_launch_detect_in_afile(a_file: Optional[str]) -> Optional[bool]:
     """Returns bool value of launch detect for a given A-file
 
@@ -40,18 +73,11 @@ def check_launch_detect_in_afile(a_file: Optional[str]) -> Optional[bool]:
     bool
         True if launch is detected (1), else False (0)
     """
-    if a_file is None or not os.path.getsize(a_file) > 0:
+    search_phrase = "Launch Obs Done?"
+    line = find_line_in_afile(a_file, search_phrase)
+    if line is None:
         return None
-
-    with open(a_file, "r") as f:
-        module_logger.debug(f"Opened File: {a_file=}")
-        lines = f.readlines()
-
-        for i, line in enumerate(lines):
-            if "Launch Obs Done?" in line:
-                line_id = i
-                module_logger.debug(f'"Launch Obs Done?" found on line {line_id=}')
-                return bool(int(line.split("=")[1]))
+    return bool(int(line.split("=")[1]))
 
 
 def get_serial_id(d_file: "str") -> str:
@@ -80,16 +106,11 @@ def get_serial_id(d_file: "str") -> str:
 
 
 def get_sonde_rev(a_file: str | None) -> Optional[str]:
-    if a_file is None or not os.path.getsize(a_file) > 0:
+    search_phrase = "Sonde ID/Type/Rev"
+    line = find_line_in_afile(a_file, search_phrase, end_char=",", number_of_records=3)
+    if line is None:
         return None
-
-    with open(a_file, "r") as f:
-        module_logger.debug(f"Opened File: {a_file=}")
-
-        for i, line in enumerate(f):
-            if "Sonde ID/Type/Rev" in line:
-                module_logger.debug(f'"Sonde ID/Type/Rev" found on line {i=}')
-                return line.split(":")[1].split(",")[2].lstrip()
+    return line.split(":")[1].split(",")[2].lstrip()
 
 
 def get_launch_time(a_file: str | None) -> np.datetime64:
@@ -117,18 +138,14 @@ def get_launch_time(a_file: str | None) -> np.datetime64:
     if a_file is None or not os.path.getsize(a_file) > 0:
         return np.datetime64("NaT")
 
-    with open(a_file, "r") as f:
-        module_logger.debug(f"Opened File: {a_file=}")
-        lines = f.readlines()
+    search_phrase = "Launch Time (y,m,d,h,m,s)"
+    line = find_line_in_afile(a_file, search_phrase)
+    if line is None:
+        return np.datetime64("NaT")
+    ltime = line.split(":", 1)[1].lstrip().rstrip()
+    format = "%Y-%m-%d, %H:%M:%S"
 
-        for i, line in enumerate(lines):
-            if "Launch Time (y,m,d,h,m,s)" in line:
-                module_logger.debug(f'"Launch Time (y,m,d,h,m,s)" found on line {i=}')
-                break
-        ltime = line.split(":", 1)[1].lstrip().rstrip()
-        format = "%Y-%m-%d, %H:%M:%S"
-
-        return np.datetime64(datetime.strptime(ltime, format))
+    return np.datetime64(datetime.strptime(ltime, format))
 
 
 def get_spatial_coordinates_at_launch(a_file: str | None) -> List[float]:
