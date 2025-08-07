@@ -1312,7 +1312,7 @@ class Sonde:
         ds = self.interim_l3_ds
 
         diff_array = ds[alt_dim].sortby("time").dropna(dim="time").diff(dim="time")
-        if not np.all(diff_array < 0):
+        if not np.all(diff_array <= 0):
             warnings.warn(
                 f"your altitude for {self} on {self.launch_time} is not sorted."
             )
