@@ -677,9 +677,6 @@ class Sonde:
             print(f"No flight attributes for {self} on {self.flight_id}")
             return self
 
-        with open(self.afile, "r") as f:
-            lines = f.readlines()
-
         for a_file_attr_name, ds_attr_name in l2_flight_attributes_map.items():
             if (
                 "AVAPS" in ds_attr_name
@@ -688,16 +685,15 @@ class Sonde:
             else:
                 dtype = float
 
-            for line in lines:
-                if a_file_attr_name in line:
-                    try:
-                        value = line.split("= ")[1]
-                        flight_attrs[ds_attr_name] = dtype(value)
-                    except IndexError:
-                        print(
-                            f"No flight attribute {a_file_attr_name} for {self} on {self.flight_id}"
-                        )
-                    break
+            line = rr.find_line_in_afile(self.afile, a_file_attr_name)
+            if line is not None:
+                try:
+                    value = line.split("= ")[1]
+                    flight_attrs[ds_attr_name] = dtype(value)
+                except IndexError:
+                    print(
+                        f"No flight attribute {a_file_attr_name} for {self} on {self.flight_id}"
+                    )
         self.flight_attrs = flight_attrs
 
         return self
