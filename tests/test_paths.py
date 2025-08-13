@@ -1,7 +1,8 @@
 from pydropsonde.helper import paths
 import os
 import pytest
-
+import numpy as np
+import configparser
 
 main_data_directory = "./example_data"
 platform_id = "HALO"
@@ -43,3 +44,19 @@ def test_l1_path(flight):
 
 def test_quicklooks_path(flight):
     assert flight.quicklooks_path() == quicklooks_path
+
+
+def test_raw_reader():
+    config = configparser.ConfigParser()
+
+    flight = paths.Flight(
+        data_directory="example_data",
+        flight_id="20200119",
+        platform_id="HALO",
+        path_structure="{platform}/Level_0/{flight_id}",
+    )
+    sonde = flight.populate_sonde_instances(config=config)[0]
+    assert sonde.serial_id == "190140094"
+    assert sonde.launch_time == np.datetime64("2020-01-19T16:55:14.000000")
+    assert sonde.sonde_rev == "A1"
+    assert sonde.launch_detect
