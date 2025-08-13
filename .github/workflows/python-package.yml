@@ -5,90 +5,61 @@ on:
   push:
   pull_request:
 
+
+
 jobs:
-  build-from-lock:
+  test-package:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v4
+      - uses: astral-sh/setup-uv@v4
         with:
-          python-version: "3.x"
-      - name: Install poetry
-        uses: abatilo/actions-poetry@v2
-      - name: Setup a local virtual environment (if no poetry.toml file)
-        run: |
-          poetry config virtualenvs.create true --local
-          poetry config virtualenvs.in-project true --local
-      - uses: actions/cache@v3
-        name: Define a cache for the virtual environment based on the dependencies lock file
+          version: "latest"
+
+      - name: Set up Python 3.13
+        run: uv python install 3.13
+
+      - name: Cache uv dependencies
+        uses: actions/cache@v4
         with:
-          path: ./.venv
-          key: venv-${{ hashFiles('poetry.lock') }}
-      - name: Install the project dependencies
+          path: |
+            ~/.cache/uv
+            .venv
+          key: ${{ runner.os }}-uv-3.13-${{ hashFiles('**/uv.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-uv-3.13-
+
+      - name: Create virtual environment
+        run: uv venv
+      - name: run tests locked
         run: |
-          poetry self add "poetry-dynamic-versioning[plugin]"
-          poetry install
+          uv sync --locked
+          uv run pytest
+      - name: run tests frozen
+        run: |
+          uv sync --frozen
+          uv run pytest
       - name: run tests
-        run: poetry run pytest
-      - name: build release distributions
-        run: poetry build
-      - name: Run pipeline
-        run: poetry run pydropsonde -c ./dropsonde.cfg
-  build-from-toml:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v4
-        with:
-          python-version: "3.x"
-      - name: Install poetry
-        uses: abatilo/actions-poetry@v2
-      - name: Setup a local virtual environment (if no poetry.toml file)
         run: |
-          poetry config virtualenvs.create true --local
-          poetry config virtualenvs.in-project true --local
-      - uses: actions/cache@v3
-        name: Define a cache for the virtual environment based on the dependencies toml file
-        with:
-          path: ./.venv
-          key: venv-${{ hashFiles('pyproject.toml') }}
-      - name: Install the project dependencies
-        run: |
-          pip install -e .
-          pip install pytest
-      - name: run tests
-        run: pytest
+          uv sync --upgrade
+          uv run pytest
       - name: Run pipeline
-        run: pydropsonde -c ./dropsonde.cfg
+        run: uv run pydropsonde -c ./dropsonde.cfg
+
 
   publish-to-PyPI:
     if: "${{ github.event_name == 'release' }}"
     runs-on: ubuntu-latest
-    needs: [ build-from-toml]
-    #build-from-lock,
+    needs: [test-package]
     permissions:
       id-token: write
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v4
-        with:
-          python-version: "3.x"
-      - name: Install poetry
-        uses: abatilo/actions-poetry@v2
-      - name: Setup a local virtual environment (if no poetry.toml file)
-        run: |
-          poetry config virtualenvs.create true --local
-          poetry config virtualenvs.in-project true --local
-      - uses: actions/cache@v3
-        name: Define a cache for the virtual environment based on the dependencies lock file
-        with:
-          path: ./.venv
-          key: venv-${{ hashFiles('poetry.lock') }}
-      - name: Install the project dependencies
-        run: |
-          poetry self add "poetry-dynamic-versioning[plugin]"
-          poetry install
-      - name: build release distributions
-        run: poetry build
-      - name: Publish release distributions to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+      - uses: astral-sh/setup-uv@v3
+      - run: uv build
+      # Check that basic features work and we didn't miss to include crucial files
+      - name: tests (wheel)
+        run: uv run --isolated --no-project -p 3.13 --with dist/*.whl tests/publish_test.py
+      - name: tests (source distribution)
+        run: uv run --isolated --no-project -p 3.13 --with dist/*.tar.gz tests/publish_test.py
+      - run: uv publish --trusted-publishing always
