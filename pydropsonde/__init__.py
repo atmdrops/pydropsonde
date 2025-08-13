@@ -1,7 +1,7 @@
 import logging
 import datetime
 import os
-
+from importlib.metadata import version
 
 # create pydropsonde logger
 logger = logging.getLogger("pydropsonde")
@@ -32,3 +32,5 @@ ch.setFormatter(formatter)
 logger.addHandler(fh_info)
 logger.addHandler(fh_debug)
 logger.addHandler(ch)
+
+__version__ = version("pydropsonde")
