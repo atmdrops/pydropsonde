@@ -3,6 +3,7 @@ name = "pydropsonde"
 repository = "https://github.com/atmdrops/pydropsonde"
 documentation = "https://atmdrops.github.io/pydropsonde/"
 description = "Tools to process dropsonde data"
+dynamic = ["version"]
 authors = [{name="Geet George", email= "geet.george@mpimet.mpg.de"}]
 maintainers = [
     {name="Helene Gloeckner", email="helene.gloeckner@mpimet.mpg.de"},
@@ -18,7 +19,6 @@ classifiers = [
 ]
 packages = [{include = "pydropsonde"}]
 requires-python = ">3.10"
-dynamic=["version"]
 
 
 dependencies = [
@@ -28,60 +28,49 @@ dependencies = [
     "circle-fit",
     "flox",
     "fsspec!=0.9.0",
-    "llvmlite>=0.40",
+    "llvmlite",
     "moist-thermodynamics",
     "netcdf4",
     "numpy",
-    "numba>=0.50",
-    "numcodecs",
-    "pyproj",
+    "numba",
+    "numcodecs<0.16.0",
     "pandas",
     "requests",
     "scipy",
+    "setuptools>=80.9.0",
     "tqdm",
     "xarray",
     "xhistogram",
     "zarr (>2.0.0,<3.0.0)",
 ]
 
-[tool.poetry]
-version = "0.0.0"
-
-[tool.poetry.group.test.dependencies]
-pytest = "*"
-pytest-watch = "*"
-
-[tool.poetry-dynamic-versioning]
-enable = true
-vcs = "git"
-
-[tool.poetry.scripts]
-pydropsonde = 'pydropsonde.main:main'
-
-[tool.poetry.requires-plugins]
-poetry-dynamic-versioning = { version = ">=1.0.0,<2.0.0", extras = ["plugin"] }
-
-
-[tool.poetry-dynamic-versioning.files."pydropsonde/_version.py"]
-persistent-substitution = true
-initial-content ="""
-  TYPE_CHECKING = False
-  if TYPE_CHECKING:
-      from typing import Tuple, Union
-      VERSION_TUPLE = Tuple[Union[int, str], ...]
-  else:
-      VERSION_TUPLE = object
-
-  version: str
-  __version__: str
-  __version_tuple__: VERSION_TUPLE
-  version_tuple: VERSION_TUPLE
-
-  __version__ = '0.0.0'
-  __version_tuple__ = (0, 0, 0)
-  """
-
+[tool.pytest.ini_options]
+python_path = [
+    ".", "tests"
+]
 
 [build-system]
-requires = ["poetry-core>=1.0.0", "poetry-dynamic-versioning>=1.0.0,<2.0.0"]
-build-backend = "poetry_dynamic_versioning.backend"
+requires=["hatchling", "uv-dynamic-versioning"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+source = "uv-dynamic-versioning"
+
+[project.scripts]
+pydropsonde = 'pydropsonde.main:main'
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "ruff",
+    "pre-commit",
+    "ipykernel"
+]
+docu = [
+    "sphinx",
+    "nbsphinx",
+    "sphinx-autodoc2",
+    "sphinx-autobuild",
+    "sphinx-book-theme",
+    "sphinx-last-updated-by-git",
+]
