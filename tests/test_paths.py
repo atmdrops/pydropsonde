@@ -5,8 +5,8 @@ import pytest
 
 main_data_directory = "./example_data"
 platform_id = "HALO"
-flightdate = "20200119"
-flightdate2 = "HALO-20240926a"
+flightdate = "empty_afile"
+flightdate2 = "HALO-20240831a"
 path_structure = "{platform}/Level_0/{flight_id}"
 platform_path_structure = "{platform}/Level_0"
 
