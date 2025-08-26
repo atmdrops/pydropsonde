@@ -306,7 +306,7 @@ def create_and_populate_circle_object(
             print(f"No data for segment {segment['segment_id']}")
 
     gridded.circles = circles
-
+    
     return gridded
 
 
