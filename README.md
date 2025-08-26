@@ -1,4 +1,6 @@
-# pyDropsonde
+
+![Logo](docs/source/_static/pydropsonde_logo.svg)
+# pydropsonde
 
 
 The documentation is hosted at [atmdrops.github.io/pydropsonde/](https://atmdrops.github.io/pydropsonde/).
