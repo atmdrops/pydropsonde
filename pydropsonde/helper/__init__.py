@@ -323,11 +323,15 @@ def calc_rh_from_q(ds, alt_dim="altitude"):
     return ds
 
 
-def calc_iwv(ds, sonde_dim="sonde_id", alt_dim="alt", qc_var=None):
+def calc_iwv(ds, sonde_dim="sonde_id", alt_dim="alt", max_alt=300, qc_var=None):
     """
     Input :
 
-        dataset : Dataset
+        ds : Dataset
+        sonde_dim : Dimension name for the sonde identifier
+        alt_dim : Dimension name for the altitude
+        max_alt : Maximum altitude to consider for integrated water vapor calculation
+        qc_var : List of quality control variable names to check for valid data
 
     Output :
 
@@ -338,21 +342,38 @@ def calc_iwv(ds, sonde_dim="sonde_id", alt_dim="alt", qc_var=None):
     if qc_var is not None:
         qc_vals = [ds[var].values for var in qc_var]
     if (qc_var is None) or (qc_vals.count(0) == len(qc_vals)):
-        pressure = ds.p.values
-        temperature = ds.ta.values
-        q = ds.q.values
-        alt = ds[alt_dim].values
+        alt = ds[alt_dim]
+        pressure = ds.p
+        temperature = ds.ta
+        q = ds.q
 
-        mask_p = ~np.isnan(pressure)
-        mask_t = ~np.isnan(temperature)
-        mask_q = ~np.isnan(q)
-        mask = mask_p & mask_t & mask_q
-        iwv = physics.integrate_water_vapor(
-            q=q[mask], p=pressure[mask], T=temperature[mask], z=alt[mask]
+        q_interp = q.interpolate_na(dim=alt_dim, method="linear")
+        log_p = np.log(pressure)
+        p_interp = np.exp(
+            log_p.interpolate_na(dim=alt_dim, method="linear", fill_value="extrapolate")
         )
+        ta_interp = temperature.interpolate_na(
+            dim=alt_dim, method="linear", fill_value="extrapolate"
+        )
+
+        q_surface_filled = q_interp.bfill(dim=alt_dim, limit=int(max_alt / 10))
+        if np.isnan(q_surface_filled.sel(altitude=0)):
+            return np.nan
+        else:
+            mask_p = ~np.isnan(p_interp)
+            mask_t = ~np.isnan(ta_interp)
+            mask_q = ~np.isnan(q_surface_filled)
+            mask = mask_p & mask_t & mask_q
+            iwv = physics.integrate_water_vapor(
+                q=q_surface_filled[mask].values,
+                p=p_interp[mask].values,
+                T=ta_interp[mask].values,
+                z=alt[mask].values,
+            )
 
     else:
         iwv = np.nan
+
     ds_iwv = xr.DataArray([iwv], dims=[sonde_dim], coords={})
     ds_iwv.name = "iwv"
     ds_iwv.attrs = dict(
