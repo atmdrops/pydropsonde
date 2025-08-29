@@ -302,6 +302,7 @@ class Sonde:
         if hasattr(self, "postaspenfile"):
             try:
                 ds = xr.open_dataset(self.postaspenfile, engine="netcdf4")
+                ds = ds.assign(time=ds.time)
             except ValueError:
                 warnings.warn(f"No valid l1 file for {self}")
                 return None
@@ -733,7 +734,7 @@ class Sonde:
             "launch_time": (
                 str(self.aspen_ds.launch_time.values)
                 if hasattr(self.aspen_ds, "launch_time")
-                else np.datetime64(self.aspen_ds.base_time.values)
+                else np.datetime64(self.aspen_ds.base_time.values, "us")
             ),
             "is_floater": str(self.qc.is_floater),
             "sonde_serial_ID": self.serial_id,
@@ -1663,7 +1664,7 @@ class Sonde:
             dict(
                 launch_time=(
                     self.sonde_dim,
-                    [np.datetime64(self.launch_time, "ns")],
+                    [np.datetime64(self.launch_time, "us")],
                     essential_attrs["launch_time"],
                 )
             )
