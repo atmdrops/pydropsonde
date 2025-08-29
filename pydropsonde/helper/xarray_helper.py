@@ -70,6 +70,21 @@ def get_chunks(ds, var, object_dims=("sonde", "circle"), alt_dim="alt"):
     return tuple((chunks[d] for d in ds[var].dims))
 
 
+def get_time_encoding(ds_time):
+    min_time = np.nanmin(ds_time.values)
+    max_time = np.nanmax(ds_time.values)
+    if np.isnan(min_time):
+        min_time = np.datetime64("1970-01-01T00:00:00", "ms")
+    if (max_time - min_time) > np.timedelta64(2**53 - 1, "ms"):
+        warnings.warn(
+            "your time range is larger than 2**53 milliseconds, consider using another encoding for time"
+        )
+    return {
+        "dtype": "int64",
+        "units": f"milliseconds since {np.datetime_as_string(min_time, unit='ms', timezone='UTC')}",
+    }
+
+
 def get_target_dtype(ds, var):
     """
     reduce float dtypes to float32 and properly encode time
@@ -77,7 +92,7 @@ def get_target_dtype(ds, var):
     if isinstance(ds[var].values.flat[0], np.floating):
         return {"dtype": "float32"}
     if np.issubdtype(type(ds[var].values.flat[0]), np.datetime64):
-        return {"units": "nanoseconds since 2000-01-01", "dtype": "<i8"}
+        return get_time_encoding(ds[var])
     else:
         return {"dtype": ds[var].values.dtype}
 
