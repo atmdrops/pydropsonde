@@ -302,6 +302,7 @@ class Sonde:
         if hasattr(self, "postaspenfile"):
             try:
                 ds = xr.open_dataset(self.postaspenfile, engine="netcdf4")
+                ds = ds.assign(time=ds.time.astype("datetime64[ms]"))
             except ValueError:
                 warnings.warn(f"No valid l1 file for {self}")
                 return None
@@ -1663,7 +1664,7 @@ class Sonde:
             dict(
                 launch_time=(
                     self.sonde_dim,
-                    [np.datetime64(self.launch_time, "ns")],
+                    [np.datetime64(self.launch_time, "ms")],
                     essential_attrs["launch_time"],
                 )
             )
