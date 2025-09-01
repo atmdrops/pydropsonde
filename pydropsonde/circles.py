@@ -229,7 +229,14 @@ class Circle:
             {
                 var: (
                     ds[var].dims,
-                    ds[var].bfill(dim=self.alt_dim, limit=int(max_alt // 10)).values,
+                    ds[var]
+                    .interpolate_na(
+                        dim=self.alt_dim,
+                        method="nearest",
+                        max_gap=int(max_alt),
+                        fill_value="extrapolate",
+                    )
+                    .values,
                     ds[var].attrs,
                 )
                 for var in constant_vars
