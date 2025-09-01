@@ -2,6 +2,7 @@ from dataclasses import dataclass
 import numpy as np
 import xarray as xr
 import circle_fit as cf
+import pydropsonde.helper as hh
 import pydropsonde.helper.physics as hp
 import pydropsonde.helper.xarray_helper as hx
 
@@ -297,6 +298,13 @@ class Circle:
             ds["p"] = np.exp(ds["p"])
             self.circle_ds = ds.swap_dims({"sonde_id": self.sonde_dim})
 
+        return self
+
+    def recalculate_ta_rh(self):
+        ds = self.circle_ds
+        ds = hh.calc_T_from_theta(ds)
+        ds = hh.calc_rh_from_q(ds)
+        self.circle_ds = ds
         return self
 
     def mask_sonde(self, sonde_id=0):
