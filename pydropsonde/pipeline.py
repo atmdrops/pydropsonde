@@ -644,6 +644,7 @@ pipeline = {
         "intake": "gridded",
         "apply": iterate_Circle_method_over_dict_of_Circle_objects,
         "functions": [
+            "interpolate_position",
             "get_xy_coords_for_circles",
             "drop_vars",
             "interpolate_na_sondes",

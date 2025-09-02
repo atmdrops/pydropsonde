@@ -93,6 +93,29 @@ class Circle:
         )
         return self
 
+    def interpolate_position(self, max_alt=300):
+        ds = self.circle_ds.sortby(self.alt_dim)
+
+        ds = ds.assign(
+            {
+                var: (
+                    ds[var].dims,
+                    ds[var]
+                    .interpolate_na(
+                        dim=self.alt_dim,
+                        method="nearest",
+                        max_gap=int(max_alt),
+                        fill_value="extrapolate",
+                    )
+                    .values,
+                    ds[var].attrs,
+                )
+                for var in ["lat", "lon"]
+            }
+        )
+        self.circle_ds = ds
+        return self
+
     def get_xy_coords_for_circles(self):
         """
         Calculate x and y from lat and lon relative to circle center.
