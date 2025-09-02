@@ -267,14 +267,13 @@ class Circle:
             ds = self.circle_ds.swap_dims({self.sonde_dim: "sonde_id"})
             alt_dim = self.alt_dim
             ds["p"] = np.log(ds["p"])
+
             for var in [
                 var
                 for var in ds.variables
                 if set([alt_dim, "sonde_id"]).issubset(ds.variables[var].dims)
             ]:
-                no_nan = ds[var].dropna(dim="sonde_id", thresh=int(thresh))
-                no_nan = no_nan
-                interp = no_nan.interpolate_na(
+                interp = ds[var].interpolate_na(
                     dim=alt_dim,
                     method=method,
                     max_gap=int(max_gap),
@@ -283,7 +282,7 @@ class Circle:
                     {
                         var: (
                             ds[var].dims,
-                            interp.broadcast_like(ds[var]).values,
+                            interp.values,
                             ds[var].attrs,
                         )
                     }
