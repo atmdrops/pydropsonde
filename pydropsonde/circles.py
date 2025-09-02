@@ -715,9 +715,12 @@ class Circle:
         div = ds.div.where(~np.isnan(ds.div), drop=True).sortby(alt_dim)
         p = ds.p_mean.where(~np.isnan(ds.div), drop=True).sortby(alt_dim)
         zero_vel = xr.DataArray(data=[0], dims=alt_dim, coords={alt_dim: [0]})
-        pres_diff = xr.concat([zero_vel, p.diff(dim=alt_dim)], dim=alt_dim)
-        del_omega = -div * pres_diff.values
-        omega = del_omega.cumsum(dim=alt_dim) * 0.01 * 60**2
+        if p.sizes["altitude"] > 0:
+            pres_diff = xr.concat([zero_vel, p.diff(dim=alt_dim)], dim=alt_dim)
+            del_omega = -div * pres_diff.values
+            omega = del_omega.cumsum(dim=alt_dim) * 0.01 * 60**2
+        else:
+            omega = xr.DataArray(data=[np.nan], dims=alt_dim, coords={alt_dim: [0]})
         omega_attrs = {
             "standard_name": "vertical_air_velocity_expressed_as_tendency_of_pressure",
             "long_name": "Area-averaged atmospheric pressure velocity (omega)",
@@ -742,13 +745,13 @@ class Circle:
         alt_dim = self.alt_dim
         div = ds.div.where(~np.isnan(ds.div), drop=True).sortby(alt_dim)
         zero_vel = xr.DataArray(data=[0], dims=alt_dim, coords={alt_dim: [0]})
-
-        height = xr.concat([zero_vel, div[alt_dim]], dim=alt_dim)
-        height_diff = height.diff(dim=alt_dim)
-
-        del_w = -div * height_diff.values
-
-        w_vel = del_w.cumsum(dim=alt_dim)
+        if div.sizes["altitude"] > 0:
+            height = xr.concat([zero_vel, div[alt_dim]], dim=alt_dim)
+            height_diff = height.diff(dim=alt_dim)
+            del_w = -div * height_diff.values
+            w_vel = del_w.cumsum(dim=alt_dim)
+        else:
+            w_vel = xr.DataArray(data=[np.nan], dims=alt_dim, coords={alt_dim: [0]})
         wvel_attrs = {
             "standard_name": "upward_air_velocity",
             "long_name": "Area-averaged atmospheric vertical velocity",
