@@ -40,10 +40,10 @@ def find_string_in_afile(
         for _ in range(number_of_records):
             end_pos = content.find(bytes(end_char, encoding="ascii"), end_pos + 1)
             if end_pos == -1:
-                break
-        if end_pos == -1:
-            module_logger.debug(f"End of search phrase not found after {search_phrase}")
-            return None
+                module_logger.debug(
+                    f"End of search phrase not found after {search_phrase}"
+                )
+                return []
         module_logger.debug(f"{search_phrase} found")
         try:
             res = content[pos:end_pos].decode("ascii").strip()
