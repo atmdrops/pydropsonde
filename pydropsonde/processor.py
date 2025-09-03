@@ -685,10 +685,10 @@ class Sonde:
             else:
                 dtype = float
 
-            line = rr.find_line_in_afile(self.afile, a_file_attr_name)
-            if line is not None:
+            phrase = rr.find_string_in_afile(self.afile, a_file_attr_name)
+            if phrase is not None:
                 try:
-                    value = line.split("= ")[1]
+                    value = phrase.split("= ")[1]
                     flight_attrs[ds_attr_name] = dtype(value)
                 except IndexError:
                     print(

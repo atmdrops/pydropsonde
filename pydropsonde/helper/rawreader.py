@@ -22,7 +22,7 @@ def get_flight_segmentation(yaml_file: str):
     return meta
 
 
-def find_line_in_afile(
+def find_string_in_afile(
     a_file: str, search_phrase: str, end_char="\n", number_of_records=1
 ) -> Optional[str]:
     if a_file is None or not os.path.getsize(a_file) > 0:
@@ -42,15 +42,13 @@ def find_line_in_afile(
             if end_pos == -1:
                 break
         if end_pos == -1:
-            module_logger.debug(f"End of line not found after {search_phrase}")
+            module_logger.debug(f"End of search phrase not found after {search_phrase}")
             return None
         module_logger.debug(f"{search_phrase} found")
         try:
             res = content[pos:end_pos].decode("ascii").strip()
         except UnicodeDecodeError:
-            module_logger.warning(
-                f"Could not decode line with {search_phrase} in {a_file}"
-            )
+            module_logger.warning(f"Could not decode {search_phrase} in {a_file}")
             return None
         return res
 
@@ -74,7 +72,7 @@ def check_launch_detect_in_afile(a_file: Optional[str]) -> Optional[bool]:
         True if launch is detected (1), else False (0)
     """
     search_phrase = "Launch Obs Done?"
-    line = find_line_in_afile(a_file, search_phrase)
+    line = find_string_in_afile(a_file, search_phrase)
     if line is None:
         return None
     return bool(int(line.split("=")[1]))
@@ -107,7 +105,9 @@ def get_serial_id(d_file: "str") -> str:
 
 def get_sonde_rev(a_file: str | None) -> Optional[str]:
     search_phrase = "Sonde ID/Type/Rev"
-    line = find_line_in_afile(a_file, search_phrase, end_char=",", number_of_records=3)
+    line = find_string_in_afile(
+        a_file, search_phrase, end_char=",", number_of_records=3
+    )
     if line is None:
         return None
     return line.split(":")[1].split(",")[2].lstrip()
@@ -139,7 +139,7 @@ def get_launch_time(a_file: str | None) -> np.datetime64:
         return np.datetime64("NaT")
 
     search_phrase = "Launch Time (y,m,d,h,m,s)"
-    line = find_line_in_afile(a_file, search_phrase)
+    line = find_string_in_afile(a_file, search_phrase)
     if line is None:
         return np.datetime64("NaT")
     ltime = line.split(":", 1)[1].lstrip().rstrip()
