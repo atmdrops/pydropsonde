@@ -35,7 +35,7 @@ def find_string_in_afile(
         pos = content.find(bytes(search_phrase, encoding="ascii"))
         if pos == -1:
             module_logger.debug(f"{search_phrase} not found in file")
-            return None
+            return []
         end_pos = pos + len(search_phrase) - 1
         for _ in range(number_of_records):
             end_pos = content.find(bytes(end_char, encoding="ascii"), end_pos + 1)
@@ -46,11 +46,11 @@ def find_string_in_afile(
                 return []
         module_logger.debug(f"{search_phrase} found")
         try:
-            res = content[pos:end_pos].decode("ascii").strip()
+            res = content[pos + len(search_phrase) : end_pos].decode("ascii").strip()
         except UnicodeDecodeError:
             module_logger.warning(f"Could not decode {search_phrase} in {a_file}")
             return None
-        return res
+        return res.split(end_char)
 
 
 def check_launch_detect_in_afile(a_file: Optional[str]) -> Optional[bool]:
@@ -71,11 +71,11 @@ def check_launch_detect_in_afile(a_file: Optional[str]) -> Optional[bool]:
     bool
         True if launch is detected (1), else False (0)
     """
-    search_phrase = "Launch Obs Done?"
+    search_phrase = "Launch Obs Done? (0,1) ="
     line = find_string_in_afile(a_file, search_phrase)
-    if line is None:
+    if not line:
         return None
-    return bool(int(line.split("=")[1]))
+    return bool(int(line[0]))
 
 
 def get_serial_id(d_file: "str") -> str:
@@ -104,13 +104,13 @@ def get_serial_id(d_file: "str") -> str:
 
 
 def get_sonde_rev(a_file: str | None) -> Optional[str]:
-    search_phrase = "Sonde ID/Type/Rev"
+    search_phrase = "Sonde ID/Type/Rev/Built/Sensors:"
     line = find_string_in_afile(
         a_file, search_phrase, end_char=",", number_of_records=3
     )
-    if line is None:
+    if not line:
         return None
-    return line.split(":")[1].split(",")[2].lstrip()
+    return line[2].lstrip()
 
 
 def get_launch_time(a_file: str | None) -> np.datetime64:
@@ -138,11 +138,11 @@ def get_launch_time(a_file: str | None) -> np.datetime64:
     if a_file is None or not os.path.getsize(a_file) > 0:
         return np.datetime64("NaT")
 
-    search_phrase = "Launch Time (y,m,d,h,m,s)"
+    search_phrase = "Launch Time (y,m,d,h,m,s):"
     line = find_string_in_afile(a_file, search_phrase)
-    if line is None:
+    if not line:
         return np.datetime64("NaT")
-    ltime = line.split(":", 1)[1].lstrip().rstrip()
+    ltime = line[0].lstrip().rstrip()
     format = "%Y-%m-%d, %H:%M:%S"
 
     return np.datetime64(datetime.strptime(ltime, format))
