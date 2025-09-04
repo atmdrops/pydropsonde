@@ -43,15 +43,24 @@ def check_launch_detect_in_afile(a_file: Optional[str]) -> Optional[bool]:
     if a_file is None or not os.path.getsize(a_file) > 0:
         return None
 
-    with open(a_file, "r") as f:
-        module_logger.debug(f"Opened File: {a_file=}")
-        lines = f.readlines()
+    print(f"Reading A-file: {a_file}")
+    try:
+        with open(a_file, "r", encoding="utf-8") as f:
+            print(f"Reading file: {a_file}")
+            lines = f.readlines()
+    except UnicodeDecodeError:
+        print(f"⚠️  UnicodeDecodeError in {a_file}, retrying with errors='ignore'")
+        with open(a_file, "r", encoding="utf-8", errors="ignore") as f:
+            print(f"Reading file (with errors ignored): {a_file}")
+            lines = f.readlines()
 
-        for i, line in enumerate(lines):
-            if "Launch Obs Done?" in line:
-                line_id = i
-                module_logger.debug(f'"Launch Obs Done?" found on line {line_id=}')
-                return bool(int(line.split("=")[1]))
+    for i, line in enumerate(lines):
+        if "Launch Obs Done?" in line:
+            line_id = i
+            module_logger.debug(f'"Launch Obs Done?" found on line {line_id=}')
+            return bool(int(line.split("=")[1]))
+
+    return None  # If phrase not found
 
 
 def get_serial_id(d_file: "str") -> str:
@@ -83,7 +92,7 @@ def get_sonde_rev(a_file: str | None) -> Optional[str]:
     if a_file is None or not os.path.getsize(a_file) > 0:
         return None
 
-    with open(a_file, "r") as f:
+    with open(a_file, "r",encoding="utf-8", errors="ignore") as f:
         module_logger.debug(f"Opened File: {a_file=}")
 
         for i, line in enumerate(f):
@@ -117,7 +126,7 @@ def get_launch_time(a_file: str | None) -> np.datetime64:
     if a_file is None or not os.path.getsize(a_file) > 0:
         return np.datetime64("NaT")
 
-    with open(a_file, "r") as f:
+    with open(a_file, "r", encoding="utf-8", errors="ignore") as f:
         module_logger.debug(f"Opened File: {a_file=}")
         lines = f.readlines()
 
@@ -189,3 +198,4 @@ def get_spatial_coordinates_at_launch(a_file: str | None) -> List[float]:
 
     else:
         return [np.nan, np.nan, np.nan]
+    
