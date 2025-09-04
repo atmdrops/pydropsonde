@@ -51,12 +51,12 @@ def test_raw_reader():
 
     flight = paths.Flight(
         data_directory="example_data",
-        flight_id="20200119",
-        platform_id="HALO",
+        flight_id="20200210",
+        platform_id="P3",
         path_structure="{platform}/Level_0/{flight_id}",
     )
     sonde = flight.populate_sonde_instances(config=config)[0]
-    assert sonde.serial_id == "190140094"
-    assert sonde.launch_time == np.datetime64("2020-01-19T16:55:14.000000")
-    assert sonde.sonde_rev == "A1"
+    assert sonde.serial_id == "192620526"
+    assert sonde.launch_time == np.datetime64("2020-02-10T06:24:12.000000")
+    assert sonde.sonde_rev == "A2"
     assert sonde.launch_detect
