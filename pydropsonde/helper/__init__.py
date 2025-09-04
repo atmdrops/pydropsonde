@@ -323,52 +323,54 @@ def calc_rh_from_q(ds, alt_dim="altitude"):
     return ds
 
 
-def calc_iwv(ds, sonde_dim="sonde_id", alt_dim="alt", max_alt=300, qc_var=None):
+def calc_iwv(ds, sonde_dim="sonde_id", alt_dim="alt", max_gap=300, qc_var=None):
     """
     Input :
 
         ds : Dataset
         sonde_dim : Dimension name for the sonde identifier
         alt_dim : Dimension name for the altitude
-        max_alt : Maximum altitude to consider for integrated water vapor calculation
+        max_gap : Maximum one-sided gap at the surface to fill for IWV calculation (m)
         qc_var : List of quality control variable names to check for valid data
 
     Output :
 
         dataset : Dataset with integrated water vapor
 
-    Function to estimate integrated water vapor in the given dataset.
+    Function to estimate integrated water vapor in the given dataset. q, p and ta are interpolated before the calculation, and up to max_gap m are extrapolated to the surface. If the gap at the surface is larger than 300m or one of the QC was not passed, Nan is returned.
     """
     if qc_var is not None:
         qc_vals = [ds[var].values for var in qc_var]
     if (qc_var is None) or (qc_vals.count(0) == len(qc_vals)):
-        alt = ds[alt_dim]
-        pressure = ds.p
-        temperature = ds.ta
-        q = ds.q
-
-        q_interp = q.interpolate_na(dim=alt_dim, method="linear")
-        log_p = np.log(pressure)
+        q_interp = ds.q.interpolate_na(dim=alt_dim, method="linear").interpolate_na(
+            dim=alt_dim, method="nearest", fill_value="extrapolate", max_gap=max_gap
+        )
+        log_p = np.log(ds.p)
         p_interp = np.exp(
-            log_p.interpolate_na(dim=alt_dim, method="linear", fill_value="extrapolate")
+            log_p.interpolate_na(dim=alt_dim, method="linear").interpolate_na(
+                dim=alt_dim, method="linear", fill_value="extrapolate", max_gap=max_gap
+            )
         )
-        ta_interp = temperature.interpolate_na(
-            dim=alt_dim, method="linear", fill_value="extrapolate"
+        ta_interp = ds.ta.interpolate_na(dim=alt_dim, method="linear").interpolate_na(
+            dim=alt_dim, method="linear", fill_value="extrapolate", max_gap=max_gap
         )
 
-        q_surface_filled = q_interp.bfill(dim=alt_dim, limit=int(max_alt / 10))
-        if np.isnan(q_surface_filled.sel(altitude=0)):
-            return np.nan
+        if (
+            (np.isnan(q_interp.sel(altitude=0)))
+            or (np.isnan(p_interp.sel(altitude=0)))
+            or (np.isnan(ta_interp.sel(altitude=0)))
+        ):
+            iwv = np.nan
         else:
             mask_p = ~np.isnan(p_interp)
             mask_t = ~np.isnan(ta_interp)
-            mask_q = ~np.isnan(q_surface_filled)
+            mask_q = ~np.isnan(q_interp)
             mask = mask_p & mask_t & mask_q
             iwv = physics.integrate_water_vapor(
-                q=q_surface_filled[mask].values,
+                q=q_interp[mask].values,
                 p=p_interp[mask].values,
                 T=ta_interp[mask].values,
-                z=alt[mask].values,
+                z=ds[alt_dim][mask].values,
             )
 
     else:
