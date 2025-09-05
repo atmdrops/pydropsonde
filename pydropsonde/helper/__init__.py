@@ -104,25 +104,25 @@ l2_flight_attributes_map = {
     "Format Notes =": "AVAPS_format_notes",
     "True Heading (deg) =": "true_heading_(deg)",
     "Ground Track (deg) =": "ground_track_(deg)",
-    "Longitude (deg) =": "aircraft_longitude_(degrees_east)",
-    "Latitude (deg) =": "aircraft_latitude_(degrees_north)",
-    "MSL Altitude (m) =": "aircraft_msl_altitude_(m)",
-    "Geopotential Altitude (m) =": "aircraft_geopotential_altitude_(m)",
+    "Longitude (deg) =": "launch_lon_(degrees_east)",
+    "Latitude (deg) =": "launch_lat_(degrees_north)",
+    "MSL Altitude (m) =": "launch_altitude_(m)",
+    "Geopotential Altitude (m) =": "launch_geopotential_altitude_(m)",
 }
 
 l3_coords = dict(
     launch_time={"long_name": "dropsonde launch time", "time_zone": "UTC"},
-    aircraft_longitude={
+    launch_lon={
         "long_name": "aircraft longitude at launch",
         "units": "degrees_east",
         "source": "aircraft measurement",
     },
-    aircraft_latitude={
+    launch_lat={
         "long_name": "aircraft latitude at launch",
         "units": "degrees_north",
         "source": "aircraft measurement",
     },
-    aircraft_msl_altitude={
+    launch_altitude={
         "long_name": "aircraft altitude at launch",
         "units": "m",
         "source": "aircraft measurement",

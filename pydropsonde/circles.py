@@ -192,7 +192,7 @@ class Circle:
             dict(
                 circle_altitude=(
                     [],
-                    self.circle_ds["aircraft_msl_altitude"].mean().values,
+                    self.circle_ds["launch_altitude"].mean().values,
                     circle_altitude_attrs,
                 ),
                 circle_time=(

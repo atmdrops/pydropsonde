@@ -2006,9 +2006,9 @@ class Gridded:
         )
         concatenated_ds = concatenated_ds.reset_coords(
             [
-                "aircraft_latitude",
-                "aircraft_longitude",
-                "aircraft_msl_altitude",
+                "launch_lat",
+                "launch_lon",
+                "launch_altitude",
                 "sonde_id",
             ]
         )
