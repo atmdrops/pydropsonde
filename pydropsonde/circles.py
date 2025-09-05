@@ -2,6 +2,7 @@ from dataclasses import dataclass
 import numpy as np
 import xarray as xr
 import circle_fit as cf
+import pydropsonde.helper as hh
 import pydropsonde.helper.physics as hp
 import pydropsonde.helper.xarray_helper as hx
 
@@ -90,6 +91,29 @@ class Circle:
         self.circle_ds = self.circle_ds.drop_vars(["flight_id"]).assign(
             flight_id=flight_id
         )
+        return self
+
+    def interpolate_position(self, max_alt=300):
+        ds = self.circle_ds.sortby(self.alt_dim)
+
+        ds = ds.assign(
+            {
+                var: (
+                    ds[var].dims,
+                    ds[var]
+                    .interpolate_na(
+                        dim=self.alt_dim,
+                        method="nearest",
+                        max_gap=int(max_alt),
+                        fill_value="extrapolate",
+                    )
+                    .values,
+                    ds[var].attrs,
+                )
+                for var in ["lat", "lon"]
+            }
+        )
+        self.circle_ds = ds
         return self
 
     def get_xy_coords_for_circles(self):
@@ -229,7 +253,14 @@ class Circle:
             {
                 var: (
                     ds[var].dims,
-                    ds[var].bfill(dim=self.alt_dim, limit=int(max_alt // 10)).values,
+                    ds[var]
+                    .interpolate_na(
+                        dim=self.alt_dim,
+                        method="nearest",
+                        max_gap=int(max_alt),
+                        fill_value="extrapolate",
+                    )
+                    .values,
                     ds[var].attrs,
                 )
                 for var in constant_vars
@@ -290,6 +321,13 @@ class Circle:
             ds["p"] = np.exp(ds["p"])
             self.circle_ds = ds.swap_dims({"sonde_id": self.sonde_dim})
 
+        return self
+
+    def recalculate_ta_rh(self):
+        ds = self.circle_ds
+        ds = hh.calc_T_from_theta(ds)
+        ds = hh.calc_rh_from_q(ds)
+        self.circle_ds = ds
         return self
 
     def mask_sonde(self, sonde_id=0):
