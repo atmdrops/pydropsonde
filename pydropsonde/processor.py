@@ -989,7 +989,7 @@ class Sonde:
         )
         return self
 
-    def add_l2_ds(self, l2_dir: str = None):
+    def add_l2_ds(self, l2_dir: str = None, l2_ds=None):
         """
         Adds the L2 dataset as an attribute to the sonde object.
 
@@ -1003,7 +1003,10 @@ class Sonde:
         self : object
             Returns the sonde object with the L2 dataset added as an attribute.
         """
-        if l2_dir is None:
+        if l2_ds is not None:
+            self.set_l2_ds(l2_ds)
+            return self
+        elif l2_dir is None:
             l2_dir = self.l2_dir
 
         try:
