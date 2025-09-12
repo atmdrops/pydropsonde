@@ -498,9 +498,7 @@ class Sonde:
         """
         self.qc.set_qc_ds(self.interim_l2_ds)
 
-        aircraft_alt = self.flight_attrs.get(
-            "aircraft_msl_altitude_(m)", float(max_alt)
-        )
+        aircraft_alt = self.flight_attrs.get("launch_altitude_(m)", float(max_alt))
         self.qc.alt_below_aircraft(aircraft_alt)
 
         return self
@@ -1023,7 +1021,7 @@ class Sonde:
         Returns:
             self: A sonde object with the updated `interim_l3_ds` attribute.
         """
-        self.interim_l3_ds = self.l2_ds.sortby("time")
+        self.interim_l3_ds = self.l2_ds.sortby("time").reset_coords()
 
         return self
 
@@ -1072,8 +1070,9 @@ class Sonde:
         """
         remove measured values above aircraft
         """
+
         variables = ["lat", "lon", self.alt_dim, "u", "v"]
-        maxalt = self.flight_attrs.get("aircraft_msl_altitude_(m)", float(max_alt))
+        maxalt = self.flight_attrs.get("launch_altitude_(m)", float(max_alt))
         self.interim_l3_ds = hx.remove_above_alt(
             self.interim_l3_ds, variables, alt_dim=self.alt_dim, maxalt=maxalt
         )
@@ -1098,6 +1097,7 @@ class Sonde:
                     }
                 )
         self.interim_l3_ds = ds
+
         return self
 
     def add_q_and_theta_to_l2_ds(self):
@@ -1215,7 +1215,7 @@ class Sonde:
         self.alt_dim = alt_dim
         return self
 
-    def replace_alt_dim(self, interpolate=True):
+    def replace_alt_dim(self):
         """
         Replaces the altitude dimension in the dataset if one altitude coordinate is worse than the other
 
@@ -1268,10 +1268,7 @@ class Sonde:
             ds = ds.rename({"gpsalt": "altitude"}).drop_vars(["alt"])
         else:
             self.qc.qc_flags.update({"altitude_source": self.alt_dim})
-        if hh.get_bool(interpolate):
-            ds = ds.assign(
-                {"altitude": ds["altitude"].sortby("time").interpolate_na(dim="time")}
-            )
+
         alt_attrs["long_name"] = "altitude"
         alt_attrs["description"] = (
             "Best estimate from either GPS or pressure measurements. See details for each sonde in respective Level 2 dataset."
@@ -1280,10 +1277,9 @@ class Sonde:
         self.alt_dim = "altitude"
         self.qc.alt_dim = "altitude"
         self.interim_l3_ds = self.qc.add_alt_source_to_ds(ds)
-
         return self
 
-    def swap_alt_dimension(self):
+    def swap_alt_dimension(self, dropna=False):
         """
         Swap the 'time' dimension with an alternative dimension (either alt or gpsalt) in the dataset.
 
@@ -1296,56 +1292,73 @@ class Sonde:
             self: The instance of the object with the updated dataset.
         """
         alt_dim = self.alt_dim
-        self.interim_l3_ds = self.interim_l3_ds.swap_dims({"time": alt_dim})
-
-        return self
-
-    def remove_non_mono_incr_alt(self, bottom_up=True):
-        """
-        This function removes the indices in the some height variable that are not monotonically increasing
-        """
-        alt_dim = self.alt_dim
-
         ds = self.interim_l3_ds
-
-        diff_array = ds[alt_dim].sortby("time").dropna(dim="time").diff(dim="time")
-        if not np.all(diff_array <= 0):
-            warnings.warn(
-                f"your altitude for {self} on {self.launch_time} is not sorted."
-            )
-            if bottom_up:
-                alt = ds[alt_dim].sortby("time", ascending=False).values
-                idx = (
-                    diff_array.sortby("time", ascending=False)
-                    .where(diff_array > 0)
-                    .argmin(dim="time")
-                    .values
-                )
-                curr_alt = alt[idx]
-                idx = idx + 1
-                while idx < ds.sizes["time"]:
-                    if alt[idx] < curr_alt:
-                        alt[idx] = np.nan
-                    elif ~np.isnan(alt[idx]):
-                        curr_alt = alt[idx]
-                    idx += 1
-                ds = ds.assign({alt_dim: ("time", alt[::-1], ds[alt_dim].attrs)})
-
-            else:
-                alt = ds[alt_dim]
-                curr_alt = alt.isel(time=0)
-                for i in range(len(alt)):
-                    if alt[i] > curr_alt:
-                        alt[i] = np.nan
-                    elif ~np.isnan(alt[i]):
-                        curr_alt = alt[i]
-                ds[alt_dim] = alt
-
+        ds = ds.swap_dims({"time": alt_dim})
+        if dropna:
+            ds = ds.where(~np.isnan(ds[alt_dim]), drop=True)
         self.interim_l3_ds = ds
 
         return self
 
-    def interpolate_alt(
+    def remove_non_mono_incr_alt(self, bottom_up=True, tried=False):
+        """
+        This function removes the indices in the some height variable that are not monotonically increasing
+        """
+        ds = self.interim_l3_ds
+        alt_dim = self.alt_dim
+        if "ascent_flag" in ds.variables:
+            ascent = bool(ds.ascent_flag.values)
+        else:
+            ascent = False
+        bu_sign = np.sign(int(bottom_up) - 0.5)
+        ds = ds.sortby("time", ascending=not (bottom_up ^ ascent))
+        alt = ds[alt_dim].values
+        diff = ds[alt_dim].diff(dim="time")
+        idx = xr.where(bu_sign * diff <= 0, 0, 1).argmin(dim="time").values
+        curr_alt = ds[alt_dim].values[idx]
+        idx += 1
+
+        while idx < ds.sizes["time"]:
+            if bu_sign * (ds[alt_dim].values[idx] - curr_alt) > 0:
+                curr_alt = alt[idx]
+
+            else:
+                alt[idx] = np.nan
+            idx += 1
+        if (np.count_nonzero(alt[~np.isnan(alt)]) < 3) and (not tried):
+            print(
+                f"Using bottom up {bottom_up} did not work for {self} from {self.launch_time}. Trying the other way around"
+            )
+            self = self.remove_non_mono_incr_alt(bottom_up=(not bottom_up), tried=True)
+            return self
+
+        if (np.count_nonzero(alt[~np.isnan(alt)]) < 3) and tried:
+            print(f"All values are non-monotonic in {self} from {self.launch_time}")
+            return None
+
+        ds = ds.assign({alt_dim: (ds[alt_dim].dims, alt, ds[alt_dim].attrs)})
+        assert np.all(ds[alt_dim].dropna("time").diff(dim="time") > 0) or np.all(
+            ds[alt_dim].dropna("time").diff(dim="time") < 0
+        )
+        self.interim_l3_ds = ds
+        return self
+
+    def interpolate_alt_dim(
+        self,
+        interpolate=True,
+    ):
+        if hh.get_bool(interpolate):
+            ds = self.interim_l3_ds.sortby("time")
+            self.interim_l3_ds = ds.assign(
+                {
+                    self.alt_dim: ds[self.alt_dim].interpolate_na(
+                        dim="time", fill_value="extrapolate"
+                    )
+                }
+            )
+        return self
+
+    def interpolate_variables_to_common_grid(
         self,
         interp_start=-5,
         interp_stop=14600,
@@ -1353,7 +1366,7 @@ class Sonde:
         max_gap_fill: int = 50,
         interpolate=False,
         p_log=True,
-        method: str = "bin",
+        method: str = "linear_interpolate",
     ):
         """
         Interpolate sonde data along comon altitude grid to prepare concatenation
@@ -1361,11 +1374,59 @@ class Sonde:
         alt_dim = self.alt_dim
         interpolation_grid = np.arange(interp_start, interp_stop, interp_step)
         ds = self.interim_l3_ds
-
         if p_log:
             ds = ds.assign(p=(ds.p.dims, np.log(ds.p.values), ds.p.attrs))
         if method == "linear_interpolate":
-            interp_ds = ds.interp({alt_dim: interpolation_grid})
+            intgrid = (interpolation_grid + (interp_step / 2))[:-1]
+            ds = (
+                ds.swap_dims({alt_dim: "time"})
+                .sortby("time")
+                .dropna(dim="time", how="all", subset=[alt_dim])
+                .swap_dims({"time": alt_dim})
+                .sortby(alt_dim)
+                .interpolate_na(dim=alt_dim, fill_value="extrapolate")
+            )
+            if ds.sizes[alt_dim] < 2:
+                print(
+                    f"Not enough values to interpolate for {ds.vaisala_serial_id.values} at {ds.launch_time.values}"
+                )
+                return None
+            ds = ds.assign(
+                time=(
+                    ds.time.dims,
+                    ds.time.astype("float").where(~np.isnan(ds.time)).values,
+                    ds.time.attrs,
+                )
+            )
+            interp_ds = ds.interp(
+                {alt_dim: intgrid},
+                method="linear",
+                kwargs={"fill_value": "extrapolate"},
+            )
+
+            # mask out values that are outside of 10m bin of an original value
+            dsbinned = (
+                self.interim_l3_ds[
+                    [var for var in ds.variables if (np.issubdtype(ds[var], np.number))]
+                ]
+                .groupby_bins(alt_dim, bins=interpolation_grid, labels=intgrid)
+                .count()
+                .rename({f"{alt_dim}_bins": alt_dim})
+            )
+            interp_ds = interp_ds.assign(
+                {
+                    var: interp_ds[var].where(dsbinned[var] > 0)
+                    for var in dsbinned.variables
+                    if (alt_dim in interp_ds[var].dims) & (var != alt_dim)
+                }
+            )
+            interp_ds = interp_ds.assign(
+                interpolated_time=(
+                    interp_ds.time.dims,
+                    interp_ds.time.astype(self.interim_l3_ds.time.dtype).values,
+                    self.interim_l3_ds.time.attrs,
+                )
+            ).drop("time")
         elif method == "bin":
             mean_ds = {}
             count_dict = {}
