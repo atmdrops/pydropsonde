@@ -1318,7 +1318,13 @@ class Sonde:
         ds = ds.sortby("time", ascending=not (bottom_up ^ ascent))
         alt = ds[alt_dim].values
         diff = ds[alt_dim].diff(dim="time")
-        idx = xr.where(bu_sign * diff <= 0, 0, 1).argmin(dim="time").values
+        try:
+            idx = xr.where(bu_sign * diff <= 0, 0, 1).argmin(dim="time").values
+        except ValueError:
+            assert np.all(ds[alt_dim].dropna("time").diff(dim="time") > 0) or np.all(
+                ds[alt_dim].dropna("time").diff(dim="time") < 0
+            )
+            return self
         curr_alt = ds[alt_dim].values[idx]
         idx += 1
 
@@ -1866,7 +1872,12 @@ class Sonde:
             == 0
         ):
             print(
-                f"sonde {ds.sonde_id.values} from {ds.flight_id.values} has no valid data after processing and is dropped"
+                f"sonde {ds.sonde_id.values} from {ds.launch_time.values} has no valid data after processing and is dropped"
+            )
+            return None
+        elif ds[self.alt_dim].count() < 3:
+            print(
+                f"sonde {ds.sonde_id.values} from {ds.launch_time.values} has less than 3 valid data points after processing and is dropped"
             )
             return None
         else:
