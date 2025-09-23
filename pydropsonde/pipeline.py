@@ -569,7 +569,6 @@ pipeline = {
             "remove_above_aircraft",
             "remove_unphysical",
             "add_theta_to_l2_ds",
-            "remove_non_mono_incr_alt",
             "interpolate_alt_dim",
             "remove_non_mono_incr_alt",
             "swap_alt_dimension",
