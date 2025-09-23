@@ -1117,6 +1117,27 @@ class Sonde:
 
         return self
 
+    def add_rh_to_l2_ds(self):
+        """
+        Adds relative humidity to the L2 dataset.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        self : object
+            Returns the sonde object with relative humidity added to the L2 dataset.
+        """
+        ds = self.interim_l3_ds
+
+        ds = hh.calc_rh_from_q(ds)
+
+        self.interim_l3_ds = ds
+
+        return self
+
     def add_theta_to_l2_ds(self):
         """
         Adds potential temperature and specific humidity to the L2 dataset.
@@ -1133,6 +1154,27 @@ class Sonde:
         ds = self.interim_l3_ds
 
         ds = hh.calc_theta_from_T(ds)
+
+        self.interim_l3_ds = ds
+
+        return self
+
+    def add_q_to_l2_ds(self):
+        """
+        Adds specific humidity to the L2 dataset.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        self : object
+            Returns the sonde object with specific humidity added to the L2 dataset.
+        """
+        ds = self.interim_l3_ds
+
+        ds = hh.calc_q_from_rh_sonde(ds)
 
         self.interim_l3_ds = ds
 
