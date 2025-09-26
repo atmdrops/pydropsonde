@@ -114,11 +114,13 @@ l3_coords = dict(
     launch_time={"long_name": "dropsonde launch time", "time_zone": "UTC"},
     launch_lon={
         "long_name": "aircraft longitude at launch",
+        "standard_name": "deployment_longitude",
         "units": "degrees_east",
         "source": "aircraft measurement",
     },
     launch_lat={
         "long_name": "aircraft latitude at launch",
+        "standard_name": "deployment_latitude",
         "units": "degrees_north",
         "source": "aircraft measurement",
     },
