@@ -724,15 +724,7 @@ class Sonde:
             Returns the sonde with a new attribute "sonde_attrs"
         """
         sonde_attrs = {
-            "platform_id": self.platform_id,
-            "launch_time": (
-                str(self.aspen_ds.launch_time.values)
-                if hasattr(self.aspen_ds, "launch_time")
-                else np.datetime64(self.aspen_ds.base_time.values, "us")
-            ),
             "is_floater": str(self.qc.is_floater),
-            "sonde_serial_ID": self.serial_id,
-            "sonde_ID": self.id,
         }
         self.sonde_attrs = sonde_attrs
 
