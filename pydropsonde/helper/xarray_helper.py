@@ -167,8 +167,8 @@ def to_file(ds, path, filetype, overwrite=True, **kwargs):
         ds.to_netcdf(path, **kwargs)
     elif filetype == "zarr":
         try:
-            ds.to_zarr(path, **kwargs)
-        except ContainsGroupError:
+            ds.to_zarr(path, zarr_format=2, **kwargs)
+        except (ContainsGroupError, FileExistsError):
             if overwrite:
                 ds.to_zarr(path, zarr_format=2, mode="w", **kwargs)
             else:
