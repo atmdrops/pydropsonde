@@ -549,6 +549,7 @@ pipeline = {
             "add_sonde_id_variable",
             "add_platform_id_variable",
             "add_flight_id_variable",
+            "add_launch_time_variable",
             "add_qc_to_l2",
             "get_l2_filename",
             "update_history_l2",

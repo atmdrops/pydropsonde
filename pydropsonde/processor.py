@@ -724,15 +724,7 @@ class Sonde:
             Returns the sonde with a new attribute "sonde_attrs"
         """
         sonde_attrs = {
-            "platform_id": self.platform_id,
-            "launch_time": (
-                str(self.aspen_ds.launch_time.values)
-                if hasattr(self.aspen_ds, "launch_time")
-                else np.datetime64(self.aspen_ds.base_time.values, "us")
-            ),
             "is_floater": str(self.qc.is_floater),
-            "sonde_serial_ID": self.serial_id,
-            "sonde_ID": self.id,
         }
         self.sonde_attrs = sonde_attrs
 
@@ -805,6 +797,28 @@ class Sonde:
         )
         ds = ds.assign({variable_name: self.platform_id})
         ds[variable_name] = ds[variable_name].assign_attrs(attrs)
+        self.interim_l2_ds = ds
+        return self
+
+    def add_launch_time_variable(self):
+        if hasattr(self, "interim_l2_ds"):
+            ds = self.interim_l2_ds
+        else:
+            ds = self.aspen_ds
+
+        ds = ds.assign(
+            launch_time=(
+                np.datetime64(self.aspen_ds.launch_time.values, "us")
+                if hasattr(self.aspen_ds, "launch_time")
+                else np.datetime64(self.aspen_ds.base_time.values, "us")
+            )
+        )
+        ds["launch_time"] = ds["launch_time"].assign_attrs(
+            {
+                "long_name": "dropsonde launch time",
+                "time_zone": "UTC",
+            }
+        )
         self.interim_l2_ds = ds
         return self
 
