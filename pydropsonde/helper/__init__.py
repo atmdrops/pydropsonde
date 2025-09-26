@@ -420,7 +420,7 @@ def calc_theta_from_T(ds):
         theta_attrs = dict(
             standard_name="air_potential_temperature",
             long_name="dry potential temperature",
-            units="kelvin",
+            units="K",
         )
     theta_attrs.update(dict(method="calculated from measured ta and p"))
     ds = ds.assign(theta=(ds.ta.dims, theta, theta_attrs))
@@ -481,7 +481,7 @@ def calc_theta_e(ds):
             dict(
                 standard_name="air_equivalent_potential_temperature",
                 long_name="equivalent potential temperature",
-                units="kelvin",
+                units="K",
             ),
         )
     )
