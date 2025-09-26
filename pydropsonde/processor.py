@@ -1117,6 +1117,27 @@ class Sonde:
 
         return self
 
+    def add_rh_to_l2_ds(self):
+        """
+        Adds relative humidity to the L2 dataset.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        self : object
+            Returns the sonde object with relative humidity added to the L2 dataset.
+        """
+        ds = self.interim_l3_ds
+
+        ds = hh.calc_rh_from_q(ds)
+
+        self.interim_l3_ds = ds
+
+        return self
+
     def add_theta_to_l2_ds(self):
         """
         Adds potential temperature and specific humidity to the L2 dataset.
@@ -1133,6 +1154,27 @@ class Sonde:
         ds = self.interim_l3_ds
 
         ds = hh.calc_theta_from_T(ds)
+
+        self.interim_l3_ds = ds
+
+        return self
+
+    def add_q_to_l2_ds(self):
+        """
+        Adds specific humidity to the L2 dataset.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        self : object
+            Returns the sonde object with specific humidity added to the L2 dataset.
+        """
+        ds = self.interim_l3_ds
+
+        ds = hh.calc_q_from_rh_sonde(ds)
 
         self.interim_l3_ds = ds
 
@@ -1158,7 +1200,7 @@ class Sonde:
         self.interim_l3_ds = ds
         return self
 
-    def add_iwv(self):
+    def add_iwv(self, qc_var="default"):
         """
         Calculates interpolated water vapor from the interim l3 dataset.
 
@@ -1171,9 +1213,11 @@ class Sonde:
         self : object
             Returns the sonde object with integrated water vapour added to the interim l3 dataset.
         """
+        if qc_var == "default":
+            qc_var = ["rh_qc", "ta_qc", "p_qc"]
         self.interim_l3_ds = hh.calc_iwv(
             self.interim_l3_ds,
-            qc_var=["rh_qc", "ta_qc", "p_qc"],
+            qc_var=qc_var,
             alt_dim=self.alt_dim,
             sonde_dim=self.sonde_dim,
         )
@@ -1212,6 +1256,23 @@ class Sonde:
             Returns the sonde object with wind direction and speed added to the interim l3 dataset.
         """
         self.interim_l3_ds = hh.calc_wind_dir_and_speed(self.interim_l3_ds)
+        return self
+
+    def add_wind_components(self):
+        """
+        Calculates wind components from the interim l3 dataset
+        and adds it to the interim l3 dataset
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        self : object
+            Returns the sonde object with wind components added to the interim l3 dataset.
+        """
+        self.interim_l3_ds = hh.calc_wind_components(self.interim_l3_ds)
         return self
 
     def set_alt_dim(self, alt_dim="alt"):
