@@ -114,11 +114,13 @@ l3_coords = dict(
     launch_time={"long_name": "dropsonde launch time", "time_zone": "UTC"},
     launch_lon={
         "long_name": "aircraft longitude at launch",
+        "standard_name": "deployment_longitude",
         "units": "degrees_east",
         "source": "aircraft measurement",
     },
     launch_lat={
         "long_name": "aircraft latitude at launch",
+        "standard_name": "deployment_latitude",
         "units": "degrees_north",
         "source": "aircraft measurement",
     },
@@ -242,7 +244,7 @@ def calc_q_from_rh_sonde(ds):
         q_attrs = dict(
             standard_name="specific_humidity",
             long_name="specific humidity",
-            units="1",
+            units="kg kg-1",
             method="calculated from measured RH following Hardy 1998",
         )
     ds = ds.assign(
@@ -280,7 +282,7 @@ def calc_q_from_rh(ds):
         q_attrs = dict(
             standard_name="specific_humidity",
             long_name="specific humidity",
-            units="1",
+            units="kg kg-1",
             method=f"calculated from RH following {es_name}",
         )
     ds = ds.assign(
@@ -420,7 +422,7 @@ def calc_theta_from_T(ds):
         theta_attrs = dict(
             standard_name="air_potential_temperature",
             long_name="dry potential temperature",
-            units="kelvin",
+            units="K",
         )
     theta_attrs.update(dict(method="calculated from measured ta and p"))
     ds = ds.assign(theta=(ds.ta.dims, theta, theta_attrs))
@@ -481,7 +483,7 @@ def calc_theta_e(ds):
             dict(
                 standard_name="air_equivalent_potential_temperature",
                 long_name="equivalent potential temperature",
-                units="kelvin",
+                units="K",
             ),
         )
     )

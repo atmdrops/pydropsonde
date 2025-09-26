@@ -189,27 +189,27 @@ class Circle:
         Add circle metadata to the circle dataset.
         """
         circle_radius_attrs = {
-            "long_name": "circle_radius",
+            "long_name": "circle radius",
             "description": f"Radius of {self.method}",
             "units": "m",
         }
         circle_lon_attrs = {
-            "long_name": "circle_lon",
+            "long_name": "circle longitude",
             "description": f"Longitude of {self.method}",
             "units": "degrees_east",
         }
         circle_lat_attrs = {
-            "long_name": "circle_lat",
+            "long_name": "circle latitude",
             "description": f"Latitude of {self.method}",
             "units": "degrees_north",
         }
         circle_altitude_attrs = {
-            "long_name": "circle_altitude",
+            "long_name": "circle altitude",
             "description": "Mean altitude of the aircraft during the circle",
             "units": self.circle_ds[self.alt_dim].attrs["units"],
         }
         circle_time_attrs = {
-            "long_name": "circle_time",
+            "long_name": "circle time",
             "time_zone": "UTC",
             "description": "Mean launch time of first and last sonde in circle",
         }
@@ -417,9 +417,9 @@ class Circle:
                     "meridional gradient of " + long_name,
                 ]
                 use_names = [
-                    standard_name + "_circle_mean",
-                    "derivative_of_" + standard_name + "_wrt_x",
-                    "derivative_of_" + standard_name + "_wrt_y",
+                    "",
+                    "x_derivative_of_" + standard_name,
+                    "y_derivative_of_" + standard_name,
                 ]
                 try:
                     weight = self.circle_ds[f"{par}_weights"]
@@ -491,13 +491,9 @@ class Circle:
             se_x = np.sqrt(nominator / dx_denominator)
             se_y = np.sqrt(nominator / dy_denominator)
 
-            dvardx_std_name = ds[dvardx_name].attrs.get(
-                "standard_name", f"derivative_of_{var}_wrt_x"
-            )
+            dvardx_std_name = ds[dvardx_name].attrs.get("standard_name", "")
             unit = ds[dvardx_name].attrs.get("units", "")
-            dvardy_std_name = ds[dvardy_name].attrs.get(
-                "standard_name", f"derivative_of_{var}_wrt_y"
-            )
+            dvardy_std_name = ds[dvardy_name].attrs.get("standard_name", "")
 
             ds = ds.assign(
                 {
@@ -536,7 +532,7 @@ class Circle:
             }
         )
         vor_std_name = ds["vor"].attrs.get(
-            "standard_name", "atmosphere_relative_vorticity"
+            "standard_name", "atmosphere_upward_relative_vorticity"
         )
         ds = ds.assign(
             {
@@ -730,8 +726,8 @@ class Circle:
         ds = self.circle_ds
         vor = ds.v_dvdx - ds.u_dudy
         vor_attrs = {
-            "standard_name": "atmosphere_relative_vorticity",
-            "long_name": "Area-averaged horizontal relative vorticity",
+            "standard_name": "atmosphere_upward_relative_vorticity",
+            "long_name": "Area-averaged relative vorticity",
             "units": "s-1",
         }
         self.circle_ds = ds.assign(vor=(ds.u_dudx.dims, vor.values, vor_attrs))
