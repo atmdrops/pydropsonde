@@ -189,27 +189,27 @@ class Circle:
         Add circle metadata to the circle dataset.
         """
         circle_radius_attrs = {
-            "long_name": "circle_radius",
+            "long_name": "circle radius",
             "description": f"Radius of {self.method}",
             "units": "m",
         }
         circle_lon_attrs = {
-            "long_name": "circle_lon",
+            "long_name": "circle longitude",
             "description": f"Longitude of {self.method}",
             "units": "degrees_east",
         }
         circle_lat_attrs = {
-            "long_name": "circle_lat",
+            "long_name": "circle latitude",
             "description": f"Latitude of {self.method}",
             "units": "degrees_north",
         }
         circle_altitude_attrs = {
-            "long_name": "circle_altitude",
+            "long_name": "circle altitude",
             "description": "Mean altitude of the aircraft during the circle",
             "units": self.circle_ds[self.alt_dim].attrs["units"],
         }
         circle_time_attrs = {
-            "long_name": "circle_time",
+            "long_name": "circle time",
             "time_zone": "UTC",
             "description": "Mean launch time of first and last sonde in circle",
         }
