@@ -417,9 +417,9 @@ class Circle:
                     "meridional gradient of " + long_name,
                 ]
                 use_names = [
-                    standard_name + "_circle_mean",
-                    "derivative_of_" + standard_name + "_wrt_x",
-                    "derivative_of_" + standard_name + "_wrt_y",
+                    "",
+                    "eastward_derivative_of_" + standard_name,
+                    "northward_derivative_of_" + standard_name,
                 ]
                 try:
                     weight = self.circle_ds[f"{par}_weights"]
@@ -491,13 +491,9 @@ class Circle:
             se_x = np.sqrt(nominator / dx_denominator)
             se_y = np.sqrt(nominator / dy_denominator)
 
-            dvardx_std_name = ds[dvardx_name].attrs.get(
-                "standard_name", f"derivative_of_{var}_wrt_x"
-            )
+            dvardx_std_name = ds[dvardx_name].attrs.get("standard_name", "")
             unit = ds[dvardx_name].attrs.get("units", "")
-            dvardy_std_name = ds[dvardy_name].attrs.get(
-                "standard_name", f"derivative_of_{var}_wrt_y"
-            )
+            dvardy_std_name = ds[dvardy_name].attrs.get("standard_name", "")
 
             ds = ds.assign(
                 {
