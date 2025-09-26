@@ -808,6 +808,28 @@ class Sonde:
         self.interim_l2_ds = ds
         return self
 
+    def add_launch_time_variable(self):
+        if hasattr(self, "interim_l2_ds"):
+            ds = self.interim_l2_ds
+        else:
+            ds = self.aspen_ds
+
+        ds = ds.assign(
+            launch_time=(
+                np.datetime64(self.aspen_ds.launch_time.values, "us")
+                if hasattr(self.aspen_ds, "launch_time")
+                else np.datetime64(self.aspen_ds.base_time.values, "us")
+            )
+        )
+        ds["launch_time"] = ds["launch_time"].assign_attrs(
+            {
+                "long_name": "dropsonde launch time",
+                "time_zone": "UTC",
+            }
+        )
+        self.interim_l2_ds = ds
+        return self
+
     def add_flight_id_variable(self, variable_name="flight_id"):
         """
         Adds a variable and related attributes to the sonde object with the Sonde object (self)'s flight_id attribute.
