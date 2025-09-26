@@ -532,7 +532,7 @@ class Circle:
             }
         )
         vor_std_name = ds["vor"].attrs.get(
-            "standard_name", "atmosphere_relative_vorticity"
+            "standard_name", "atmosphere_upward_relative_vorticity"
         )
         ds = ds.assign(
             {
@@ -726,8 +726,8 @@ class Circle:
         ds = self.circle_ds
         vor = ds.v_dvdx - ds.u_dudy
         vor_attrs = {
-            "standard_name": "atmosphere_relative_vorticity",
-            "long_name": "Area-averaged horizontal relative vorticity",
+            "standard_name": "atmosphere_upward_relative_vorticity",
+            "long_name": "Area-averaged relative vorticity",
             "units": "s-1",
         }
         self.circle_ds = ds.assign(vor=(ds.u_dudx.dims, vor.values, vor_attrs))
