@@ -242,7 +242,7 @@ def calc_q_from_rh_sonde(ds):
         q_attrs = dict(
             standard_name="specific_humidity",
             long_name="specific humidity",
-            units="1",
+            units="kg kg-1",
             method="calculated from measured RH following Hardy 1998",
         )
     ds = ds.assign(
@@ -280,7 +280,7 @@ def calc_q_from_rh(ds):
         q_attrs = dict(
             standard_name="specific_humidity",
             long_name="specific humidity",
-            units="1",
+            units="kg kg-1",
             method=f"calculated from RH following {es_name}",
         )
     ds = ds.assign(
