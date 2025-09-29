@@ -585,12 +585,10 @@ class Circle:
                         )
                     )
                     .broadcast_like(ds[div_error_name])
-                    .values
-                    * 0.01
-                    * 60**2,
+                    .values,
                     dict(
                         standard_name=f"{omega_std_name} standard_error",
-                        units=ds["omega"].attrs.get("units", "hPa hr-1"),
+                        units=ds["omega"].attrs.get("units", "Pa s-1"),
                     ),
                 )
             }
@@ -752,13 +750,13 @@ class Circle:
         if p.sizes["altitude"] > 0:
             pres_diff = xr.concat([zero_vel, p.diff(dim=alt_dim)], dim=alt_dim)
             del_omega = -div * pres_diff.values
-            omega = del_omega.cumsum(dim=alt_dim) * 0.01 * 60**2
+            omega = del_omega.cumsum(dim=alt_dim)
         else:
             omega = xr.DataArray(data=[np.nan], dims=alt_dim, coords={alt_dim: [0]})
         omega_attrs = {
             "standard_name": "vertical_air_velocity_expressed_as_tendency_of_pressure",
             "long_name": "Area-averaged atmospheric pressure velocity (omega)",
-            "units": "hPa hr-1",
+            "units": "Pa s-1",
         }
         self.circle_ds = ds.assign(
             dict(omega=(ds.div.dims, omega.broadcast_like(ds.div).values, omega_attrs))
