@@ -72,6 +72,7 @@ l2_variables = {
             "standard_name": "time",
             "long_name": "time of recorded measurement",
             "axis": "T",
+            "time_zone": "UTC",
         },
     },
     "gpsalt": {
