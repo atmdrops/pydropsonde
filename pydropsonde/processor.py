@@ -1585,7 +1585,7 @@ class Sonde:
             m_name = f"{variable}_m_qc"
             m_attrs = {
                 "long_name": f"interp method for {variable}",
-                "standard_name": "status_flag",
+                "standard_name": "quality_flag",
                 "flag_values": "0, 1, 2",
                 "flag_meanings": "no_data interpolated_no_raw_data average_over_raw_data",
             }
