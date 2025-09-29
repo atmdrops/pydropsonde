@@ -436,7 +436,7 @@ class QualityControl:
             qc_status = "UGLY"
         attrs = dict(
             long_name=f"qc for {variable}",
-            standard_name="status_flag",
+            standard_name="quality_flag",
             flag_masks=", ".join([f"{2**x}b" for x in range(i + 1)]),
             flag_meanings=", ".join(keys),
             description="if non-zero, this sonde should be used with care.",
