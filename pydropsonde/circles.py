@@ -609,7 +609,13 @@ class Circle:
             errors="ignore",
         )
         if "iwv_mean" in self.circle_ds.variables:
-            self.circle_ds["iwv_mean"] = self.circle_ds["iwv_mean"].mean("altitude")
+            self.circle_ds = self.circle_ds.assign(
+                iwv_mean=(
+                    "circle",
+                    [self.circle_ds["iwv_mean"].mean("altitude").values],
+                    self.circle_ds["iwv_mean"].attrs,
+                )
+            )
         return self
 
     def calc_remove_sonde_manipulation(self):
