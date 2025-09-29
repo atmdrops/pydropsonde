@@ -449,7 +449,9 @@ class QualityControl:
         get the correct unit for the detailed qc value. Depends on the last bit of the qc detail name
         """
         var_unit = self.qc_vars[var_name]
-        if (
+        if (qc_name.endswith("extent_max")) or (qc_name.endswith("extent_min")):
+            return "m"
+        elif (
             (qc_name.endswith("diff"))
             or (qc_name.endswith("min"))
             or (qc_name.endswith("max"))
