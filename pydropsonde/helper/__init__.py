@@ -45,7 +45,7 @@ l2_variables = {
         "attributes": {
             "standard_name": "relative_humidity",
             "long_name": "relative humidity",
-            "units": "",
+            "units": "1",
         },
     },
     "lat": {
