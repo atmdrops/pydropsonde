@@ -33,6 +33,7 @@ jobs:
         run: uv venv
       - name: run tests locked
         run: |
+          uv lock
           uv sync --locked
           uv run pytest
       - name: run tests frozen

@@ -42,6 +42,7 @@ dependencies = [
     "xarray",
     "xhistogram",
     "zarr",
+    "h5netcdf",
 ]
 
 [tool.pytest.ini_options]
