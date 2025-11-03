@@ -405,8 +405,6 @@ def sondes_to_gridded(sondes: list[Sonde], config: configparser.ConfigParser):
 
 def write_ragged_l2(sondes: list[Sonde], config: configparser.ConfigParser):
     if config["OPTIONAL"].getboolean("write_ragged_l2", fallback=False):
-        for sonde in sondes:
-            sonde.interim_l2_ds = sonde.l2_ds
         vars2d = [
             var
             for var in sondes[0].l2_ds.data_vars
@@ -417,12 +415,11 @@ def write_ragged_l2(sondes: list[Sonde], config: configparser.ConfigParser):
             for var in sondes[0].l2_ds.data_vars
             if "time" not in sondes[0].l2_ds[var].dims
         ]
-        print(vars1d)
-        print(sonde.interim_l2_ds[vars2d])
         l2_ds = xr.concat(
             [sonde.interim_l2_ds[vars2d] for sonde in sondes],
             dim="time",
             data_vars="minimal",
+            combine_attrs="drop_conflicts",
         ).assign_coords(
             times_per_sonde=(
                 "sonde",
@@ -605,6 +602,7 @@ pipeline = {
             "add_qc_to_l2",
             "get_l2_filename",
             "update_history_l2",
+            "update_attrs_l2",
             "write_l2",
             "add_l2_ds",
         ],
@@ -623,7 +621,6 @@ pipeline = {
         "functions": [
             "check_interim_l3",
             "get_l2_filename",
-            "add_l2_ds",
             "create_interim_l3",
             "replace_alt_dim",
             "remove_above_aircraft",

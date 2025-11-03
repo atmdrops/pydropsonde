@@ -952,6 +952,22 @@ class Sonde:
 
         return self
 
+    def update_attrs_l2(self):
+        ds = self.interim_l2_ds
+        ds.attrs.update(
+            self.global_attrs["global"],
+        )
+        ds.attrs.update(
+            self.global_attrs["l2"],
+        )
+        ds.attrs.update(
+            dict(
+                history=self.history,
+            )
+        )
+        self.interim_l2_ds = ds
+        return self
+
     def write_l2(self, l2_dir: str = None):
         """
         Writes the L2 file to the specified directory.
@@ -970,7 +986,7 @@ class Sonde:
         if l2_dir is None:
             l2_dir = self.l2_dir
 
-        ds = self.interim_l2_ds
+        ds = self.interim_l2_ds.copy()
         if hasattr(self, "broken_sondes"):
             if self.serial_id in self.broken_sondes:
                 ds.attrs.update(
@@ -978,14 +994,7 @@ class Sonde:
                 )
 
         ds.attrs.update(
-            self.global_attrs["global"],
-        )
-        ds.attrs.update(
-            self.global_attrs["l2"],
-        )
-        ds.attrs.update(
             dict(
-                history=self.history,
                 title=self.global_attrs["l2"].get(
                     "title",
                     self.global_attrs.get("title", "Dropsonde Data") + " Level 2",
