@@ -1,4 +1,5 @@
 from .helper.paths import Platform, Flight
+from .helper.xarray_helper import write_ds
 from .helper.__init__ import (
     path_to_flight_ids,
     path_to_l0_files,
@@ -402,6 +403,54 @@ def sondes_to_gridded(sondes: list[Sonde], config: configparser.ConfigParser):
     return gridded
 
 
+def write_ragged_l2(sondes: list[Sonde], config: configparser.ConfigParser):
+    if config["OPTIONAL"].getboolean("write_ragged_l2", fallback=False):
+        vars2d = [
+            var
+            for var in sondes[0].l2_ds.data_vars
+            if "time" in sondes[0].l2_ds[var].dims
+        ]
+        vars1d = [
+            var
+            for var in sondes[0].l2_ds.data_vars
+            if "time" not in sondes[0].l2_ds[var].dims
+        ]
+        l2_ds = xr.concat(
+            [sonde.interim_l2_ds[vars2d] for sonde in sondes],
+            dim="time",
+            data_vars="minimal",
+            combine_attrs="drop_conflicts",
+        ).assign_coords(
+            times_per_sonde=(
+                "sonde",
+                [s.l2_ds.sizes["time"] for s in sondes],
+                {
+                    "description": "Number of times per sonde",
+                    "sample_dimension": "time",
+                },
+            ),
+        )
+        l2_ds = xr.merge(
+            [
+                l2_ds,
+                xr.concat(
+                    [sonde.interim_l2_ds[vars1d] for sonde in sondes], dim="sonde"
+                ),
+            ],
+        )
+
+        write_ds(
+            l2_ds,
+            dir=config["OPTIONAL"].get("l2_ragged_dir", fallback="./"),
+            filename=config["OPTIONAL"].get(
+                "l2_ragged_filename", fallback="L2_ragged.zarr"
+            ),
+            object_dims=(sondes[0].sonde_dim,),
+            alt_dim="time",
+        )
+    return sondes
+
+
 def apply_method_to_dataset(
     obj: Gridded,
     functions: list,
@@ -553,10 +602,18 @@ pipeline = {
             "add_qc_to_l2",
             "get_l2_filename",
             "update_history_l2",
+            "update_attrs_l2",
             "write_l2",
+            "add_l2_ds",
         ],
         "output": "sondes",
         "comment": "This steps creates and saves the L2 data after the QC.",
+    },
+    "write_ragged_l2": {
+        "intake": "sondes",
+        "apply": write_ragged_l2,
+        "output": "sondes",
+        "comment": "This step writes a ragged L2 dataset if specified in the config file.",
     },
     "process_L2": {
         "intake": "sondes",
@@ -564,7 +621,6 @@ pipeline = {
         "functions": [
             "check_interim_l3",
             "get_l2_filename",
-            "add_l2_ds",
             "create_interim_l3",
             "replace_alt_dim",
             "remove_above_aircraft",
