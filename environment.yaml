@@ -14,8 +14,10 @@ dependencies:
   - netcdf4
   - numpy
   - openssl
+  - pillow
   - pre-commit
   - pytest
+  - qrcode
   - requests
   - sphinx
   - sphinx-autobuild
