@@ -580,8 +580,10 @@ class Circle:
                     ds[div_error_name].dims,
                     (
                         np.sqrt((se_div_nona**2).cumsum(dim=alt_dim))
-                        * ds.p_mean.sel({alt_dim: se_div_nona[alt_dim]}).diff(
-                            dim=alt_dim
+                        * (
+                            -ds.p_mean.sel({alt_dim: se_div_nona[alt_dim]}).diff(
+                                dim=alt_dim
+                            )
                         )
                     )
                     .broadcast_like(ds[div_error_name])
