@@ -803,6 +803,7 @@ class Sonde:
         return self
 
     def add_launch_time_variable(self):
+        # not used in default
         if hasattr(self, "interim_l2_ds"):
             ds = self.interim_l2_ds
         else:
@@ -822,6 +823,48 @@ class Sonde:
             }
         )
         self.interim_l2_ds = ds
+        return self
+
+    def add_attributes_as_var(self, essential_attrs=None):
+        """
+        Prepares l2 datasets to be concatenated to gridded.
+        adds all attributes as variables to avoid conflicts when concatenating because attributes are different
+        (and not lose information)
+        """
+        if hasattr(self, "interim_l2_ds"):
+            ds = self.interim_l2_ds
+        else:
+            ds = self.aspen_ds
+        if essential_attrs is None:
+            try:
+                essential_attrs = hh.l3_coords
+            except AttributeError:
+                essential_attrs = {
+                    "launch_time": {
+                        "time_zone": "UTC",
+                        "long_name": "dropsonde launch time",
+                    }
+                }
+
+        for attr, value in ds.attrs.items():
+            splt = attr.split("(")
+            var_name = splt[0][:-1]
+            if var_name in list(essential_attrs.keys()):
+                var_attrs = essential_attrs[var_name]
+                ds = ds.assign({var_name: (self.sonde_dim, [value], var_attrs)})
+        ds = ds.assign(
+            dict(
+                launch_time=(
+                    (
+                        self.sonde_dim,
+                        [np.datetime64(self.launch_time, "us")],
+                        essential_attrs["launch_time"],
+                    )
+                )
+            )
+        )
+        self.attrs = ds.attrs.keys()
+        self.interim_l2_ds = ds.squeeze(self.sonde_dim)
         return self
 
     def add_flight_id_variable(self, variable_name="flight_id"):
@@ -1787,47 +1830,6 @@ class Sonde:
                 ),
             }
         )
-        return self
-
-    def add_attributes_as_var(self, essential_attrs=None):
-        """
-        Prepares l2 datasets to be concatenated to gridded.
-        adds all attributes as variables to avoid conflicts when concatenating because attributes are different
-        (and not lose information)
-        """
-        ds = self.interim_l3_ds
-        l2_ds = self.l2_ds
-        if essential_attrs is None:
-            try:
-                essential_attrs = hh.l3_coords
-            except AttributeError:
-                essential_attrs = {
-                    "launch_time": {
-                        "time_zone": "UTC",
-                        "long_name": "dropsonde launch time",
-                    }
-                }
-
-        for attr, value in l2_ds.attrs.items():
-            splt = attr.split("(")
-            var_name = splt[0][:-1]
-            if var_name in list(essential_attrs.keys()):
-                var_attrs = essential_attrs[var_name]
-                ds = ds.assign(
-                    {var_name: (self.sonde_dim, [l2_ds.attrs[attr]], var_attrs)}
-                )
-        ds = ds.assign(
-            dict(
-                launch_time=(
-                    self.sonde_dim,
-                    [np.datetime64(self.launch_time, "us")],
-                    essential_attrs["launch_time"],
-                )
-            )
-        )
-        self.attrs = ds.attrs.keys()
-        self.interim_l3_ds = ds
-
         return self
 
     def make_attr_coordinates(self):
