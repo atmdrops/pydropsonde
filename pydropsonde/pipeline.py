@@ -410,11 +410,6 @@ def write_ragged_l2(sondes: list[Sonde], config: configparser.ConfigParser):
             for var in sondes[0].l2_ds.data_vars
             if "time" in sondes[0].l2_ds[var].dims
         ]
-        vars1d = [
-            var
-            for var in sondes[0].l2_ds.data_vars
-            if "time" not in sondes[0].l2_ds[var].dims
-        ]
         l2_ds = xr.concat(
             [sonde.interim_l2_ds[vars2d] for sonde in sondes],
             dim="time",
@@ -434,7 +429,8 @@ def write_ragged_l2(sondes: list[Sonde], config: configparser.ConfigParser):
             [
                 l2_ds,
                 xr.concat(
-                    [sonde.interim_l2_ds[vars1d] for sonde in sondes], dim="sonde"
+                    [sonde.interim_l2_ds.drop_dims("time") for sonde in sondes],
+                    dim="sonde",
                 ),
             ],
         )
@@ -598,7 +594,7 @@ pipeline = {
             "add_sonde_id_variable",
             "add_platform_id_variable",
             "add_flight_id_variable",
-            "add_launch_time_variable",
+            "add_attributes_as_var",
             "add_qc_to_l2",
             "get_l2_filename",
             "update_history_l2",
@@ -633,7 +629,6 @@ pipeline = {
             "recalc_q_and_ta",
             "add_ids",
             "add_wind",
-            "add_attributes_as_var",
             "make_attr_coordinates",
             "add_qc_to_interim_l3",
             "add_iwv",
