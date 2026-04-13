@@ -10,6 +10,7 @@ flightdate = "empty_afile"
 flightdate2 = "HALO-20240831a"
 path_structure = "{platform}/Level_0/{flight_id}"
 platform_path_structure = "{platform}/Level_0"
+config = configparser.ConfigParser()
 
 l1_path = os.path.join(main_data_directory, platform_id, "Level_1", flightdate)
 
@@ -20,7 +21,13 @@ quicklooks_path = os.path.join(
 
 @pytest.fixture
 def flight():
-    flight = paths.Flight(main_data_directory, flightdate, platform_id, path_structure)
+    flight = paths.Flight(
+        main_data_directory,
+        flightdate,
+        platform_id,
+        path_structure=path_structure,
+        config=config,
+    )
     return flight
 
 
@@ -47,12 +54,11 @@ def test_quicklooks_path(flight):
 
 
 def test_raw_reader():
-    config = configparser.ConfigParser()
-
     flight = paths.Flight(
         data_directory="example_data",
         flight_id="20200210",
         platform_id="P3",
+        config=config,
         path_structure="{platform}/Level_0/{flight_id}",
     )
     sonde = flight.populate_sonde_instances(config=config)[0]
