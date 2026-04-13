@@ -4,8 +4,10 @@ import logging
 from pathlib import Path
 import os.path
 import warnings
+import copy
 import ast
 import re
+import yaml
 
 from pydropsonde.helper import rawreader as rr
 from pydropsonde.processor import Sonde
@@ -219,3 +221,30 @@ class Flight:
         object.__setattr__(self, "Sondes", Sondes)
 
         return Sondes
+
+    def add_metadata_to_yaml(self):
+        """
+        add L0 and L1 metadata to yaml file
+        """
+        l_metadata = copy.deepcopy(self.level_attrs)
+        global_metadata = self.global_attrs
+        for i in [0, 1]:
+            l_path = Path.joinpath(
+                Path(
+                    l_metadata.get(f"l{i}", {}).pop(
+                        f"l{i}_attr_dir", getattr(self, f"l{i}_dir")
+                    )
+                ),
+                "dataset_meta.yaml",
+            )
+
+            extent = {
+                "extent": dict(
+                    temporal=l_metadata.get(f"l{i}", {}).pop("temporal", "").split(","),
+                    spatial=l_metadata.get(f"l{i}", {}).pop("spatial", "").split(","),
+                )
+            }
+            l_metadata[f"l{i}"].update(extent)
+            l_metadata[f"l{i}"].update(global_metadata["global"])
+            with open(l_path, "w") as outfile:
+                yaml.dump(l_metadata[f"l{i}"], outfile)
