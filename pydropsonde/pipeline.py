@@ -257,6 +257,7 @@ def create_and_populate_flight_object(
                 platform_objects[platform].data_directory,
                 flight_id,
                 platform,
+                config=config,
                 path_structure=path_structure,
             )
 

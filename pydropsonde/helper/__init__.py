@@ -171,7 +171,7 @@ def get_level_specific_attrs_from_config(config):
     get level specific attributes that should be added to each dataset from config
     """
     attrs = {}
-    for i in range(2, 5):
+    for i in range(0, 5):
         try:
             attrs[f"l{i}"] = dict(config.items(f"L{i}_ATTRS"))
         except NoSectionError:
