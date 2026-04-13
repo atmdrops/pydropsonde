@@ -1,3 +1,4 @@
+import configparser
 import glob
 import logging
 from pathlib import Path
@@ -8,12 +9,7 @@ import re
 
 from pydropsonde.helper import rawreader as rr
 from pydropsonde.processor import Sonde
-from pydropsonde.helper import (
-    path_to_flight_ids,
-    path_to_l0_files,
-    get_global_attrs_from_config,
-    get_level_specific_attrs_from_config,
-)
+import pydropsonde.helper.__init__ as hh
 
 # create logger
 module_logger = logging.getLogger("pydropsonde.helper.paths")
@@ -32,7 +28,7 @@ class Platform:
         data_directory,
         platform_id,
         platform_directory_name=None,
-        path_structure=path_to_flight_ids,
+        path_structure=hh.path_to_flight_ids,
     ) -> None:
         self.platform_id = platform_id
         self.platform_directory_name = platform_directory_name
@@ -71,7 +67,8 @@ class Flight:
         data_directory,
         flight_id,
         platform_id,
-        path_structure=path_to_l0_files,
+        config: configparser.ConfigParser,
+        path_structure=hh.path_to_l0_files,
     ):
         """Creates an instance of Paths object for a given flight
 
@@ -115,6 +112,9 @@ class Flight:
         self.l0_dir = flight_dir
         self.l1_dir = flight_dir.replace("Level_0", "Level_1")
         self.l2_dir = flight_dir.replace("Level_0", "Level_2")
+
+        self.global_attrs = hh.get_global_attrs_from_config(config)
+        self.level_attrs = hh.get_level_specific_attrs_from_config(config)
 
         self.logger.info(
             f"Created Path Instance: {self.flight_idpath=}; {self.flight_id=}; {self.l1_dir=}"
@@ -202,10 +202,9 @@ class Flight:
                     "processor.Sonde.add_level_dir", "l2_dir", fallback=None
                 ),
             )
-
-            global_attrs = get_global_attrs_from_config(config)
-            global_attrs.update(get_level_specific_attrs_from_config(config))
-            sonde.add_global_attrs(global_attrs)
+            sonde_attrs = self.global_attrs
+            sonde_attrs.update(self.level_attrs)
+            sonde.add_global_attrs(sonde_attrs)
 
             broken_file = config.get("OPTIONAL", "broken_sonde_file", fallback=None)
             if broken_file is not None:
