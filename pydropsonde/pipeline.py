@@ -638,6 +638,7 @@ pipeline = {
             "update_history_l3",
             "add_expected_coords",
             "drop_empty",
+            "drop_vertical_wind",
             "save_interim_l3",
         ],
         "output": "sondes",
