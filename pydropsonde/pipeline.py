@@ -410,6 +410,7 @@ def write_ragged_l2(sondes: list[Sonde], config: configparser.ConfigParser):
             for var in sondes[0].l2_ds.data_vars
             if "time" in sondes[0].l2_ds[var].dims
         ]
+        sondes.sort(key=lambda x: x.launch_time)
         l2_ds = xr.concat(
             [sonde.interim_l2_ds[vars2d] for sonde in sondes],
             dim="time",
