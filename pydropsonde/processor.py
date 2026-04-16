@@ -1953,6 +1953,10 @@ class Sonde:
         self.interim_l3_ds = ds
         return self
 
+    def drop_vertical_wind(self):
+        self.interim_l3_ds = self.interim_l3_ds.drop_vars(["w"], errors="ignore")
+        return self
+
     def drop_empty(self):
         ds = self.interim_l3_ds
         if (
