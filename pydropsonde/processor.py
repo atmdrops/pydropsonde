@@ -2261,7 +2261,7 @@ class Gridded:
         ds.attrs.update(dict(history=self.history, title=l3_title + " QC"))
         ds.attrs["summary"] = f"QC dataset for {l3_title}"
         ds.attrs["keywords"] = ds.attrs.get("keywords", "") + ", QC"
-
+        qc_vars.append("sonde_id")
         if filename is not None:
             hx.write_ds(
                 ds[qc_vars],
