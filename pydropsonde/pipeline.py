@@ -339,6 +339,9 @@ def iterate_Sonde_method_over_list_of_Sondes_objects(
                 if result is not None:
                     new_sondes.append(result)
                 else:
+                    logger.info(
+                        f"Sonde {sonde} was dropped after applying {function.__name__}"
+                    )
                     logger.debug(
                         f"Sonde {sonde} was dropped after applying {function.__name__}"
                     )
