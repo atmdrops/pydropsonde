@@ -108,6 +108,16 @@ class QualityControl:
                 hx.remove_above_alt(ds, variables, alt_dim="gpsalt", maxalt=maxalt)
             )
 
+    def gps_valid(
+        self,
+        std_factor=3,
+    ):
+        self.qc_flags["gps_valid"] = (
+            self.qc_ds.stduv.values < std_factor * self.mean_stduv
+        )
+        self.qc_details["gps_valid_stduv"] = self.qc_ds.stduv.values
+        self.qc_ds = self.qc_ds.drop_vars("stduv")
+
     def profile_extent(
         self,
         extent_min=8000,
@@ -572,6 +582,34 @@ class QualityControl:
         ds = hx.add_ancillary_var(ds, self.alt_dim, f"{alt_dim}_below_aircraft")
         return ds
 
+    def add_gps_valid_to_ds(self, ds):
+        """
+        add quality flag whether any measurement is above aircraft alt to ds
+        """
+        ds = ds.assign(
+            {
+                "gps_valid": np.byte(not self.qc_flags.get("gps_valid")),
+                "gps_valid_stduv": self.qc_details.get("gps_valid_stduv"),
+            }
+        )
+        ds["gps_valid"].attrs.update(
+            dict(
+                long_name="qc gps variability",
+                flag_values="0 1 ",
+                flag_meaning="GOOD BAD",
+            )
+        )
+        ds["gps_valid_stduv"].attrs.update(
+            dict(
+                long_name="gps valid: stduv",
+                units="m s-1",
+            )
+        )
+
+        ds = hx.add_ancillary_var(ds, self.alt_dim, "gps_valid")
+        ds = hx.add_ancillary_var(ds, self.alt_dim, "gps_valid_stduv")
+        return ds
+
     def add_alt_source_to_ds(self, ds):
         """
         Adds  an ancillary variable in the dataset for the altitude dimension.
@@ -622,6 +660,7 @@ class QualityControl:
         - ds_out: The output dataset with added non-variable QC data.
         """
         ds_out = self.add_below_aircraft_to_ds(ds)
+        ds_out = self.add_gps_valid_to_ds(ds_out)
 
         return ds_out
 

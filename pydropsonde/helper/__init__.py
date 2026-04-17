@@ -24,6 +24,14 @@ l2_variables = {
             "units": "m s-1",
         },
     },
+    "w_wind": {
+        "rename_to": "w",
+        "attributes": {
+            "standard_name": "upward_air_velocity",
+            "long_name": "atmospheric vertical velocity",
+            "units": "m s-1",
+        },
+    },
     "tdry": {
         "rename_to": "ta",
         "attributes": {

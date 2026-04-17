@@ -484,8 +484,13 @@ class Sonde:
             ds = self.cropped_aspen_ds
         else:
             ds = self.aspen_ds
+
         self.interim_l2_ds = ds
 
+        return self
+
+    def reset_qc_ds(self):
+        self.qc.set_qc_ds(self.interim_l2_ds)
         return self
 
     def below_aircraft_qc(self, max_alt=15000):
@@ -498,7 +503,6 @@ class Sonde:
             maximum realistic meassured altitude
 
         """
-        self.qc.set_qc_ds(self.interim_l2_ds)
 
         aircraft_alt = self.flight_attrs.get("launch_altitude_(m)", float(max_alt))
         self.qc.alt_below_aircraft(aircraft_alt)
@@ -537,6 +541,7 @@ class Sonde:
                 "near_surface_coverage",
                 "alt_near_gpsalt",
                 "sfc_physics",
+                "gps_valid",
             ]
         elif isinstance(run_qc, str):
             run_qc = run_qc.split(",")
@@ -1167,6 +1172,11 @@ class Sonde:
                         )
                     }
                 )
+        if not self.qc.qc_flags.get("gps_valid", True):
+            ds = ds.assign(
+                u=ds.u.where(False),
+                v=ds.v.where(False),
+            )
         self.interim_l3_ds = ds
 
         return self
@@ -1363,7 +1373,8 @@ class Sonde:
         ds = self.interim_l3_ds
         alt_attrs = ds[alt_dim].attrs
         if not self.qc.qc_flags.get("p_sfc_physics") and (
-            np.all(np.isnan(ds["gpsalt"]))
+            (np.all(np.isnan(ds["gpsalt"])))
+            or (not self.qc.qc_flags.get("gps_valid", True))
         ):
             print(
                 f"No gpsalt values and no reliable alt values. {self} from {self.flight_id} is dropped"
@@ -1383,7 +1394,8 @@ class Sonde:
         elif alt_dim == "gpsalt":
             self.qc.qc_flags.update({"altitude_source": "gpsalt"})
             if (
-                (
+                not self.qc.qc_flags.get("gps_valid", True)
+                or (
                     (not self.qc.qc_flags.get("u_near_surface", False))
                     and (self.qc.qc_flags.get("p_near_surface", False))
                 )
@@ -1953,6 +1965,10 @@ class Sonde:
         self.interim_l3_ds = ds
         return self
 
+    def drop_vertical_wind(self):
+        self.interim_l3_ds = self.interim_l3_ds.drop_vars(["w"], errors="ignore")
+        return self
+
     def drop_empty(self):
         ds = self.interim_l3_ds
         if (
@@ -2257,7 +2273,7 @@ class Gridded:
         ds.attrs.update(dict(history=self.history, title=l3_title + " QC"))
         ds.attrs["summary"] = f"QC dataset for {l3_title}"
         ds.attrs["keywords"] = ds.attrs.get("keywords", "") + ", QC"
-
+        qc_vars.append("sonde_id")
         if filename is not None:
             hx.write_ds(
                 ds[qc_vars],

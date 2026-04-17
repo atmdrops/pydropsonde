@@ -339,6 +339,9 @@ def iterate_Sonde_method_over_list_of_Sondes_objects(
                 if result is not None:
                     new_sondes.append(result)
                 else:
+                    logger.info(
+                        f"Sonde {sonde} was dropped after applying {function.__name__}"
+                    )
                     logger.debug(
                         f"Sonde {sonde} was dropped after applying {function.__name__}"
                     )
@@ -522,6 +525,25 @@ def verify_unique_sonde_ids(
     return sondes
 
 
+def get_stduv(sondes: list[Sonde], config: configparser.ConfigParser) -> list[Sonde]:
+    """
+    get std deviation of u and v to remove sondes with potential GPS issues
+    """
+    altdim = "time"
+    for sonde in sondes:
+        ds = sonde.interim_l2_ds.sortby("time")
+        ds = ds.interpolate_na("time", max_gap=np.timedelta64(10, "s")).dropna(
+            dim="time", subset=["gpsalt"]
+        )
+        sonde.qc.qc_ds = sonde.qc.qc_ds.assign(
+            stduv=np.sqrt(ds.u.diff(altdim).std() ** 2 + ds.v.diff(altdim).std() ** 2)
+        )
+    mean_stduv = np.mean([sonde.qc.qc_ds.stduv for sonde in sondes])
+    for sonde in sondes:
+        sonde.qc.mean_stduv = mean_stduv
+    return sondes
+
+
 def run_pipeline(pipeline: dict, config: configparser.ConfigParser):
     """
     Executes a pipeline of processing steps.
@@ -569,7 +591,7 @@ pipeline = {
         ],
         "output": "sondes",
     },
-    "qc": {
+    "prepare_qc": {
         "intake": "sondes",
         "apply": iterate_Sonde_method_over_list_of_Sondes_objects,
         "functions": [
@@ -581,9 +603,23 @@ pipeline = {
             "create_interim_l2_ds",
             "get_l2_variables",
             "convert_to_si",
+            "reset_qc_ds",
+            #            "remove_non_qc_sondes",
+        ],
+        "output": "sondes",
+    },
+    "check_gps": {
+        "intake": "sondes",
+        "apply": get_stduv,
+        "output": "sondes",
+        "comment": "check std in u and v diff to identify potential GPS issues",
+    },
+    "qc": {
+        "intake": "sondes",
+        "apply": iterate_Sonde_method_over_list_of_Sondes_objects,
+        "functions": [
             "below_aircraft_qc",
             "get_qc",
-            #            "remove_non_qc_sondes",
         ],
         "output": "sondes",
     },
@@ -638,6 +674,7 @@ pipeline = {
             "update_history_l3",
             "add_expected_coords",
             "drop_empty",
+            "drop_vertical_wind",
             "save_interim_l3",
         ],
         "output": "sondes",
