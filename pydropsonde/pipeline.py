@@ -545,7 +545,12 @@ def get_stduv(sondes: list[Sonde], config: configparser.ConfigParser) -> list[So
         sonde.qc.qc_ds = sonde.qc.qc_ds.assign(
             stduv=np.sqrt(ds.u.diff(altdim).std() ** 2 + ds.v.diff(altdim).std() ** 2)
         )
-    mean_stduv = np.mean([sonde.qc.qc_ds.stduv for sonde in sondes])
+        if np.isnan(sonde.qc.qc_ds.stduv.values) | (sonde.qc.qc_ds.stduv.values < 0):
+            logger.info(
+                f"Potential GPS issue found for sonde: {sonde.interim_l2_ds.SondeId}, could not calculate stduv"
+            )
+    mean_stduv = np.nanmean([sonde.qc.qc_ds.stduv for sonde in sondes])
+
     for sonde in sondes:
         sonde.qc.mean_stduv = mean_stduv
     return sondes
