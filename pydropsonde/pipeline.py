@@ -263,6 +263,13 @@ def create_and_populate_flight_object(
             )
 
             output["sondes"] += flight.populate_sonde_instances(config)
+        try:
+            flight.add_metadata_to_yaml()
+        except UnboundLocalError:
+            logger.debug(
+                "No flight object created, skipping metadata addition to yaml."
+            )
+
     return output["platforms"], output["sondes"]
 
 
