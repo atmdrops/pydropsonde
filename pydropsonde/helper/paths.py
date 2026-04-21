@@ -237,14 +237,22 @@ class Flight:
                 ),
                 "dataset_meta.yaml",
             )
+            try:
+                spatial = [
+                    float(i)
+                    for i in l_metadata.get(f"l{i}", {}).pop("spatial", "").split(",")
+                ]
+            except ValueError:
+                spatial = []
             extent = {
                 "extent": dict(
                     temporal=l_metadata.get(f"l{i}", {}).pop("temporal", "").split(","),
-                    spatial=l_metadata.get(f"l{i}", {}).pop("spatial", "").split(","),
+                    spatial=spatial,
                 )
             }
-            metadata = global_metadata["global"].copy()
-            metadata.update(l_metadata[f"l{i}"])
+            metadata = {}
+            metadata["attributes"] = global_metadata["global"].copy()
+            metadata["attributes"].update(l_metadata[f"l{i}"])
             metadata.update(extent)
             with open(l_path, "w") as outfile:
                 yaml.dump(metadata, outfile)
